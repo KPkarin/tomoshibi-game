@@ -1486,7 +1486,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.55</span>
+  <span class="title-version">v1.7.56</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2010,6 +2010,7 @@ const RENDER_DPR_CAP=1.5; // 2.0比でフレームバッファ使用量を約44%
 const MOVE_SCALE=0.84, FX_SLOW=0.7; // 全体の移動を84%に、近接演出の再生を0.7倍(ゆっくり見せる・判定不変)
 const PLAYER={r:0.55,speed:6.4*MOVE_SCALE,hp:100,maxHp:100,fireCd:0,range:18,dashT:0,dashCd:0,dashVX:0,dashVZ:0,dashStock:3,dashMax:3,dashRe:0,rockShield:0};
 const DASH_TIME=0.22, DASH_SPEED=30, DASH_CD=3, DASH_RECHARGE=2.6;
+const CONTACT_INTERVAL=.5;const avatarContactCd=[0,0];
 /* 身体の当たり判定：属性の光輪とは別に、実際の衝突半径を常時表示する。 */
 const BODY_RING_GEOMETRIES=new Map();
 const BODY_RING_MATERIALS=new Map();
@@ -3225,7 +3226,7 @@ function bossExplosion(e){
 
 /* ===== ボス戦：攻勢と反撃のターン制リズム =====
    DANGER中は予兆付きの連続攻撃、BREAK中は弾を消して完全な反撃時間にする。 */
-const BOSS_HP_MUL=20, BOSS_ATTACK_TURN=20, BOSS_RECOVERY_TURN=10, BOSS_DEFENSE_MUL=5, BOSS_RAGE_TIME=1.45;
+const BOSS_HP_MUL=10, BOSS_ATTACK_TURN=20, BOSS_RECOVERY_TURN=10, BOSS_DEFENSE_MUL=3, BOSS_RAGE_TIME=1.45;
 const BOSS_BULLET_GEO=pinGpuResource(new THREE.SphereGeometry(1,12,10));
 const BOSS_BULLET_MATS=new Map();
 const BOSS_PATTERNS={
@@ -3238,7 +3239,7 @@ const BOSS_PATTERNS={
   maou:['maouSpiral','cross','maouFan','voidRain','doomRing']
 };
 function bossAccent(e){ return e.key==='stump'?0x62e68a:e.key==='wolf'?0xff783f:e.key==='scorpion'?0xa8e34d:e.key==='golem'?0x83d7ff:e.key==='thunderbird'?0xffdf56:e.key==='maou'?0x8cc9ff:0xff5f91; }
-function setBossPhaseText(text,col){ const el=document.querySelector('#bossHp .bl'); if(el){el.textContent=text.replace('BREAK  ·  休憩10秒・防御等倍','隙 · 休憩10秒・防御等倍').replace('DANGER  ·  攻勢20秒・防御×5','攻勢20秒 · 防御×5').replace('RAGE  ·  ダメージ無効','激昂 · ダメージ無効').replace('DANGER','大技');el.style.color=text.startsWith('BREAK')?'#b4c2a1':text.startsWith('RAGE')?'#d0ad6e':'#d08b78';} }
+function setBossPhaseText(text,col){ const el=document.querySelector('#bossHp .bl'); if(el){el.textContent=text.replace('BREAK  ·  休憩10秒・防御等倍','隙 · 休憩10秒・防御等倍').replace('DANGER  ·  攻勢20秒・防御×3','攻勢20秒 · 防御×3').replace('RAGE  ·  ダメージ無効','激昂 · ダメージ無効').replace('DANGER','大技');el.style.color=text.startsWith('BREAK')?'#b4c2a1':text.startsWith('RAGE')?'#d0ad6e':'#d08b78';} }
 const BOSS_ATTACK_NAMES={
   fan:'五連・狙撃扇',spiral:'双星螺旋',radial:'全周弾幕',eyeLaser:'災眼収束砲',orbRain:'深淵の落星',
   pounce:'灼熱三連突進',flameFan:'獄炎散弾',hunt:'猛獣の追跡',fireTrail:'焦土の狩場',howl:'爆炎咆哮',
@@ -3318,10 +3319,10 @@ function bossSetState(e,state,dur){
     ai.pattern=bossChoosePattern(e); const ta=nearestAvatar(e.mesh.position.x,e.mesh.position.z).grp; ai.tx=ta.position.x;ai.tz=ta.position.z;
     const target=['pounce','roots','orbRain','fireTrail','clawRush','tailStrike','quakeLine','rockRain','thunderDash','lightningGrid','voidRain'].includes(ai.pattern),wide=['slam','golemSlam','radial','seed','cross','maouSpiral','howl','leafStorm','mushroomBurst','sandRing','crystalBurst','stormSpiral','doomRing'].includes(ai.pattern),wr=(ai.pattern==='slam'||ai.pattern==='golemSlam')?e.r*4.4:(wide?Math.max(3.2,e.r*3.5):2.4);
     ai.tele=target?bossTeleCircle(ai.tx,ai.tz,['pounce','clawRush','thunderDash'].includes(ai.pattern)?2.5:2.0,bossAccent(e),.42):bossTeleCircle(e.mesh.position.x,e.mesh.position.z,wr,bossAccent(e),.42);
-    document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×5','#ff8a8a');showBossPhase('DANGER',(BOSS_ATTACK_NAMES[ai.pattern]||'必殺攻撃')+' · 防御×5','danger');if(ai.aura)ai.aura.material.opacity=.34;
+    document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff8a8a');showBossPhase('DANGER',(BOSS_ATTACK_NAMES[ai.pattern]||'必殺攻撃')+' · 防御×3','danger');if(ai.aura)ai.aura.material.opacity=.34;
     playBossAttackSfx(e.key,ai.pattern);
   }else if(state==='pressure'){
-    document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×5','#ff6868');if(ai.aura)ai.aura.material.opacity=.34;
+    document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(ai.aura)ai.aura.material.opacity=.34;
     if(['pounce','clawRush','thunderDash'].includes(ai.pattern)){ai.dashMode='move';ai.dashClock=.75;}
   }else if(state==='rage'){
     clearBossZones(ai); clearBossBullets(e);document.body.classList.add('boss-pressure');ai.tele=bossTeleCircle(e.mesh.position.x,e.mesh.position.z,6,bossAccent(e),.7);setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');showBossPhase('RAGE','ダメージ無効','rage');if(ai.aura)ai.aura.material.opacity=.48;
@@ -3348,7 +3349,6 @@ function runBossPattern(e,dt,tgt,dx,dz,d){
   else if(p==='flameFan'&&ai.eventT<=0&&ai.shots<5){bossFan(e,7,.13,11.5,14,0xff7a3c);ai.shots++;ai.eventT=.55*rage;}
   else if(p==='fireTrail'){
     const sp=e.speed*(e.enraged?2.35:1.95);e.mesh.position.x+=dx/d*sp*dt;e.mesh.position.z+=dz/d*sp*dt;
-    if(d<e.r+PLAYER.r+.3&&ai.contactCd<=0){damageAvatar(tgt.isHost,22*Math.sqrt(stageMul()));ai.contactCd=.8;}
     if(ai.eventT<=0&&ai.shots<9){addBossZone(e,e.mesh.position.x,e.mesh.position.z,1.35,.62,17,0xff6a2d);ai.shots++;ai.eventT=.4*rage;}
   }
   else if(p==='howl'&&ai.eventT<=0&&ai.shots<4){bossRadial(e,16,ai.shots*.1,8.8+ai.shots*.5,13,0xff8a3a);ai.shots++;ai.eventT=.68*rage;}
@@ -3373,7 +3373,6 @@ function runBossPattern(e,dt,tgt,dx,dz,d){
   else if(p==='slam'&&ai.shots===0){bossGroundBlast(e,e.mesh.position.x,e.mesh.position.z,e.r*4.4,30,0x67e990);ai.shots=1;}
   else if(p==='hunt'){
     const sp=e.speed*(e.enraged?2.7:2.25);e.mesh.position.x+=dx/d*sp*dt;e.mesh.position.z+=dz/d*sp*dt;
-    if(d<e.r+PLAYER.r+.25&&ai.contactCd<=0){damageAvatar(tgt.isHost,24*Math.sqrt(stageMul()));ai.contactCd=.7;}
     if(ai.eventT<=0){bossBullet(e,Math.atan2(-dx,-dz)+rand(-.25,.25),7,10,0xff703c,.25);ai.eventT=.42;}
   }else if(p==='pounce'||p==='clawRush'||p==='thunderDash'){
     if(ai.dashMode==='wait'){ai.dashClock-=dt;if(ai.tele)ai.tele.material.opacity=.75+Math.sin(gameTime*20)*.1;if(ai.dashClock<=0){removeBossTele(ai);ai.dashMode='move';ai.dashClock=.7;}}
@@ -3476,6 +3475,7 @@ function makeAllyAvatar(){
   scene.add(grp); addShadow(grp,0.7); return grp;
 }
 function setupAlly(opts){ // opts:{weapon,bonuses,elem}
+  resetContactDamage(1);
   if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho);
   if(!ally) ally={grp:makeAllyAvatar()};
   const b=opts.bonuses||{damage:0,maxHp:0,speed:0,fireRate:0};
@@ -3488,7 +3488,7 @@ function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   ally.grp.position.set(2,0,0); ally.grp.visible=true;
   const r=ally.grp.userData.ring; if(ally.pElem.element){ r.material.color.set(ELEM[ally.pElem.element].color); r.visible=true; } else r.visible=false;
 }
-function removeAlly(){if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
+function removeAlly(){resetContactDamage(1);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
 
 /* コンテキスト退避：既存の攻撃関数を2人目に流用 */
 let _sv=null;
@@ -3551,7 +3551,30 @@ function netSendDash(){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].s
 function avatars(){ const a=[{grp:player,isHost:true}]; if(ally&&ally.hp>0)a.push({grp:ally.grp,isHost:false}); return a; }
 function nearestAvatar(x,z){ let best=player,bestHost=true,bd=1e9; for(const a of avatars()){ const dx=a.grp.position.x-x,dz=a.grp.position.z-z,d=dx*dx+dz*dz; if(d<bd){bd=d;best=a.grp;bestHost=a.isHost;} } return {grp:best,isHost:bestHost}; }
 function isInvincible(isHost){ return isHost ? (PLAYER.dashT>0 || buffType==='knuckle') : (ally && (ally.dashT>0 || ally.buffType==='knuckle')); }
-function damageAvatar(isHost,amt,ignoreDef){ if(isInvincible(isHost))return;amt*=iaiGuardMul(isHost); if(isHost){ if(PLAYER.rockShield>0){flashRockShieldVisual(player);PLAYER.rockShield--; spawnSlamShock(player.position.x,player.position.z,2.0,0x9a7548); return; } if(!ignoreDef){ const D=(1+defPct()/100); amt=Math.max(0,Math.floor(amt/D)); } PLAYER.hp-=amt; if(NET.role!=='client')playSfxHit(); } else if(ally){ if(ally.rockShield>0){flashRockShieldVisual(ally.grp);ally.rockShield--;spawnSlamShock(ally.grp.position.x,ally.grp.position.z,2.0,0x9a7548);return;} if(!ignoreDef){ const D=1+((ally.defv||0))/100; amt=Math.max(0,Math.floor(amt/D)); } ally.hp-=amt; } }
+function damageAvatar(isHost,amt,ignoreDef,minimumDamage=0){ if(isInvincible(isHost))return;amt*=iaiGuardMul(isHost); if(isHost){ if(PLAYER.rockShield>0){flashRockShieldVisual(player);PLAYER.rockShield--; spawnSlamShock(player.position.x,player.position.z,2.0,0x9a7548); return; } if(!ignoreDef){ const D=(1+defPct()/100); amt=Math.max(minimumDamage,Math.floor(amt/D)); } PLAYER.hp-=amt; if(NET.role!=='client')playSfxHit(); } else if(ally){ if(ally.rockShield>0){flashRockShieldVisual(ally.grp);ally.rockShield--;spawnSlamShock(ally.grp.position.x,ally.grp.position.z,2.0,0x9a7548);return;} if(!ignoreDef){ const D=1+((ally.defv||0))/100; amt=Math.max(minimumDamage,Math.floor(amt/D)); } ally.hp-=amt; } }
+
+/* 接触はフレーム毎の端数を切り捨てず、各プレイヤーに0.5秒ごとにまとめて適用。 */
+function resetContactDamage(owner){if(owner===0||owner===1)avatarContactCd[owner]=0;else avatarContactCd.fill(0);}
+function contactDamageRate(e){
+  const rate=e.baseContactDmg??(e.dmg||(e.boss?30:8));
+  const motif=e.baseDmg>0?Math.max(0,e.dmg/e.baseDmg):1;
+  return Math.max(0,rate*motif);
+}
+function updateContactDamage(dt){
+  if(state!=='play'||introActive)return;
+  for(const a of avatars()){
+    if((a.isHost?PLAYER.hp:ally.hp)<=0)continue;
+    const owner=a.isHost?0:1;avatarContactCd[owner]=Math.max(0,avatarContactCd[owner]-dt);
+    if(avatarContactCd[owner]>1e-8||isInvincible(a.isHost))continue;
+    let strongest=0;
+    for(const e of enemies){
+      if(e.puppet||e.hp<=0||e.stun>0)continue;
+      const dx=e.mesh.position.x-a.grp.position.x,dz=e.mesh.position.z-a.grp.position.z,r=e.r+PLAYER.r;
+      if(dx*dx+dz*dz<r*r)strongest=Math.max(strongest,contactDamageRate(e));
+    }
+    if(strongest>0){damageAvatar(a.isHost,strongest*CONTACT_INTERVAL,false,1);avatarContactCd[owner]=CONTACT_INTERVAL;}
+  }
+}
 
 /* ---- ロビー ---- */
 function showCode(code){ const w=$('netCode'),v=$('netCodeVal'); if(v)v.textContent=code||'----'; if(w)w.style.display=code?'block':'none'; }
@@ -3663,7 +3686,7 @@ function syncClientBossFx(bf){
   const changed=C.bossState!==bf.s;C.bossState=bf.s;
   if(bf.s==='recovery'){document.body.classList.remove('boss-pressure');setBossPhaseText('BREAK  ·  休憩10秒・防御等倍','#77f2c0');if(changed){showBossPhase('BREAK','休憩10秒・防御等倍','break');playBossBreakSfx(activeBossAudioKey);}}
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
-  else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×5','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×5','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
+  else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
 function updateClientFx(dt){for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh)updateGunModel(g.userData.gunMesh,g.userData.gunSkill,dt);}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
 function clearClient(){syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
@@ -4593,8 +4616,8 @@ function spawnEnemy(key){
     ring.rotation.x=-Math.PI/2; ring.position.set(ex,0.03,ez); scene.add(ring); }
   const sm=stageMul();
   const gateMul=def.boss&&stageNum%10===0?1.15:1;
-  const baseMaxHp=def.hp*sm*gateMul*(def.boss?BOSS_HP_MUL:1),baseSpeed=def.speed*MOVE_SCALE,baseDmg=def.dmg*sm,baseProjectileDmg=(def.boss?22:14)*Math.sqrt(sm);
-  const e={mesh,key,r:def.r,hp:baseMaxHp,maxHp:baseMaxHp,speed:baseSpeed,dmg:baseDmg,xp:def.xp,rng:def.rng||0,shoot:!!def.shoot,boss:!!def.boss,stump:!!def.stump,flash:0,pop:0,fireCd:rand(0.6,1.6),element:elem,ring,inv:0,enraged:false,fast:false,id:++enemyId,baseMaxHp,baseSpeed,baseDmg,baseProjectileDmg,projectileDmg:baseProjectileDmg,mobFireMul:1};
+  const baseMaxHp=def.hp*sm*gateMul*(def.boss?BOSS_HP_MUL:1),baseSpeed=def.speed*MOVE_SCALE,baseDmg=def.dmg*sm,baseContactDmg=(def.dmg||(def.boss?30:8))*Math.sqrt(sm),baseProjectileDmg=(def.boss?22:14)*Math.sqrt(sm);
+  const e={mesh,key,r:def.r,hp:baseMaxHp,maxHp:baseMaxHp,speed:baseSpeed,dmg:baseDmg,xp:def.xp,rng:def.rng||0,shoot:!!def.shoot,boss:!!def.boss,stump:!!def.stump,flash:0,pop:0,fireCd:rand(0.6,1.6),element:elem,ring,inv:0,enraged:false,fast:false,id:++enemyId,baseMaxHp,baseSpeed,baseDmg,baseContactDmg,baseProjectileDmg,projectileDmg:baseProjectileDmg,mobFireMul:1};
   if(e.boss){let hpValue=e.hp;Object.defineProperty(e,'hp',{configurable:true,enumerable:true,get(){return hpValue;},set(v){if(v<hpValue){const next=hpValue-(hpValue-v)*bossDamageWindow(e);if(e.bossAI&&!e.enraged&&next<=e.maxHp*.5){hpValue=e.maxHp*.5;bossEnterRage(e);}else hpValue=next;}else hpValue=v;}});}
   enemies.push(e); addShadow(mesh,def.r*(def.boss?1.8:1.05)); if(def.boss)bossAlive=true; if(key==='maou')buildMaouRing(ex,ez,30);
 }
@@ -4703,45 +4726,45 @@ function updateUpgradeVisuals(dt){
 }
 function clearUpgradeVisuals(){for(const o of upgradeBursts)removeAndDispose(o.g);upgradeBursts.length=0;for(const o of upgradeAuras){if(o.target&&o.target.userData)delete o.target.userData['upgradeAura_'+o.kind];removeAndDispose(o.g);}upgradeAuras.length=0;}
 const UPGRADES3=[
-  {id:'knuckleReach',w:'knuckle',max:3,nm:'踏み込みの拳',ds:'拳の間合い +18%',ic:WEAPONS.knuckle.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.18;}},
-  {id:'knucklePush',w:'knuckle',max:3,nm:'破城の拳',ds:'通常拳の吹き飛ばし +1.5',ic:WEAPONS.knuckle.icon,fx:'power',ap:()=>{RUN.knucklePush+=1.5;}},
-  {id:'knuckleStun',w:'knuckle',max:3,nm:'震脚の極意',ds:'通常拳の怯み +0.75秒',ic:WEAPONS.knuckle.icon,fx:'magic',ap:()=>{RUN.knuckleStun+=.75;}},
-  {id:'gunPower',w:'gun',max:3,nm:'重装弾',ds:'通常弾・ガトリングの威力 +20%（6発・装填3秒を維持）',ic:WEAPONS.gun.icon,fx:'power',ap:()=>{RUN.gunPower*=1.2;}},
-  {id:'gunRange',w:'gun',max:3,nm:'遠射銃身',ds:'通常弾・ガトリングの射程 +20%',ic:WEAPONS.gun.icon,fx:'range',ap:()=>{RUN.bLifeMul*=1.2;}},
-  {id:'gunFocus',w:'gun',max:3,nm:'集束機構',ds:'ガトリングの拡散幅 −20%',ic:WEAPONS.gun.icon,fx:'rapid',ap:()=>{RUN.gunFocus+=1;}},
+  {id:'knuckleReach',w:'knuckle',max:3,nm:'踏み込みの拳',ds:'拳の間合い +30%',ic:WEAPONS.knuckle.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'knucklePush',w:'knuckle',max:3,nm:'破城の拳',ds:'通常拳の吹き飛ばし +2',ic:WEAPONS.knuckle.icon,fx:'power',ap:()=>{RUN.knucklePush+=2;}},
+  {id:'knuckleStun',w:'knuckle',max:3,nm:'震脚の極意',ds:'通常拳の怯み +1秒',ic:WEAPONS.knuckle.icon,fx:'magic',ap:()=>{RUN.knuckleStun+=1;}},
+  {id:'gunPower',w:'gun',max:3,nm:'重装弾',ds:'通常弾・ガトリングの威力 +30%（6発・装填3秒を維持）',ic:WEAPONS.gun.icon,fx:'power',ap:()=>{RUN.gunPower*=1.3;}},
+  {id:'gunRange',w:'gun',max:3,nm:'遠射銃身',ds:'通常弾・ガトリングの射程 +30%',ic:WEAPONS.gun.icon,fx:'range',ap:()=>{RUN.bLifeMul*=1.3;}},
+  {id:'gunFocus',w:'gun',max:3,nm:'集束機構',ds:'ガトリングの拡散幅 −30%',ic:WEAPONS.gun.icon,fx:'rapid',ap:()=>{RUN.gunFocus+=1;}},
   {id:'spiritExtra',w:'spirit',max:2,nm:'霊火の眷属',ds:'周回する霊火 +1（通常・スキル共通）',ic:WEAPONS.spirit.icon,fx:'projectile',ap:()=>{RUN.spiritExtra+=1;}},
-  {id:'spiritReach',w:'spirit',max:3,nm:'遠見の霊眼',ds:'霊火の狙う範囲 +20%',ic:WEAPONS.spirit.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.2;}},
-  {id:'spiritPower',w:'spirit',max:3,nm:'霊火の共鳴',ds:'霊火の威力 +15%',ic:WEAPONS.spirit.icon,fx:'magic',ap:()=>{pDmgMul*=1.15;}},
-  {id:'chainReach',w:'chain',max:3,nm:'長鎖の輪舞',ds:'鎖の攻撃・引き寄せ範囲 +18%',ic:WEAPONS.chain.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.18;}},
-  {id:'chainPull',w:'chain',max:3,nm:'鉤鎖の手繰り',ds:'引き寄せ距離 +1.5',ic:WEAPONS.chain.icon,fx:'magic',ap:()=>{RUN.chainPull+=1.5;}},
-  {id:'chainPower',w:'chain',max:3,nm:'鎖刃の研磨',ds:'鎖の威力 +15%',ic:WEAPONS.chain.icon,fx:'power',ap:()=>{pDmgMul*=1.15;}},
-  {id:'scytheHeal',w:'scythe',max:3,nm:'命刈りの加護',ds:'撃破回復 +最大HPの1%',ic:WEAPONS.scythe.icon,fx:'regen',ap:()=>{RUN.scytheHeal+=.01;}},
-  {id:'scytheReach',w:'scythe',max:3,nm:'大鎌の間合い',ds:'鎌の間合い +18%',ic:WEAPONS.scythe.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.18;}},
-  {id:'scytheArc',w:'scythe',max:3,nm:'弧月の刃',ds:'通常斬撃の角度 +15%',ic:WEAPONS.scythe.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.15;}},
-  {id:'twinDashPower',w:'twin',max:3,nm:'疾風双閃',ds:'ダッシュ斬撃の威力 +20%',ic:WEAPONS.twin.icon,fx:'power',ap:()=>{RUN.twinDashPower*=1.2;}},
-  {id:'twinArc',w:'twin',max:3,nm:'双刃の輪舞',ds:'通常斬撃の角度 +15%',ic:WEAPONS.twin.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.15;}},
-  {id:'twinMove',w:'twin',max:3,nm:'追風の足運び',ds:'無限ダッシュのスキル中 移動速度 +15%',ic:WEAPONS.twin.icon,fx:'move',ap:()=>{RUN.twinMove+=.15;}},
+  {id:'spiritReach',w:'spirit',max:3,nm:'遠見の霊眼',ds:'霊火の狙う範囲 +30%',ic:WEAPONS.spirit.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'spiritPower',w:'spirit',max:3,nm:'霊火の共鳴',ds:'霊火の威力 +30%',ic:WEAPONS.spirit.icon,fx:'magic',ap:()=>{pDmgMul*=1.3;}},
+  {id:'chainReach',w:'chain',max:3,nm:'長鎖の輪舞',ds:'鎖の攻撃・引き寄せ範囲 +30%',ic:WEAPONS.chain.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'chainPull',w:'chain',max:3,nm:'鉤鎖の手繰り',ds:'引き寄せ距離 +2.25',ic:WEAPONS.chain.icon,fx:'magic',ap:()=>{RUN.chainPull+=2.25;}},
+  {id:'chainPower',w:'chain',max:3,nm:'鎖刃の研磨',ds:'鎖の威力 +30%',ic:WEAPONS.chain.icon,fx:'power',ap:()=>{pDmgMul*=1.3;}},
+  {id:'scytheHeal',w:'scythe',max:3,nm:'命刈りの加護',ds:'撃破回復 +最大HPの1.5%',ic:WEAPONS.scythe.icon,fx:'regen',ap:()=>{RUN.scytheHeal+=.015;}},
+  {id:'scytheReach',w:'scythe',max:3,nm:'大鎌の間合い',ds:'鎌の間合い +30%',ic:WEAPONS.scythe.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'scytheArc',w:'scythe',max:3,nm:'弧月の刃',ds:'通常斬撃の角度 +30%',ic:WEAPONS.scythe.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
+  {id:'twinDashPower',w:'twin',max:3,nm:'疾風双閃',ds:'ダッシュ斬撃の威力 +30%',ic:WEAPONS.twin.icon,fx:'power',ap:()=>{RUN.twinDashPower*=1.3;}},
+  {id:'twinArc',w:'twin',max:3,nm:'双刃の輪舞',ds:'通常斬撃の角度 +30%',ic:WEAPONS.twin.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
+  {id:'twinMove',w:'twin',max:3,nm:'追風の足運び',ds:'無限ダッシュのスキル中 移動速度 +30%',ic:WEAPONS.twin.icon,fx:'move',ap:()=>{RUN.twinMove+=.3;}},
   {id:'devourGrowth',w:'devour',max:2,nm:'飢餓の牙',ds:'雑魚撃破の喰らい蓄積 +1',ic:WEAPONS.devour.icon,fx:'power',ap:()=>{RUN.devourGrowth+=1;}},
-  {id:'devourReach',w:'devour',max:3,nm:'捕食の間合い',ds:'通常斬撃の距離 +18%',ic:WEAPONS.devour.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.18;}},
-  {id:'devourBurst',w:'devour',max:3,nm:'深淵の咆哮',ds:'喰らい爆発の範囲 +20%',ic:WEAPONS.devour.icon,fx:'magic',ap:()=>{RUN.devourBurstMul*=1.2;}},
-  {id:'hammerRadius',w:'hammer',max:3,nm:'震地の槌',ds:'衝撃波の半径 +20%（通常・スキル）',ic:WEAPONS.hammer.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.2;}},
-  {id:'hammerStun',w:'hammer',max:3,nm:'重圧の一撃',ds:'衝撃波の怯み +0.4秒',ic:WEAPONS.hammer.icon,fx:'magic',ap:()=>{RUN.hammerStun+=.4;}},
-  {id:'hammerPower',w:'hammer',max:3,nm:'鍛鉄の重槌',ds:'槌の威力 +20%',ic:WEAPONS.hammer.icon,fx:'power',ap:()=>{pDmgMul*=1.2;}},
-  {id:'fudeRadius',w:'fude',max:3,nm:'広域の結界符',ds:'結界の半径 +20%（通常・スキル）',ic:WEAPONS.fude.icon,fx:'range',ap:()=>{RUN.resRMul*=1.2;}},
-  {id:'fudeLife',w:'fude',max:4,nm:'長命の呪符',ds:'結界の持続 +0.5秒（通常・スキル）',ic:WEAPONS.fude.icon,fx:'magic',ap:()=>{RUN.resLifeAdd+=.5;}},
-  {id:'fudePower',w:'fude',max:3,nm:'灼印の呪符',ds:'結界の毎秒ダメージ +20%',ic:WEAPONS.fude.icon,fx:'power',ap:()=>{RUN.fudePower*=1.2;}},
-  {id:'earthRadius',w:'earth',max:3,nm:'大地の脈動',ds:'範囲攻撃の半径・地割れの長さ +18%',ic:WEAPONS.earth.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.18;}},
-  {id:'earthWidth',w:'earth',max:3,nm:'断層の広がり',ds:'地割れの幅 +20%',ic:WEAPONS.earth.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.2;}},
+  {id:'devourReach',w:'devour',max:3,nm:'捕食の間合い',ds:'通常斬撃の距離 +30%',ic:WEAPONS.devour.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'devourBurst',w:'devour',max:3,nm:'深淵の咆哮',ds:'喰らい爆発の範囲 +30%',ic:WEAPONS.devour.icon,fx:'magic',ap:()=>{RUN.devourBurstMul*=1.3;}},
+  {id:'hammerRadius',w:'hammer',max:3,nm:'震地の槌',ds:'衝撃波の半径 +30%（通常・スキル）',ic:WEAPONS.hammer.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
+  {id:'hammerStun',w:'hammer',max:3,nm:'重圧の一撃',ds:'衝撃波の怯み +0.6秒',ic:WEAPONS.hammer.icon,fx:'magic',ap:()=>{RUN.hammerStun+=.6;}},
+  {id:'hammerPower',w:'hammer',max:3,nm:'鍛鉄の重槌',ds:'槌の威力 +30%',ic:WEAPONS.hammer.icon,fx:'power',ap:()=>{pDmgMul*=1.3;}},
+  {id:'fudeRadius',w:'fude',max:3,nm:'広域の結界符',ds:'結界の半径 +30%（通常・スキル）',ic:WEAPONS.fude.icon,fx:'range',ap:()=>{RUN.resRMul*=1.3;}},
+  {id:'fudeLife',w:'fude',max:4,nm:'長命の呪符',ds:'結界の持続 +0.75秒（通常・スキル）',ic:WEAPONS.fude.icon,fx:'magic',ap:()=>{RUN.resLifeAdd+=.75;}},
+  {id:'fudePower',w:'fude',max:3,nm:'灼印の呪符',ds:'結界の毎秒ダメージ +30%',ic:WEAPONS.fude.icon,fx:'power',ap:()=>{RUN.fudePower*=1.3;}},
+  {id:'earthRadius',w:'earth',max:3,nm:'大地の脈動',ds:'範囲攻撃の半径・地割れの長さ +30%',ic:WEAPONS.earth.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'earthWidth',w:'earth',max:3,nm:'断層の広がり',ds:'地割れの幅 +30%',ic:WEAPONS.earth.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
   {id:'earthShield',w:'earth',max:3,nm:'岩護りの地脈',ds:'岩シールド +1（上限5）',ic:WEAPONS.earth.icon,fx:'vitality',ap:()=>{PLAYER.rockShield=Math.min(5,(PLAYER.rockShield||0)+1);}},
-  {id:'gsWave',w:'greatsword',max:1,nm:'焔の衝撃波',ds:'斬撃後、攻撃力35%の貫通衝撃波',ic:'【図:wave】',fx:'range',ap:()=>{RUN.gsWave=1;}},
-  {id:'gsTempo',w:'greatsword',max:3,nm:'振り抜きの極意',ds:'攻撃間隔 −15%',ic:'【図:weapon_greatsword】',fx:'rapid',ap:()=>{pFireMul*=.85;}},
-  {id:'gsSweep',w:'greatsword',max:3,nm:'大薙ぎの間合い',ds:'斬撃距離・角度 +15%',ic:'【図:vortex】',fx:'arc',ap:()=>{RUN.rangeMul*=1.15;RUN.arcMul*=1.15;}},
-  {id:'iaiFocus',w:'iai',max:3,nm:'静心の構え',ds:'静止中の気蓄積 +30%',ic:'【図:weapon_iai】',fx:'magic',ap:()=>{RUN.iaiFocus+=.3;}},
-  {id:'iaiGuard',w:'iai',max:1,nm:'不動の守り',ds:'静止・気50%以上：被ダメージ −25%',ic:'【図:shield】',fx:'vitality',ap:()=>{RUN.iaiGuard=1;}},
-  {id:'iaiStep',w:'iai',max:1,nm:'残心の足運び',ds:'気80%以上で抜刀：2秒間 移動速度 +25%',ic:'【図:dash】',fx:'move',ap:()=>{RUN.iaiStep=1;}},
+  {id:'gsWave',w:'greatsword',max:1,nm:'焔の衝撃波',ds:'斬撃後、攻撃力60%の貫通衝撃波',ic:'【図:wave】',fx:'range',ap:()=>{RUN.gsWave=1;}},
+  {id:'gsTempo',w:'greatsword',max:3,nm:'振り抜きの極意',ds:'攻撃間隔 −30%',ic:'【図:weapon_greatsword】',fx:'rapid',ap:()=>{pFireMul*=.7;}},
+  {id:'gsSweep',w:'greatsword',max:3,nm:'大薙ぎの間合い',ds:'斬撃距離・角度 +30%',ic:'【図:vortex】',fx:'arc',ap:()=>{RUN.rangeMul*=1.3;RUN.arcMul*=1.3;}},
+  {id:'iaiFocus',w:'iai',max:3,nm:'静心の構え',ds:'静止中の気蓄積 +50%',ic:'【図:weapon_iai】',fx:'magic',ap:()=>{RUN.iaiFocus+=.5;}},
+  {id:'iaiGuard',w:'iai',max:1,nm:'不動の守り',ds:'静止・気50%以上：被ダメージ −40%',ic:'【図:shield】',fx:'vitality',ap:()=>{RUN.iaiGuard=1;}},
+  {id:'iaiStep',w:'iai',max:1,nm:'残心の足運び',ds:'気80%以上で抜刀：3秒間 移動速度 +40%',ic:'【図:dash】',fx:'move',ap:()=>{RUN.iaiStep=1;}},
   {id:'puppetArmy',w:'puppeteer',max:2,excludes:'puppetElite',nm:'百鬼の行列',ds:'人形上限 +2 · 精鋭の糸と併用不可',ic:'【図:weapon_puppeteer】',fx:'projectile',ap:()=>{RUN.puppetArmy+=2;}},
-  {id:'puppetElite',w:'puppeteer',max:1,excludes:'puppetArmy',nm:'精鋭の糸',ds:'人形HP・攻撃 +60% · 上限3体（超過分解除）· 百鬼の行列と併用不可',ic:'【図:thread】',fx:'power',ap:()=>{RUN.puppetElite=1;const own=enemies.filter(e=>e.puppet&&e.puppetOwner===player.uuid);for(const e of own.slice(3))releasePuppet(e);for(const e of own.slice(0,3)){e.hp*=1.6;e.maxHp*=1.6;e.dmg*=1.6;}}},
-  {id:'puppetFrenzy',w:'puppeteer',max:2,nm:'狂宴の幕引き',ds:'人形の無敵・暴走 +2秒',ic:'【図:element_fire】',fx:'flame',ap:()=>{RUN.puppetFrenzy+=2;}},
+  {id:'puppetElite',w:'puppeteer',max:1,excludes:'puppetArmy',nm:'精鋭の糸',ds:'人形HP・攻撃 +90% · 上限3体（超過分解除）· 百鬼の行列と併用不可',ic:'【図:thread】',fx:'power',ap:()=>{RUN.puppetElite=1;const own=enemies.filter(e=>e.puppet&&e.puppetOwner===player.uuid);for(const e of own.slice(3))releasePuppet(e);for(const e of own.slice(0,3)){e.hp*=1.9;e.maxHp*=1.9;e.dmg*=1.9;}}},
+  {id:'puppetFrenzy',w:'puppeteer',max:2,nm:'狂宴の幕引き',ds:'人形の無敵・暴走 +3秒',ic:'【図:element_fire】',fx:'flame',ap:()=>{RUN.puppetFrenzy+=3;}},
 
   {w:'all',nm:'攻撃速度 +20%',ds:'',ic:'【図:charge】',fx:'rapid',ap:()=>{pFireMul*=0.8;}},
   {w:'all',nm:'攻撃力 +20%',ds:'',ic:'【図:weapon_sword】',fx:'power',ap:()=>{pDmgMul*=1.2;}},
@@ -4752,19 +4775,19 @@ const UPGRADES3=[
   {w:'all',nm:'星環の加護',ds:'最大HP +10%・岩シールド +1',ic:'【図:star】',fx:'star',persist:'star',ap:()=>{const inc=Math.max(1,Math.round(PLAYER.maxHp*.1));PLAYER.maxHp+=inc;PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+inc);PLAYER.rockShield=(PLAYER.rockShield||0)+1;}},
   {w:'all',nm:'焔刃の紋章',ds:'攻撃力 +15%・攻撃速度 +5%',ic:'【図:element_fire】',fx:'flame',persist:'flame',ap:()=>{pDmgMul*=1.15;pFireMul*=.95;}},
   {w:'bow',nm:'多重発射 +1',ds:'扇状に発射',ic:'【図:multi】',fx:'projectile',ap:()=>{RUN.proj+=1;}},
-  {w:'bow',nm:'矢速 +25%',ds:'射程 +10%',ic:'【図:multi】',fx:'rapid',ap:()=>{RUN.bSpeedMul*=1.25;RUN.bLifeMul*=1.1;}},
-  {w:'sword',nm:'斬撃範囲 +22%',ds:'',ic:'【図:range】',fx:'range',ap:()=>{RUN.rangeMul*=1.22;}},
-  {w:'sword',nm:'弧の長さ +25%',ds:'',ic:'【図:vortex】',fx:'arc',ap:()=>{RUN.arcMul*=1.25;}},
-  {w:'spear',nm:'間合い +22%',ds:'',ic:'【図:range】',fx:'range',ap:()=>{RUN.rangeMul*=1.22;}},
+  {id:'矢速 +25%',w:'bow',nm:'矢速 +40%',ds:'矢の持続 +25%',ic:'【図:multi】',fx:'rapid',ap:()=>{RUN.bSpeedMul*=1.4;RUN.bLifeMul*=1.25;}},
+  {id:'斬撃範囲 +22%',w:'sword',nm:'斬撃範囲 +35%',ds:'',ic:'【図:range】',fx:'range',ap:()=>{RUN.rangeMul*=1.35;}},
+  {id:'弧の長さ +25%',w:'sword',nm:'弧の長さ +40%',ds:'',ic:'【図:vortex】',fx:'arc',ap:()=>{RUN.arcMul*=1.4;}},
+  {id:'間合い +22%',w:'spear',nm:'間合い +35%',ds:'',ic:'【図:range】',fx:'range',ap:()=>{RUN.rangeMul*=1.35;}},
   {w:'spear',nm:'多重突き +1',ds:'扇状に発射',ic:'【図:multi】',fx:'projectile',ap:()=>{RUN.proj+=1;}},
-  {w:'spear',nm:'穂先 +25%',ds:'突きの幅 +25%',ic:'【図:point】',fx:'arc',ap:()=>{RUN.arcMul*=1.25;}},
-  {w:'mage',nm:'残滓の範囲 +20%',ds:'',ic:'【図:magic】',fx:'magic',ap:()=>{RUN.resRMul*=1.2;}},
-  {w:'mage',nm:'残滓の持続 +0.5s',ds:'',ic:'【図:duration】',fx:'magic',ap:()=>{RUN.resLifeAdd+=0.5;}},
+  {id:'穂先 +25%',w:'spear',nm:'穂先 +40%',ds:'突きの幅 +40%',ic:'【図:point】',fx:'arc',ap:()=>{RUN.arcMul*=1.4;}},
+  {id:'残滓の範囲 +20%',w:'mage',nm:'残滓の範囲 +30%',ds:'',ic:'【図:magic】',fx:'magic',ap:()=>{RUN.resRMul*=1.3;}},
+  {id:'残滓の持続 +0.5s',w:'mage',nm:'残滓の持続 +0.75s',ds:'',ic:'【図:duration】',fx:'magic',ap:()=>{RUN.resLifeAdd+=0.75;}},
   {w:'mage',nm:'多重詠唱 +1',ds:'近い敵から個別照準（1体なら集中）',ic:'【図:multi】',fx:'projectile',ap:()=>{RUN.proj+=1;}},
 ];
-function runMoveMul(){return (RUN&&RUN.iaiStepT>0?1.25:1)*(weapon==='twin'&&buffType==='twin'?1+((RUN&&RUN.twinMove)||0):1);}
+function runMoveMul(){return (RUN&&RUN.iaiStepT>0?1.4:1)*(weapon==='twin'&&buffType==='twin'?1+((RUN&&RUN.twinMove)||0):1);}
 function updateIaiState(dt){if(!RUN)return;if(RUN.iaiStepT>0)RUN.iaiStepT=Math.max(0,RUN.iaiStepT-dt);if(weapon!=='iai'){const ring=player.userData.iaiRing;if(ring)ring.visible=false;return;}const moving=Math.abs(move.x)+Math.abs(move.z)>.05||PLAYER.dashT>0;const fillT=Math.max(.4,fireInterval()*.88);iaiCharge=clamp(iaiCharge+(moving?-2.6:(1+RUN.iaiFocus)/fillT)*dt,0,1);updateIaiRing();}
-function iaiGuardMul(isHost){const run=isHost?RUN:ally&&ally.run,wp=isHost?weapon:ally&&ally.weapon,c=isHost?iaiCharge:ally&&ally.iaiCharge,mv=isHost?move:ally&&ally.move,dash=isHost?PLAYER.dashT:ally&&ally.dashT;return run&&run.iaiGuard&&wp==='iai'&&c>=.5&&mv&&Math.abs(mv.x)+Math.abs(mv.z)<=.05&&!(dash>0)?.75:1;}
+function iaiGuardMul(isHost){const run=isHost?RUN:ally&&ally.run,wp=isHost?weapon:ally&&ally.weapon,c=isHost?iaiCharge:ally&&ally.iaiCharge,mv=isHost?move:ally&&ally.move,dash=isHost?PLAYER.dashT:ally&&ally.dashT;return run&&run.iaiGuard&&wp==='iai'&&c>=.5&&mv&&Math.abs(mv.x)+Math.abs(mv.z)<=.05&&!(dash>0)?.6:1;}
 function spawnGsWave(ang,dmg){const mesh=new THREE.Mesh(new THREE.BoxGeometry(3.2,.16,.6),new THREE.MeshBasicMaterial({color:0xffcb79,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false}));mesh.position.set(player.position.x,.7,player.position.z);mesh.rotation.y=ang;scene.add(mesh);pBullets.push({mesh,vx:Math.sin(ang)*18,vz:Math.cos(ang)*18,life:.7,dmg,r:1.6,pierce:true,hitSet:new Set(),oel:pElem});}
 function upgradeRank(u,run=RUN){return (run&&run.build&&run.build[u.id||u.nm])||0;}
 function upgradeAllowed(u,wp=weapon,run=RUN){return (u.w==='all'||u.w===wp)&&(!u.max||upgradeRank(u,run)<u.max)&&(!u.excludes||!((run&&run.build&&run.build[u.excludes])||0));}
@@ -4913,7 +4936,7 @@ function spawnMuzzle(ang,col,big){
 function gunStorm(){
   const W=WEAPONS.gun,t=nearestEnemy(gunRange(RUN,true));
   const aim=t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y;
-  const focus=(RUN&&RUN.gunFocus)||0,spread=W.skillSpread*Math.pow(.8,focus);
+  const focus=(RUN&&RUN.gunFocus)||0,spread=W.skillSpread*Math.pow(.7,focus);
   const ang=aim+(Math.random()-.5)*spread,dmg=gunBulletDamage();
   emitGunBullet(ang,dmg,W.skillSpeed,gunRange(RUN,true)/W.skillSpeed,.18,W.col);
   player.rotation.y=aim;
@@ -5307,7 +5330,7 @@ function tryPuppetizeForBullet(e,b){const actor=b.owner===player.uuid?player:all
 function tryPuppetize(e){
   if(!e||e.boss||e.puppet)return false; const cap=RUN.puppetElite?3:5+RUN.puppetArmy;if(enemies.filter(o=>o.puppet&&o.puppetOwner===player.uuid).length>=cap)return false;
   e.puppetOwner=player.uuid;e.puppetRun=RUN;e.puppet=true; e.puppetOrigMaxHp=e.maxHp; e.puppetOrigDmg=e.dmg;
-  const mult=RUN.puppetElite?3.2:2;e.maxHp*=mult;e.hp*=mult;e.dmg*=mult; e.puppetTgt=null; e.frenzyT=0;
+  const mult=RUN.puppetElite?3.8:2;e.maxHp*=mult;e.hp*=mult;e.dmg*=mult; e.puppetTgt=null; e.frenzyT=0;
   puppetCount=(puppetCount||0)+1; markPuppet(e,WEAPONS.puppeteer.col); return true;
 }
 function releasePuppet(e){
@@ -5364,7 +5387,7 @@ function doFire(){
   const tgt=nearestEnemy(W.melee?(effR+1.5):(weapon==='gun'?gunRange(RUN,buffType==='gun'):weapon==='iai'?50:PLAYER.range));
   if(!tgt)return;
   const dx=tgt.mesh.position.x-player.position.x, dz=tgt.mesh.position.z-player.position.z, ang=Math.atan2(dx,dz);
-  if(weapon==='iai'){const c=iaiCharge;iaiSlash(ang,0.5+c*3.5,12+c*40);if(RUN.iaiStep&&c>=.8)RUN.iaiStepT=2;iaiCharge=0;return;}
+  if(weapon==='iai'){const c=iaiCharge;iaiSlash(ang,0.5+c*3.5,12+c*40);if(RUN.iaiStep&&c>=.8)RUN.iaiStepT=3;iaiCharge=0;return;}
   if(weapon==='chain'){ chainAttack(ang); return; }
   if(WEAPONS[weapon].orbit){ return; }
   if(weapon==='gun'){ gunFire(dx,dz); return; }
@@ -5376,7 +5399,7 @@ function doFire(){
     const n=(weapon==='spear')?Math.max(1,RUN.proj|0):1, spread=0.18;
     const perDmg=baseDmg()*Math.pow(0.92,n-1); // 本数が増えるほど1本あたりを少し下げる（合計は増加）
     for(let k=0;k<n;k++){ const a=ang+(k-(n-1)/2)*spread; meleeAttack(a,effR,arc,perDmg,W.chargeHit,W.col,false,k>0); }
-    if(weapon==='greatsword'&&RUN.gsWave)spawnGsWave(ang,baseDmg()*.35);
+    if(weapon==='greatsword'&&RUN.gsWave)spawnGsWave(ang,baseDmg()*.6);
   }
   else { const n=Math.max(1,RUN.proj|0), spread=0.16, isMage=weapon==='mage'; if(isMage){ spawnRodCast(ang,W.col); if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:player.position.x,z:player.position.z,a:ang,k:'r',col:W.col}); if(meleeEvents.length>24)meleeEvents.shift(); } } else if(weapon==='bow'){ spawnBowDraw(ang,W.col); if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:player.position.x,z:player.position.z,a:ang,k:'b',col:W.col}); if(meleeEvents.length>24)meleeEvents.shift(); } } const targets=isMage?mageShotTargets(PLAYER.range):null;
     if(isMage&&!targets.length)return;
@@ -6285,6 +6308,7 @@ function clearArr(arr){ for(const x of arr){
   if(x.mesh){removeShadowFor(x.mesh);removeAndDispose(x.mesh);} if(x.m)removeAndDispose(x.m); if(x.tele)removeAndDispose(x.tele); if(x.extra)removeAndDispose(x.extra);
 } arr.length=0; }
 function clearField(){
+  resetContactDamage();
   clearAllIaiEchoes();
   clearUpgradeVisuals();
   for(const e of enemies){if(e.ring)removeAndDispose(e.ring);if(e.bossAI)cleanupBossBrain(e);}
@@ -6878,10 +6902,12 @@ function update(dt){
     else if(!bossHandled&&e.stump){ updateStump(e,dt); }
     else if(!bossHandled){
       if(e.shoot){ if(d>e.rng+1){ e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; } else if(d<e.rng-2){ e.mesh.position.x-=dx/d*e.speed*dt; e.mesh.position.z-=dz/d*e.speed*dt; } e.fireCd-=dt; if(e.fireCd<=0){ enemyShoot(e); e.fireCd=e.boss?(e.fast?0.45:0.9):1.8*(e.mobFireMul||1); } }
-      else { e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; if(d<e.r+PLAYER.r){ damageAvatar(tgt.isHost,e.dmg*dt); } }
+      else { e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; }
     }
     e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);
   }
+
+  updateContactDamage(dt);
 
   // チャージ＆発射＆バフ
   charge=Math.min(100,charge+passiveCharge()*dt);
