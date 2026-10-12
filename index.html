@@ -1486,7 +1486,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.59</span>
+  <span class="title-version">v1.7.60</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -3684,7 +3684,7 @@ function netSendSkill(ang){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[
 function buildSnapshot(){
   const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost}];
   if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
-  const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
+  const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; const fm=enemyForcePacket(e);if(fm)o.fm=fm;if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
   const pb=pBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.mage?1:0,s:b.pierce?1:0,g:b.gun?1:0}));
   const eb=eBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.maou||0,c:b.col||0,r:b.r||.26}));
   const ie=[];if(iaiEcho)ie.push(iaiEchoSnapshot(iaiEcho,0));if(ally&&ally.hp>0&&ally.iaiEcho)ie.push(iaiEchoSnapshot(ally.iaiEcho,1));
@@ -3719,7 +3719,7 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function updateClientFx(dt){updateClientEnemyForces(dt);for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
 function clearClient(){syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
@@ -3736,7 +3736,7 @@ function applySnapshot(d){
   while(C.players.length>d.ps.length){ const old=C.players.pop();removeShadowFor(old);removeAndDispose(old); }
   // enemies (id差分)
   const seen=new Set(); let bossInvNow=false;
-  for(const e of d.en){ seen.add(e.i); if(e.iv!==undefined)bossInvNow=true; let m=C.enemies.get(e.i); if(!m){const def=ETYPES[e.k]||ETYPES.imp;m=buildEnemyModel(e.k,def);const vr=new THREE.Mesh(new THREE.RingGeometry(def.r*1.05,def.r*1.45,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;m.add(vr);m.userData.clientVisRing=vr;attachBodyHitboxRing(m,def.r,0xff6474);scene.add(m);C.enemies.set(e.i,m);}m.position.x=e.x;m.position.z=e.z;m.rotation.y=Math.atan2((C.meX||0)-e.x,(C.meZ||0)-e.z);const evr=m.userData.clientVisRing;if(evr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');evr.visible=vis;if(vis)evr.material.color.setHex(d.mo==='jungle'?0x65e7ff:0xff4f7b);}
+  for(const e of d.en){ seen.add(e.i); if(e.iv!==undefined)bossInvNow=true; let m=C.enemies.get(e.i); if(!m){const def=ETYPES[e.k]||ETYPES.imp;m=buildEnemyModel(e.k,def);const vr=new THREE.Mesh(new THREE.RingGeometry(def.r*1.05,def.r*1.45,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;m.add(vr);m.userData.clientVisRing=vr;attachBodyHitboxRing(m,def.r,0xff6474);scene.add(m);C.enemies.set(e.i,m);}setClientEnemyPosition(m,e.x,e.z,e.fm);m.rotation.y=Math.atan2((C.meX||0)-e.x,(C.meZ||0)-e.z);const evr=m.userData.clientVisRing;if(evr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');evr.visible=vis;if(vis)evr.material.color.setHex(d.mo==='jungle'?0x65e7ff:0xff4f7b);}
     if(e.w!==undefined){ const range=ETYPES.stump.r*4.4; let fx=C.stumpFx.get(e.i); if(!fx){ fx={tele:cStumpRing(range*0.95,range),lastSl:e.sl||0,range}; scene.add(fx.tele); C.stumpFx.set(e.i,fx); }
       fx.tele.position.set(e.x,0.05,e.z); fx.tele.material.opacity=e.w>0?(0.65+0.25*e.w):0; fx.tele.scale.setScalar(1);
       if((e.sl||0)!==fx.lastSl){ fx.lastSl=e.sl||0; cSpawnShock(e.x,e.z,fx.range); } } }
@@ -4591,10 +4591,10 @@ function buildEnemyModel(key,def){
   g.userData=ud; g.userData.mats=mats; return g;
 }
 const ETYPES={
-  imp:{color:0xff6b4a,r:0.62,hp:16,speed:3.3,dmg:18,xp:1,rng:0},
-  bat:{color:0xffd06a,r:0.46,hp:7,speed:5.0,dmg:11,xp:1,rng:0},
-  caster:{color:0xc07bff,r:0.6,hp:20,speed:2.2,dmg:0,xp:2,rng:13,shoot:1},
-  brute:{color:0x6f9bff,r:1.05,hp:78,speed:1.7,dmg:34,xp:3,rng:0},
+  imp:{color:0xff6b4a,r:0.62,hp:32,speed:3.3,dmg:18,xp:1,rng:0},
+  bat:{color:0xffd06a,r:0.46,hp:14,speed:5.0,dmg:11,xp:1,rng:0},
+  caster:{color:0xc07bff,r:0.6,hp:40,speed:2.2,dmg:0,xp:2,rng:13,shoot:1},
+  brute:{color:0x6f9bff,r:1.05,hp:156,speed:1.7,dmg:34,xp:3,rng:0},
   boss:{color:0xff4d6a,r:1.7,hp:520,speed:1.5,dmg:40,xp:20,rng:11,shoot:1,boss:1},
   wolf:{color:0xff7a3a,r:1.8,hp:560,speed:2.7,dmg:46,xp:22,boss:1},
   stump:{color:0x5ed17a,r:1.9,hp:720,speed:0,dmg:0,xp:24,boss:1,stump:1},
@@ -4698,6 +4698,85 @@ function animateEnemy(e,dt){
   if(ud.sigil){ ud.sigil.position.y=0.045-e.mesh.position.y; ud.sigil.rotation.y+=dt*(e.boss?.12:.035); }
   if(e.flash>0){ e.flash-=dt; const k=clamp(e.flash/0.12,0,1); for(const m of ud.mats){ m.emissiveIntensity=(m.userData_base!=null?m.userData_base:0.5)+k*2.2; } }
 }
+/* ===== 吹き飛ばし・引き寄せ ===== */
+/* Short authoritative displacements: collision, bullets and snapshots use the moving position. */
+function queueEnemyForce(e,x,z,kind){
+  if(!e||e.boss||e.hp<=0||!e.mesh||![x,z,e.mesh.position.x,e.mesh.position.z].every(Number.isFinite))return false;
+  const p=e.mesh.position,dx=x-p.x,dz=z-p.z,dist=Math.hypot(dx,dz);
+  if(dist<1e-7){e.forceMove=null;e.forcePose=null;return false;}
+  e.forceMove={x0:p.x,z0:p.z,x1:x,z1:z,t:0,duration:Math.min(.38,.18+dist*.012),kind,dx:dx/dist,dz:dz/dist};
+  if(!(e.forceWaveCd>0)){spawnEnemyForceWave(p.x,p.z,e.r||.6,kind);e.forceWaveCd=.12;}
+  return true;
+}
+function pushEnemy(e,dx,dz){
+  if(!e||!e.mesh||![dx,dz].every(Number.isFinite))return false;
+  const pending=e.forceMove;
+  const x=(pending?pending.x1:e.mesh.position.x)+dx,z=(pending?pending.z1:e.mesh.position.z)+dz;
+  return queueEnemyForce(e,x,z,'push');
+}
+function pullEnemy(e,x,z){return queueEnemyForce(e,x,z,'pull');}
+function updateEnemyForce(e,dt){
+  e.forceWaveCd=Math.max(0,(e.forceWaveCd||0)-Math.max(0,dt));
+  const f=e.forceMove;if(!f){e.forcePose=null;return false;}
+  if(e.hp<=0||e.boss){e.forceMove=null;e.forcePose=null;return false;}
+  f.t=Math.min(f.duration,f.t+Math.max(0,dt));const p=f.t/f.duration,k=p*(2-p);
+  e.mesh.position.x=f.x0+(f.x1-f.x0)*k;e.mesh.position.z=f.z0+(f.z1-f.z0)*k;
+  e.forcePose={dx:f.dx,dz:f.dz,tilt:(f.kind==='push'?.22:.12)*Math.sin(p*Math.PI)};
+  if(p>=1){e.mesh.position.x=f.x1;e.mesh.position.z=f.z1;e.forceMove=null;}
+  return true;
+}
+function ensureEnemyForceVisual(m){
+  const u=m.userData;if(u.forceVisual)return u.forceVisual;
+  const visual=new THREE.Group();
+  // Keep floor markers on the root so leaning bodies cannot tip collision circles.
+  for(const child of [...m.children])if(child!==u.bodyHitboxRing&&child!==u.clientVisRing&&child!==u.visRing&&child!==u.sigil)visual.add(child);
+  m.add(visual);u.forceVisual=visual;return visual;
+}
+function applyEnemyForcePose(e){
+  if(e.boss)return;
+  const p=e.forcePose,u=e.mesh.userData;
+  if(p){setEnemyForceTilt(e.mesh,p.dx,p.dz,p.tilt);u.forceLeaning=true;}
+  else if(u.forceLeaning){u.forceVisual.rotation.x=0;u.forceVisual.rotation.z=0;u.forceLeaning=false;}
+}
+function setEnemyForceTilt(m,dx,dz,tilt){
+  const v=ensureEnemyForceVisual(m),a=m.rotation.y,c=Math.cos(a),s=Math.sin(a);
+  // Displacement directions are world coordinates; body tilt is relative to its facing.
+  v.rotation.x=(dx*s+dz*c)*tilt;v.rotation.z=-(dx*c-dz*s)*tilt;
+}
+/* Optional per-enemy data: old packets remain valid; authoritative coordinates stay unchanged. */
+function enemyForcePacket(e){
+  const f=e.forceMove;
+  return f?[f.kind==='push'?1:2,f.dx,f.dz,f.t/f.duration]:null;
+}
+function setClientEnemyPosition(m,x,z,packet){
+  if(![x,z].every(Number.isFinite))return;
+  const u=m.userData,valid=Array.isArray(packet)&&packet.length===4&&packet.every(Number.isFinite);
+  if(!u.clientPositionReady){u.clientPositionReady=true;m.position.x=x;m.position.z=z;u.forcePacket=valid?packet:null;return;}
+  if(valid||u.forcePacket){
+    u.forceLerp={x0:m.position.x,z0:m.position.z,x1:x,z1:z,t:0,duration:.07};
+    u.forcePacket=valid?packet:null;
+    if(!valid&&u.forceVisual){u.forceVisual.rotation.x=0;u.forceVisual.rotation.z=0;}
+  }else{m.position.x=x;m.position.z=z;u.forceLerp=null;}
+}
+function updateClientEnemyForces(dt){
+  for(const m of C.enemies.values()){
+    const u=m.userData,f=u.forceLerp;
+    if(f){f.t=Math.min(f.duration,f.t+Math.max(0,dt));const k=f.t/f.duration;m.position.x=f.x0+(f.x1-f.x0)*k;m.position.z=f.z0+(f.z1-f.z0)*k;if(k>=1)u.forceLerp=null;}
+    const p=u.forcePacket;
+    if(p){const tilt=(p[0]===1?.22:.12)*Math.sin(p[3]*Math.PI);setEnemyForceTilt(m,p[1],p[2],tilt);}
+  }
+}
+let enemyForceWaveGeo=null;
+function spawnEnemyForceWave(x,z,r,kind){
+  if(!enemyForceWaveGeo)enemyForceWaveGeo=pinGpuResource(new THREE.RingGeometry(.55,.68,24));
+  const col=kind==='pull'?0x8bdfc1:0xffd9a0;
+  const wave=new THREE.Mesh(enemyForceWaveGeo,new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.34,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));
+  wave.rotation.x=-Math.PI/2;wave.position.set(x,.055,z);wave.scale.setScalar(Math.max(.7,r));scene.add(wave);
+  // Existing transient disposal releases the material, while the shared geometry stays pinned.
+  melees.push({m:wave,life:.24,max:.24,o0:.34,enemyForceWave:true,forceRadius:Math.max(.7,r)});
+  if(NET.role==='host'&&NET.started){meleeEvents.push({owner:ally&&player===ally.grp?1:0,x,z,a:0,k:'B',r:Math.max(.7,r)*1.6,col});if(meleeEvents.length>24)meleeEvents.shift();}
+}
+
 function spawnEnemy(key){
   const def=ETYPES[key]; const ang=Math.random()*TAU, dist=rand(20,28);
   const ex=player.position.x+Math.cos(ang)*dist, ez=player.position.z+Math.sin(ang)*dist;
@@ -5040,7 +5119,7 @@ function poseWeaponMotion(s,p,k,dt){
     s.m.position.y=s.poseY+.025*Math.sin(p*Math.PI);
     s.m.children.forEach(c=>{if(c.material)c.material.opacity=.95*motionFade(p);});
   }else if(s.sweep){const a=s.sweep.a0+(s.sweep.a1-s.sweep.a0)*motionEase(p/.6),r=s.sweep.range;s.m.position.set(s.sweep.cx+Math.sin(a)*r/2,s.m.position.y,s.sweep.cz+Math.cos(a)*r/2);s.m.rotation.y=a;if(s.m.material)s.m.material.opacity=s.o0*k;}
-  else{if(s.m.material)s.m.material.opacity=s.o0*k;if(s.grow)s.m.scale.setScalar(1+p*s.grow);}
+  else{if(s.m.material)s.m.material.opacity=s.o0*k;if(s.enemyForceWave)s.m.scale.setScalar(s.forceRadius*(1+p*1.6));else if(s.grow)s.m.scale.setScalar(1+p*s.grow);}
 }
 function poseGun(mesh,kick,reload,skill){
   const u=clamp(reload/WEAPONS.gun.reload,0,1),tilt=reload>0?Math.sin(Math.PI*(1-u)):.0;
@@ -5205,7 +5284,7 @@ function hammerHit(cx,cz,R,dmg,stun){
   let hits=0; for(const e of enemies.slice()){ const dx=e.mesh.position.x-cx, dz=e.mesh.position.z-cz; if(dx*dx+dz*dz<(R+e.r)*(R+e.r)){
     const cr=Math.random()<pCritChance; const dd=dmg*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
     const dealt=damageEnemy(e,dd); e.flash=0.12; hits++; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid});
-    if(!e.boss){ e.stun=Math.max(e.stun||0,stun+((RUN&&RUN.hammerStun)||0)); const l=Math.hypot(dx,dz)||1; e.mesh.position.x+=dx/l*1.4; e.mesh.position.z+=dz/l*1.4; }
+    if(!e.boss){ e.stun=Math.max(e.stun||0,stun+((RUN&&RUN.hammerStun)||0)); const l=Math.hypot(dx,dz)||1; pushEnemy(e,dx/l*1.4,dz/l*1.4); }
     if(e.hp<=0)killEnemy(e); } }
   return hits;
 }
@@ -5245,7 +5324,7 @@ function chainAttack(ang){
       const cr=Math.random()<pCritChance; const dd=baseDmg()*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
       const dealt=damageEnemy(e,dd); e.flash=0.12; hits++; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); if(e.hp<=0)killEnemy(e);
     } else if(d<hookR && !e.boss && d>0.1){ // 遠くはフックで引き寄せ
-      const t=Math.max(range*0.8,d-4-((RUN&&RUN.chainPull)||0))/d; e.mesh.position.x=player.position.x+dx*t; e.mesh.position.z=player.position.z+dz*t; e.stun=Math.max(e.stun||0,0.3);
+      const t=Math.max(range*0.8,d-4-((RUN&&RUN.chainPull)||0))/d; pullEnemy(e,player.position.x+dx*t,player.position.z+dz*t); e.stun=Math.max(e.stun||0,0.3);
     }
   }
   if(hits>0)addCharge(W.chargeHit);
@@ -5576,8 +5655,7 @@ function updatePuppetEnemy(e,dt){
   if(!target||target.hp<=0||enemies.indexOf(target)<0){ target=nearestEnemyForPuppet(e,e.frenzyT>0); e.puppetTgt=target; }
   if(!target){ if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt); return; }
   const spdMul=e.frenzyT>0?5:2, dx=target.mesh.position.x-e.mesh.position.x, dz=target.mesh.position.z-e.mesh.position.z, d=Math.hypot(dx,dz)||1;
-  if(d>e.r+target.r){ e.mesh.position.x+=dx/d*e.speed*spdMul*dt; e.mesh.position.z+=dz/d*e.speed*spdMul*dt; }
-  else{ target.hp-=e.dmg*dt; if(target.hp<=0)killEnemy(target); }
+  if(!e.forcedThisStep){if(d>e.r+target.r){e.mesh.position.x+=dx/d*e.speed*spdMul*dt;e.mesh.position.z+=dz/d*e.speed*spdMul*dt;}else{target.hp-=e.dmg*dt;if(target.hp<=0)killEnemy(target);}}
   e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);
 }
 function puppeteerSkill(){
@@ -5644,7 +5722,7 @@ function meleeAttack(ang,range,arc,dmg,chargeHit,col,isSkill,extra){
     const cr=Math.random()<pCritChance; const dd=dmg*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
     const dealt=damageEnemy(e,dd); e.flash=0.12; hits++; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid});
     if(buffType==='twin'&&!e.boss&&e.hp>0&&e.hp<=e.maxHp*0.5){ e.hp=0; dmgPop(e.mesh.position,0,{exec:true}); }
-    if(W.knockback && !e.boss && e.r<1.2){ const len=Math.hypot(T.dx,T.dz)||1; const push=W.knockback+((RUN&&RUN.knucklePush)||0);e.mesh.position.x+=T.dx/len*push;e.mesh.position.z+=T.dz/len*push;e.stun=(W.stun||0)+((RUN&&RUN.knuckleStun)||0); }
+    if(W.knockback && !e.boss && e.r<1.2){ const len=Math.hypot(T.dx,T.dz)||1; const push=W.knockback+((RUN&&RUN.knucklePush)||0);pushEnemy(e,T.dx/len*push,T.dz/len*push);e.stun=(W.stun||0)+((RUN&&RUN.knuckleStun)||0); }
     if(e.hp<=0)killEnemy(e);
   }
   if(!isSkill&&!extra&&hits>0) addCharge(chargeHit*(W.chargeEach?hits:1));
@@ -5999,7 +6077,7 @@ function updateChainWard(dt){
 }
 function scytheReapStart(){
   const R=16; for(const e of enemies){ if(e.boss)continue; const dx=e.mesh.position.x-player.position.x, dz=e.mesh.position.z-player.position.z, d=Math.hypot(dx,dz);
-    if(d<R&&d>0.1){ const t=Math.max(2.2,d*0.35)/d; e.mesh.position.x=player.position.x+dx*t; e.mesh.position.z=player.position.z+dz*t; e.stun=Math.max(e.stun||0,0.4); } }
+    if(d<R&&d>0.1){ const t=Math.max(2.2,d*0.35)/d; pullEnemy(e,player.position.x+dx*t,player.position.z+dz*t); e.stun=Math.max(e.stun||0,0.4); } }
   const suck=new THREE.Mesh(new THREE.RingGeometry(0.4,R,48),new THREE.MeshBasicMaterial({color:0x9bffa0,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));
   suck.rotation.x=-Math.PI/2; suck.position.set(player.position.x,0.06,player.position.z); scene.add(suck); melees.push({m:suck,life:0.4,max:0.4,o0:0.5,grow:-0.85});
   PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+PLAYER.maxHp*0.15);
@@ -6812,16 +6890,18 @@ function update(dt){
 
   for(const e of enemies){
     if(e.pop<1){ e.pop=Math.min(1,e.pop+dt*4); e.mesh.scale.setScalar(e.pop); }
-    if(e.puppet){ updatePuppetEnemy(e,dt); continue; }
+    e.forcedThisStep=updateEnemyForce(e,dt);
+    if(e.puppet){updatePuppetEnemy(e,dt);applyEnemyForcePose(e);continue;}
     const tgt=nearestAvatar(e.mesh.position.x,e.mesh.position.z); const dx=tgt.grp.position.x-e.mesh.position.x,dz=tgt.grp.position.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
     const bossHandled=e.boss?updateBossCombat(e,dt,tgt,dx,dz,d):false;
-    if(!bossHandled&&e.stun>0){ e.stun-=dt; }
+    if(e.forcedThisStep){e.stun=Math.max(0,(e.stun||0)-dt);}
+    else if(!bossHandled&&e.stun>0){ e.stun-=dt; }
     else if(!bossHandled&&e.stump){ updateStump(e,dt); }
     else if(!bossHandled){
       if(e.shoot){ if(d>e.rng+1){ e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; } else if(d<e.rng-2){ e.mesh.position.x-=dx/d*e.speed*dt; e.mesh.position.z-=dz/d*e.speed*dt; } e.fireCd-=dt; if(e.fireCd<=0){ enemyShoot(e); e.fireCd=e.boss?(e.fast?0.45:0.9):1.8*(e.mobFireMul||1); } }
       else { e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; }
     }
-    e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);
+    e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);applyEnemyForcePose(e);
   }
 
   updateContactDamage(dt);
@@ -6910,7 +6990,7 @@ function enemyShoot(e){
   }
   if(isMaou)trail=0xbfe4ff;
   scene.add(mesh);
-  const spd=e.boss?10:9; const sm=Math.sqrt(stageMul()); eBullets.push({mesh,vx:dx/len*spd,vz:dz/len*spd,life:3.0,dmg:e.projectileDmg||((e.boss?22:14)*sm),r:rad,maou:isMaou?1:0,boss:e.boss?1:0,spin,hue,trail,ms:M?1:0});
+  const spd=e.boss?10:9*.8; const sm=Math.sqrt(stageMul()); eBullets.push({mesh,vx:dx/len*spd,vz:dz/len*spd,life:3.0,dmg:e.projectileDmg||((e.boss?22:14)*sm),r:rad,maou:isMaou?1:0,boss:e.boss?1:0,spin,hue,trail,ms:M?1:0});
 }
 // ===== 魔王アリーナ：青白い炎のリング（通過は実質不可・魔王も外に出ない） =====
 let maouRing=null, maouRingCdH=0, maouRingCdA=0;
