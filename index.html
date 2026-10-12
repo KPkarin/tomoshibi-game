@@ -16,6 +16,7 @@
     background-image:radial-gradient(circle at 20% 50%, rgba(255,107,157,.08) 0%, transparent 50%),
                       radial-gradient(circle at 80% 80%, rgba(199,123,255,.06) 0%, transparent 50%);}
   #app{position:fixed;inset:0;}
+  #app,#app canvas,#skillBtn,#skillBtn *,#dashBtn,#dashBtn *{touch-action:none;-webkit-touch-callout:none;}
   canvas{display:block;}
   #hud{position:fixed;top:0;left:0;right:0;padding:14px 16px;pointer-events:none;display:none;flex-direction:column;gap:6px;z-index:5;}
   body.playing #hud{display:flex;}
@@ -1485,7 +1486,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.54</span>
+  <span class="title-version">v1.7.55</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -6121,7 +6122,20 @@ function setMuted(m){ muted=m;if(!m&&curTrack&&(bgmSource||fbCur))announceMusicC
 }
 function updateMuteBtn(){ const b=$('muteBtn'); if(b)b.textContent=muted?'【図:mute】':'【図:sound】'; }
 
+/* Safari等の標準拡大操作を、Pointer Eventsで操作する戦闘領域だけ抑制する。 */
+function preventBattleTouchZoom(e){
+  if(state!=='play')return;
+  const target=e.target,combat=target&&typeof target.closest==='function'&&target.closest('#app,#skillBtn,#dashBtn');
+  if((combat||e.type.startsWith('gesture'))&&e.cancelable)e.preventDefault();
+}
+function bindBattleTouchGuards(){
+  for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend','dblclick']){
+    document.addEventListener(type,preventBattleTouchZoom,{passive:false});
+  }
+}
+
 function bindInput(){
+  bindBattleTouchGuards();
  $('firstRewardOk').onclick=()=>$('firstRewardDialog').close();
   $('clearDetailsBtn').onclick=openResultDetails;$('overDetailsBtn').onclick=openResultDetails;
   $('resultDetailsClose').onclick=()=>$('resultDetails').close();
