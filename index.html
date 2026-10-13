@@ -1486,7 +1486,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.60</span>
+  <span class="title-version">v1.7.61</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2015,7 +2015,7 @@ const RENDER_DPR_CAP=1.5; // 2.0比でフレームバッファ使用量を約44%
 
 const MOVE_SCALE=0.84, FX_SLOW=0.7; // 全体の移動を84%に、近接演出の再生を0.7倍(ゆっくり見せる・判定不変)
 const PLAYER={r:0.55,speed:6.4*MOVE_SCALE,hp:100,maxHp:100,fireCd:0,range:18,dashT:0,dashCd:0,dashVX:0,dashVZ:0,dashStock:3,dashMax:3,dashRe:0,rockShield:0};
-const DASH_TIME=0.22, DASH_SPEED=30, DASH_CD=3, DASH_RECHARGE=2.6;
+const DASH_TIME=0.22, DASH_SPEED=30, DASH_CD=3, DASH_RECHARGE=DASH_CD;
 const CONTACT_INTERVAL=.5;const avatarContactCd=[0,0];
 /* 身体の当たり判定：属性の光輪とは別に、実際の衝突半径を常時表示する。 */
 const BODY_RING_GEOMETRIES=new Map();
@@ -2039,16 +2039,16 @@ function updateBodyHitboxRings(){
 const WEAPONS={
   sword:{name:'灯刃',rarity:'R',icon:'【武器:sword】',melee:true,dmg:30,interval:0.65,range:3.6,arc:1.7,chargeHit:1.5,col:0xffd27a,
     desc:'前方を薙ぐ近接剣。スキル：特大斬撃。'},
-  greatsword:{name:'灯大剣',rarity:'SR',icon:'【武器:greatsword】',melee:true,two:true,dmg:167.5,interval:5.0,range:6.0,arc:2.094,chargeHit:2,chargeEach:true,col:0xffb060,
-    desc:'低速・広範囲の大薙ぎ。スキル：5秒間旋回、敵弾も斬る。スキル中の再チャージは1/2。'},
+  greatsword:{name:'灯大剣',rarity:'SR',icon:'【武器:greatsword】',melee:true,two:true,dmg:150,interval:5.0,attackTime:.34,spinPower:.45,range:6.0,arc:2.094,chargeHit:2,chargeEach:true,col:0xffb060,
+    desc:'低速・広範囲の大薙ぎ。通常斬撃中はその場に踏みとどまる。スキル：5秒間旋回、敵弾も斬る。スキル中の再チャージは1/2。'},
   knuckle:{name:'灯拳',rarity:'SR',icon:'【武器:knuckle】',melee:true,single:true,dmg:34,interval:0.5,range:2.5,arc:0.9,chargeHit:2,chargeEach:true,cpassive:2,knockback:4.0,stun:5.0,col:0xff9a5a,
     desc:'短距離の単体攻撃。小型の敵を吹き飛ばし5秒怯ませる。スキル：5秒無敵・範囲化・攻撃＆連射×2。'},
   spear:{name:'灯槍',rarity:'SR',icon:'【武器:spear】',melee:true,dmg:20,interval:0.34,range:5.4,arc:0.5,chargeHit:1,col:0x9fd6ff,
     desc:'長距離の貫通突き。スキル：貫通投擲。'},
   gun:{name:'灯銃',rarity:'SSR',icon:'【武器:gun】',dmg:60,interval:0.1,range:50,bulletSpeed:100,bulletLife:.5,chargeHit:0.35,col:0xffe08a,mag:6,reload:3,skillRate:10,skillTime:10,skillSpeed:70,skillRange:55,skillSpread:Math.PI/9,
     desc:'高速・高火力の直線弾を6発撃つと3秒リロード。スキル：通常弾と同威力の弾を10秒間、前方約20°・長射程のガトリングを毎秒10発。通常・スキル中ともチャージ速度40%。'},
-  spirit:{name:'灯霊',rarity:'SSR',icon:'【武器:spirit】',orbit:true,dmg:20,interval:0.5,range:16,chargeHit:0.6,col:0xb98aff,
-    desc:'周囲の霊火が自動射撃。スキル：霊火を増殖・巨大化。'},
+  spirit:{name:'灯霊',rarity:'SSR',icon:'【武器:spirit】',orbit:true,dmg:10,skillPower:2.34,interval:0.5,range:16,chargeHit:0.6,col:0xb98aff,
+    desc:'周囲の霊火が自動射撃。スキル：6秒間、霊火を増殖・巨大化。発動中のチャージは0%。'},
   chain:{name:'灯鎖',rarity:'SSR',icon:'【武器:chain】',melee:true,dmg:26,interval:0.45,range:5.2,arc:6.283,chargeHit:1.1,col:0xffe08a,
     desc:'全周囲を薙ぎ、遠い敵を引き寄せる。スキル：高速旋回する鎖結界。'},
   iai:{name:'灯居合',rarity:'SSR',icon:'【武器:iai】',dmg:24,interval:1.1,echoTime:10,echoRate:3,echoPower:1.2,echoFinishPower:8,range:50,bulletSpeed:0,bulletLife:0,chargeHit:1,col:0xffb0d8,
@@ -2056,7 +2056,7 @@ const WEAPONS={
   scythe:{name:'灯鎌',rarity:'SSR',icon:'【武器:scythe】',melee:true,dmg:52,interval:0.6,range:4.0,arc:3.5,chargeHit:1.3,col:0x9bffa0,
     desc:'約200°の横薙ぎ。撃破でHP回復。スキル：引き寄せ・回転斬り・HP回復。'},
   twin:{name:'灯双剣',rarity:'SSR',icon:'【武器:twin】',melee:true,dmg:8.6,interval:0.5,range:3.3,arc:4.712,chargeHit:1.2,col:0x8affd0,
-    desc:'270°の広い斬撃。無敵斬りダッシュを3回蓄積。スキル：10秒間ダッシュ無制限・攻撃×3・斬撃とダッシュ斬撃の到達距離×2・HP50%以下の敵を即死（ボス除く）。通常時のチャージは等倍、スキル中の再チャージは1/16。'},
+    desc:'270°の広い斬撃。無敵斬りダッシュを3回蓄積、3秒ごとに1回回復。スキル：10秒間ダッシュ無制限・攻撃×3・斬撃とダッシュ斬撃の到達距離×2・HP50%以下の敵を即死（ボス除く）。通常時のチャージは等倍、スキル中の再チャージは1/16。'},
   devour:{name:'灯食',rarity:'UR',icon:'【武器:devour】',melee:true,dmg:46,interval:0.45,range:3.8,arc:2.8,chargeHit:1.0,col:0x9b30ff,
     desc:'撃破ごとに攻撃力上昇（出撃中）。スキル：喰らいを爆発。'},
   hammer:{name:'灯槌',rarity:'SR',icon:'【武器:hammer】',melee:true,dmg:70,interval:0.95,range:4.2,arc:0,chargeHit:1.6,col:0xffcf6a,slamR:3.0,
@@ -3508,28 +3508,29 @@ function makeAllyAvatar(){
 function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   resetContactDamage(1);
   if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho);
+  if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);
   if(!ally) ally={grp:makeAllyAvatar()};
   const b=opts.bonuses||{damage:0,maxHp:0,speed:0,fireRate:0};
   ally.weapon=WEAPONS[opts.weapon]?opts.weapon:'sword';
   ally.pElem=opts.elem||{element:null,elemBonus:false};
   ally.maxHp=Math.round(100*(1+(b.maxHp||0)/100)); ally.hp=ally.maxHp; ally.speed=6.4*MOVE_SCALE*(1+(b.speed||0)/100);
   ally.pDmgMul=1+(b.damage||0)/100; ally.pFireMul=1/(1+(b.fireRate||0)/100); ally.defv=b.def||0;
-  ally.run=makeRun();ally.iaiCharge=0;ally.iaiEcho=null;ally.charge=0; ally.buffT=0; ally.buffType=null; ally.fireCd=0; ally.move={x:0,z:0}; ally.dashT=0; ally.dashCd=0; ally.dashVX=0; ally.dashVZ=0; ally.dashStock=3; ally.dashMax=3; ally.dashRe=0; ally.rockShield=0;
+  ally.gsSpin=null;ally.gsSpinAng=0;ally.grp.userData.gsAttackT=0;ally.run=makeRun();ally.iaiCharge=0;ally.iaiEcho=null;ally.charge=0; ally.buffT=0; ally.buffType=null; ally.fireCd=0; ally.move={x:0,z:0}; ally.dashT=0; ally.dashCd=0; ally.dashVX=0; ally.dashVZ=0; ally.dashStock=3; ally.dashMax=3; ally.dashRe=0; ally.rockShield=0;
   ally.gunAmmo=WEAPONS.gun.mag; ally.gunReloadT=0; ally.gunBoost=0; ally.gunStormT=0; ally.gunKick=0;ally.devourStacks=0;ally.spiritT=0;if(ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);ally.spiritOrbs=[]; ally.gunMesh=ally.gunMesh||null;
   ally.grp.position.set(2,0,0); ally.grp.visible=true;
   const r=ally.grp.userData.ring; if(ally.pElem.element){ r.material.color.set(ELEM[ally.pElem.element].color); r.visible=true; } else r.visible=false;
 }
-function removeAlly(){resetContactDamage(1);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
+function removeAlly(){resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
 
 /* コンテキスト退避：既存の攻撃関数を2人目に流用 */
 let _sv=null;
-function loadAlly(){ _sv={RUN,iaiCharge,iaiEcho,move:{...move},dashT:PLAYER.dashT,dashStock:PLAYER.dashStock,dashMax:PLAYER.dashMax,dashRe:PLAYER.dashRe,player,weapon,charge,buffT,buffType,pDmgMul,pFireMul,pElem,hp:PLAYER.hp,maxHp:PLAYER.maxHp,speed:PLAYER.speed,fireCd:PLAYER.fireCd,rockShield:PLAYER.rockShield,gunAmmo,gunReloadT,gunBoost,gunStormT,gunMesh,gunKick,devourStacks,spiritOrbs,spiritT};
-  RUN=ally.run||(ally.run=makeRun());iaiCharge=ally.iaiCharge||0;iaiEcho=ally.iaiEcho||null;move.x=ally.move.x;move.z=ally.move.z;PLAYER.dashT=ally.dashT||0;PLAYER.dashStock=ally.dashStock??3;PLAYER.dashMax=ally.dashMax??3;PLAYER.dashRe=ally.dashRe||0;player=ally.grp; weapon=ally.weapon; charge=ally.charge; buffT=ally.buffT; buffType=ally.buffType; pDmgMul=ally.pDmgMul; pFireMul=ally.pFireMul; pElem=ally.pElem;
+function loadAlly(){ _sv={gsSpin,gsSpinAng,RUN,iaiCharge,iaiEcho,move:{...move},dashT:PLAYER.dashT,dashStock:PLAYER.dashStock,dashMax:PLAYER.dashMax,dashRe:PLAYER.dashRe,player,weapon,charge,buffT,buffType,pDmgMul,pFireMul,pElem,hp:PLAYER.hp,maxHp:PLAYER.maxHp,speed:PLAYER.speed,fireCd:PLAYER.fireCd,rockShield:PLAYER.rockShield,gunAmmo,gunReloadT,gunBoost,gunStormT,gunMesh,gunKick,devourStacks,spiritOrbs,spiritT};
+  gsSpin=ally.gsSpin||null;gsSpinAng=ally.gsSpinAng||0;RUN=ally.run||(ally.run=makeRun());iaiCharge=ally.iaiCharge||0;iaiEcho=ally.iaiEcho||null;move.x=ally.move.x;move.z=ally.move.z;PLAYER.dashT=ally.dashT||0;PLAYER.dashStock=ally.dashStock??3;PLAYER.dashMax=ally.dashMax??3;PLAYER.dashRe=ally.dashRe||0;player=ally.grp; weapon=ally.weapon; charge=ally.charge; buffT=ally.buffT; buffType=ally.buffType; pDmgMul=ally.pDmgMul; pFireMul=ally.pFireMul; pElem=ally.pElem;
   PLAYER.hp=ally.hp; PLAYER.maxHp=ally.maxHp; PLAYER.speed=ally.speed; PLAYER.fireCd=ally.fireCd; PLAYER.rockShield=ally.rockShield||0;
   gunAmmo=ally.gunAmmo; gunReloadT=ally.gunReloadT; gunBoost=ally.gunBoost; gunStormT=ally.gunStormT; gunMesh=ally.gunMesh; gunKick=ally.gunKick;devourStacks=ally.devourStacks||0;spiritOrbs=ally.spiritOrbs||[];spiritT=ally.spiritT||0; }
-function storeAlly(){ally.run=RUN;ally.iaiCharge=iaiCharge;ally.iaiEcho=iaiEcho;ally.speed=PLAYER.speed;ally.dashT=PLAYER.dashT;ally.dashStock=PLAYER.dashStock;ally.dashMax=PLAYER.dashMax;ally.dashRe=PLAYER.dashRe; ally.charge=charge; ally.buffT=buffT; ally.buffType=buffType; ally.pDmgMul=pDmgMul; ally.pFireMul=pFireMul; ally.hp=PLAYER.hp; ally.maxHp=PLAYER.maxHp; ally.fireCd=PLAYER.fireCd; ally.rockShield=PLAYER.rockShield;
+function storeAlly(){ally.gsSpin=gsSpin;ally.gsSpinAng=gsSpinAng;ally.run=RUN;ally.iaiCharge=iaiCharge;ally.iaiEcho=iaiEcho;ally.speed=PLAYER.speed;ally.dashT=PLAYER.dashT;ally.dashStock=PLAYER.dashStock;ally.dashMax=PLAYER.dashMax;ally.dashRe=PLAYER.dashRe; ally.charge=charge; ally.buffT=buffT; ally.buffType=buffType; ally.pDmgMul=pDmgMul; ally.pFireMul=pFireMul; ally.hp=PLAYER.hp; ally.maxHp=PLAYER.maxHp; ally.fireCd=PLAYER.fireCd; ally.rockShield=PLAYER.rockShield;
   ally.gunAmmo=gunAmmo; ally.gunReloadT=gunReloadT; ally.gunBoost=gunBoost; ally.gunStormT=gunStormT; ally.gunMesh=gunMesh; ally.gunKick=gunKick;ally.devourStacks=devourStacks;ally.spiritOrbs=spiritOrbs;ally.spiritT=spiritT;
-  const s=_sv;RUN=s.RUN;iaiCharge=s.iaiCharge;iaiEcho=s.iaiEcho;move.x=s.move.x;move.z=s.move.z;PLAYER.dashT=s.dashT;PLAYER.dashStock=s.dashStock;PLAYER.dashMax=s.dashMax;PLAYER.dashRe=s.dashRe; player=s.player; weapon=s.weapon; charge=s.charge; buffT=s.buffT; buffType=s.buffType; pDmgMul=s.pDmgMul; pFireMul=s.pFireMul; pElem=s.pElem; PLAYER.hp=s.hp; PLAYER.maxHp=s.maxHp; PLAYER.speed=s.speed; PLAYER.fireCd=s.fireCd; PLAYER.rockShield=s.rockShield;
+  const s=_sv;gsSpin=s.gsSpin;gsSpinAng=s.gsSpinAng;RUN=s.RUN;iaiCharge=s.iaiCharge;iaiEcho=s.iaiEcho;move.x=s.move.x;move.z=s.move.z;PLAYER.dashT=s.dashT;PLAYER.dashStock=s.dashStock;PLAYER.dashMax=s.dashMax;PLAYER.dashRe=s.dashRe; player=s.player; weapon=s.weapon; charge=s.charge; buffT=s.buffT; buffType=s.buffType; pDmgMul=s.pDmgMul; pFireMul=s.pFireMul; pElem=s.pElem; PLAYER.hp=s.hp; PLAYER.maxHp=s.maxHp; PLAYER.speed=s.speed; PLAYER.fireCd=s.fireCd; PLAYER.rockShield=s.rockShield;
   gunAmmo=s.gunAmmo; gunReloadT=s.gunReloadT; gunBoost=s.gunBoost; gunStormT=s.gunStormT; gunMesh=s.gunMesh; gunKick=s.gunKick;devourStacks=s.devourStacks;spiritOrbs=s.spiritOrbs;spiritT=s.spiritT; }
 function updateGunState(dt){
   if(weapon==='gun'&&gunReloadT>0&&buffType!=='gun'){ gunReloadT=Math.max(0,gunReloadT-dt); if(gunReloadT<=1e-8){ gunReloadT=0; gunAmmo=WEAPONS.gun.mag; gunBoost=0; } }
@@ -3537,27 +3538,29 @@ function updateGunState(dt){
 }
 function updateAlly(dt){
   if(ally&&ally.hp<=0&&ally.iaiEcho){clearIaiEcho(ally.iaiEcho);ally.iaiEcho=null;}
+  if(ally&&ally.hp<=0){if(ally.gsSpin){removeAndDispose(ally.gsSpin);ally.gsSpin=null;}ally.grp.userData.gsAttackT=0;if(ally.buffType==='greatsword'){ally.buffType=null;ally.buffT=0;}}
   if(!ally||ally.hp<=0)return;
   loadAlly();
   try{
+  updateTwinDashRecharge(dt);const actorMoveDt=greatswordMovementTime(dt);
   if(ally.dashCd>0)ally.dashCd-=dt;
-  if(ally.dashT>0){ ally.dashT-=dt; player.position.x+=ally.dashVX*dt; player.position.z+=ally.dashVZ*dt; }
-  else { const mv=ally.move; player.position.x+=mv.x*PLAYER.speed*runMoveMul()*dt; player.position.z+=mv.z*PLAYER.speed*runMoveMul()*dt;
-    if(mv.x||mv.z){ const a=Math.atan2(mv.x,mv.z); let d=a-player.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); player.rotation.y+=d*Math.min(1,dt*10); } }
+  if(ally.dashT>0){ ally.dashT-=dt; player.position.x+=ally.dashVX*actorMoveDt; player.position.z+=ally.dashVZ*actorMoveDt; }
+  else { const mv=ally.move; player.position.x+=mv.x*PLAYER.speed*runMoveMul()*actorMoveDt; player.position.z+=mv.z*PLAYER.speed*runMoveMul()*actorMoveDt;
+    if(actorMoveDt>0&&(mv.x||mv.z)){ const a=Math.atan2(mv.x,mv.z); let d=a-player.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); player.rotation.y+=d*Math.min(1,dt*10); } }
   charge=Math.min(100,charge+passiveCharge()*dt);
   updateGunState(dt);
-  PLAYER.dashT=ally.dashT;updateIaiState(dt);PLAYER.fireCd-=dt; if(PLAYER.fireCd<=0){ const okBuff=!(weapon==='twin'&&PLAYER.dashT>0)&&buffType!=='gun'; if(okBuff&&nearestEnemy(fireRange())){ doFire(); PLAYER.fireCd=fireInterval(); } else PLAYER.fireCd=0; }
-  if(weapon==='twin'&&PLAYER.dashStock<PLAYER.dashMax){ PLAYER.dashRe-=dt; if(PLAYER.dashRe<=0){ PLAYER.dashStock=Math.min(PLAYER.dashMax,PLAYER.dashStock+1); PLAYER.dashRe=DASH_RECHARGE; } }
+  PLAYER.dashT=ally.dashT;updateIaiState(dt);PLAYER.fireCd-=dt; if(PLAYER.fireCd<=0){ const okBuff=!greatswordRooted()&&!(weapon==='greatsword'&&PLAYER.dashT>0)&&!(weapon==='twin'&&PLAYER.dashT>0)&&buffType!=='gun'&&buffType!=='greatsword'; if(okBuff&&nearestEnemy(fireRange())){ doFire(); PLAYER.fireCd=fireInterval(); } else PLAYER.fireCd=0; }
+  if(buffType==='greatsword')updateGreatswordSpin(dt);
   updateSpirits(dt);
   updateIaiEcho(dt);
-  if(buffT>0){ buffT-=dt; if(buffT<=1e-8){buffT=0;buffType=null;} }
+  if(buffT>0){ buffT-=dt; if(buffT<=1e-8){const was=buffType;buffT=0;buffType=null;if(was==='greatsword')endGsSpin();} }
   if(ally.grp.userData.ring)ally.grp.userData.ring.position.set(0,0.03,0);updateRockShieldVisual(ally.grp,PLAYER.rockShield,dt);
   }finally{ storeAlly(); }
 }
 function allySkill(ang){ if(!ally||ally.hp<=0)return; loadAlly(); try{ activateSkill(typeof ang==='number'?ang:undefined); }finally{ storeAlly(); } }
 /* ---- ダッシュ（回避・無敵） ---- */
 function spawnDashFx(pos,ang){ const ring=new THREE.Mesh(new THREE.RingGeometry(0.3,0.62,24),new THREE.MeshBasicMaterial({color:0x9fe0ff,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false})); ring.rotation.x=-Math.PI/2; ring.position.set(pos.x,0.08,pos.z); scene.add(ring); melees.push({m:ring,life:0.4,max:0.4,o0:0.7,grow:11}); }
-function doDash(){ if(state!=='play'||introActive)return; if(PLAYER.dashT>0)return;
+function doDash(){ if(state!=='play'||introActive)return; if(PLAYER.dashT>0||greatswordRooted())return;
   if(weapon==='twin'){ const free=(buffType==='twin'); if(!free&&PLAYER.dashStock<=0)return; if(!free){ if(PLAYER.dashStock>=PLAYER.dashMax)PLAYER.dashRe=DASH_RECHARGE; PLAYER.dashStock--; } }
   else { if(PLAYER.dashCd>0)return; }
   let dx=move.x,dz=move.z; if(!dx&&!dz){ dx=Math.sin(player.rotation.y); dz=Math.cos(player.rotation.y); }
@@ -3568,7 +3571,7 @@ function twinDashSlash(ang){ const W=WEAPONS.twin; const dmg=baseDmg()*2.5*((RUN
   spawnSwordSwing(ang,rng*1.15,0x8affd0,true,true);
   if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:player.position.x,z:player.position.z,a:ang,r:rng,arc:2.6,k:'s',wk:'twin',col:0x8affd0,s:1}); if(meleeEvents.length>24)meleeEvents.shift(); }
 }
-function allyDash(){ if(!ally||ally.hp<=0||ally.dashT>0)return;
+function allyDash(){ if(!ally||ally.hp<=0||ally.dashT>0||greatswordRooted(ally.grp,ally.weapon))return;
   const twin=ally.weapon==='twin',free=twin&&ally.buffType==='twin';
   if(twin){ if(!free&&ally.dashStock<=0)return; if(!free){if(ally.dashStock>=ally.dashMax)ally.dashRe=DASH_RECHARGE;ally.dashStock--;} }
   else if(ally.dashCd>0)return;
@@ -3682,8 +3685,8 @@ function netSendSkill(ang){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[
 
 /* ---- スナップショット ---- */
 function buildSnapshot(){
-  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost}];
-  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
+  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost,ds:PLAYER.dashStock,dr:PLAYER.dashRe,dm:PLAYER.dashMax}];
+  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ds:ally.dashStock,dr:ally.dashRe,dm:ally.dashMax,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
   const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; const fm=enemyForcePacket(e);if(fm)o.fm=fm;if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
   const pb=pBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.mage?1:0,s:b.pierce?1:0,g:b.gun?1:0}));
   const eb=eBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.maou||0,c:b.col||0,r:b.r||.26}));
@@ -3753,7 +3756,7 @@ function applySnapshot(d){
     const sb=$('skillBtn'); if(sb){ const cg=me.cg||0; sb.style.setProperty('--skill-charge',clamp(cg,0,100)*3.6+'deg'); sb.classList.toggle('ready',cg>=100); }
     const sic=$('skillIc');setWeaponIcon(sic,me.wp||weapon);updateGunHud(me.wp||weapon,me.ty,me.bt||0,me.ga,me.gr||0,me.gb||0);
     const sbt=$('skillBt'); if(sbt)sbt.textContent=(me.bt&&me.bt>0)?Math.ceil(me.bt)+'s':'';
-    const db=$('dashBtn'); if(db){ const dc=me.dc||0; const frac=1-clamp(dc/DASH_CD,0,1); db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`; db.classList.toggle('ready',dc<=0); const dbt=$('dashBt'); if(dbt)dbt.textContent=dc>0?Math.ceil(dc)+'s':''; } }
+    const db=$('dashBtn'); if(db){const dbt=$('dashBt');if(me.wp==='twin'&&Number.isFinite(me.ds)){const max=me.dm||3,st=me.ds,part=st<max?1-clamp((me.dr||0)/DASH_RECHARGE,0,1):0;db.style.background=`conic-gradient(#8affd0 ${(st+part)/max*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',st>0||me.ty==='twin');if(dbt)dbt.textContent='×'+st;}else{const dc=me.dc||0,frac=1-clamp(dc/DASH_CD,0,1);db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',dc<=0);if(dbt)dbt.textContent=dc>0?Math.ceil(dc)+'s':'';} } }
   $('hLv').textContent=d.lv; $('hKills').textContent=d.ki; $('hTime').textContent=fmtTime(d.gt);
   setBossBar((d.bh!=null&&!d.bi)?d.bh:null,d.bk);
   if(d.bs&&d.bk)activeBossAudioKey=d.bk;
@@ -4800,7 +4803,7 @@ function spawnEnemy(key){
 /* ===== 攻撃ロジック ===== */
 function baseDmg(){ const stk=(weapon==='devour')?(1+devourStacks*0.02):1; const base=(WEAPONS[weapon].dmg*weaponDupeMul(weapon)); return base*pDmgMul*stk*(buffType==='bow'?3:buffType==='twin'?3:buffType==='knuckle'?2:1); }
 function rechargeMul(){
-  if(weapon==='iai'&&buffType==='iai')return 0;
+  if((weapon==='iai'&&buffType==='iai')||(weapon==='spirit'&&buffType==='spirit'))return 0;
   if(weapon==='gun')return .4;
   if(weapon==='twin')return buffType==='twin'?.0625:1;
   return (weapon==='bow'&&buffType==='bow')||(weapon==='greatsword'&&buffType==='greatsword')?.5:1;
@@ -4810,6 +4813,30 @@ function passiveCharge(){ if(buffType==='knuckle')return 0; const W=WEAPONS[weap
 function fireInterval(){ let it=WEAPONS[weapon].interval*pFireMul; if(buffType==='bow')it/=3; else if(buffType==='mage')it/=2; else if(buffType==='knuckle')it/=2; return it; }
 // doFireと同じ基準で「範囲内に敵がいるか」を判定（1撃目即発動の判定に使用）
 function meleeRange(wp=weapon,run=RUN,buff=buffType){ return (WEAPONS[wp].range||0)*run.rangeMul*(wp==='twin'&&buff==='twin'?2:1); }
+/* Attack commitment belongs to each avatar, including a host-simulated guest. */
+function greatswordRooted(actor=player,wp=weapon){
+  return wp==='greatsword'&&!!actor&&((actor.userData.gsAttackT||0)>1e-8);
+}
+function beginGreatswordAttack(){
+  player.userData.gsAttackT=WEAPONS.greatsword.attackTime/FX_SLOW;
+}
+function greatswordMovementTime(dt){
+  if(weapon!=='greatsword'){player.userData.gsAttackT=0;return dt;}
+  const left=Math.max(0,player.userData.gsAttackT||0);
+  player.userData.gsAttackT=Math.max(0,left-dt);
+  return Math.max(0,dt-left);
+}
+function updateTwinDashRecharge(dt){
+  if(weapon!=='twin')return;
+  if(PLAYER.dashStock>=PLAYER.dashMax){PLAYER.dashRe=0;return;}
+  PLAYER.dashRe-=dt;
+  while(PLAYER.dashRe<=1e-8&&PLAYER.dashStock<PLAYER.dashMax){
+    PLAYER.dashStock++;
+    PLAYER.dashRe+=DASH_RECHARGE;
+  }
+  if(PLAYER.dashStock>=PLAYER.dashMax)PLAYER.dashRe=0;
+}
+
 function fireRange(){ const W=WEAPONS[weapon]; let effR=meleeRange(); if(weapon==='knuckle'&&buffType==='knuckle')effR=5.0*RUN.rangeMul; return W.melee?(effR+1.5):(weapon==='gun'?gunRange(RUN,buffType==='gun'):weapon==='iai'?50:PLAYER.range); }
 function addCharge(n){ if(buffType==='knuckle')return; charge=Math.min(100,charge+n*tomoChargeMul()*rechargeMul()); }
 function nearestEnemy(range){ let best=null,bd=range*range; for(const e of enemies){if(e.puppet)continue; const dx=e.mesh.position.x-player.position.x,dz=e.mesh.position.z-player.position.z,d=dx*dx+dz*dz; if(d<bd){bd=d;best=e;} } return best; }
@@ -5361,7 +5388,7 @@ function updateSpirits(dt){
       o.g.userData.shotPulse=1;
       const dx=tgt.mesh.position.x-o.g.position.x, dz=tgt.mesh.position.z-o.g.position.z, len=Math.hypot(dx,dz)||1; const spd=22;
       const mm=new THREE.Mesh(new THREE.SphereGeometry(big?0.34:0.2,10,8),new THREE.MeshStandardMaterial({color:0xe6d8ff,emissive:0xb98aff,emissiveIntensity:1.5,roughness:0.3})); mm.add(glow(0xb98aff,big?2.4:1.4)); mm.position.copy(o.g.position); scene.add(mm);
-      pBullets.push({mesh:mm,vx:dx/len*spd,vz:dz/len*spd,life:1.6,dmg:baseDmg()*(big?1.3:1),r:big?0.34:0.2,oel:pElem}); addCharge(W.chargeHit);
+      pBullets.push({mesh:mm,vx:dx/len*spd,vz:dz/len*spd,life:1.6,dmg:baseDmg()*(big?W.skillPower:1),r:big?0.34:0.2,oel:pElem}); addCharge(W.chargeHit);
     } else o.cd=0.2; }
   }
 }
@@ -5680,6 +5707,7 @@ function mageShotTargets(range){
   return enemies.filter(e=>!e.puppet&&e.hp>0).map(e=>({e,d:(e.mesh.position.x-player.position.x)**2+(e.mesh.position.z-player.position.z)**2})).filter(q=>q.d<limit).sort((a,b)=>a.d-b.d).map(q=>q.e);
 }
 function doFire(){
+  if(weapon==='greatsword'&&(greatswordRooted()||PLAYER.dashT>0))return;
   const W=WEAPONS[weapon];
   let effR=meleeRange(); if(weapon==='knuckle'&&buffType==='knuckle')effR=5.0*RUN.rangeMul;
   const tgt=nearestEnemy(W.melee?(effR+1.5):(weapon==='gun'?gunRange(RUN,buffType==='gun'):weapon==='iai'?50:PLAYER.range));
@@ -5693,7 +5721,7 @@ function doFire(){
   if(weapon==='fude'){ fudeAttack(tgt); return; }
   if(weapon==='earth'){ earthAttack(tgt); return; }
   if(weapon==='puppeteer'){ spawnThreadShot(dx,dz); return; }
-  if(W.melee){ const arc=(weapon==='knuckle'&&buffType==='knuckle'?2.4:(W.arc||0))*RUN.arcMul;
+  if(W.melee){ if(weapon==='greatsword')beginGreatswordAttack(); const arc=(weapon==='knuckle'&&buffType==='knuckle'?2.4:(W.arc||0))*RUN.arcMul;
     const n=(weapon==='spear')?Math.max(1,RUN.proj|0):1, spread=0.18;
     const perDmg=baseDmg()*Math.pow(0.92,n-1); // 本数が増えるほど1本あたりを少し下げる（合計は増加）
     for(let k=0;k<n;k++){ const a=ang+(k-(n-1)/2)*spread; meleeAttack(a,effR,arc,perDmg,W.chargeHit,W.col,false,k>0); }
@@ -5759,7 +5787,7 @@ function spawnSwordSwing(ang,range,col,isSkill,big){
   const tIdx=[]; for(let i=0;i<N-1;i++){ const k=i*2; tIdx.push(k,k+1,k+2,k+2,k+1,k+3); } tGeo.setIndex(tIdx);
   const tMat=new THREE.MeshBasicMaterial({color:big?0xffe0b0:col,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false});
   const tMesh=new THREE.Mesh(tGeo,tMat); tMesh.frustumCulled=false; scene.add(tMesh);
-  const life=big?0.34:(isSkill?0.3:0.19);
+  const life=big?WEAPONS.greatsword.attackTime:(isSkill?0.3:0.19);
   pushWeaponMotion({m:pivot,extra:tMesh,life,max:life,o0:1,swing:{sword,big,range,N,tPos,tGeo,tMat,samples:[]}});
 }
 function buildGameScythe(col,big){
@@ -6027,11 +6055,11 @@ function endGsSpin(){ if(gsSpin){removeAndDispose(gsSpin);gsSpin=null;} }
 function updateGreatswordSpin(dt){
   const W=WEAPONS.greatsword, range=W.range*RUN.rangeMul;
   gsSpinAng+=4*TAU*dt;                 // 1秒4回転
-  const dmg=baseDmg()*1.5;             // 1接触=通常の1.5倍
+  const dmg=baseDmg()*W.spinPower;     // 旋回の威力は通常斬撃と分けて調整
   for(const e of enemies.slice()){
     const dx=e.mesh.position.x-player.position.x, dz=e.mesh.position.z-player.position.z, d=Math.hypot(dx,dz);
     if(d>range+e.r) continue;
-    e._gsCd=(e._gsCd||0)-dt; if(e._gsCd>0) continue; e._gsCd=0.25;   // 1回転につき1接触
+    const cds=e.gsHitCd||(e.gsHitCd=new WeakMap());const cd=(cds.get(player)||0)-dt;cds.set(player,cd);if(cd>0)continue;cds.set(player,.25); // 各プレイヤーに1回転1接触
     const cr=Math.random()<pCritChance; const dd=dmg*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
     const dealt=damageEnemy(e,dd); e.flash=0.12; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); if(e.hp<=0)killEnemy(e);
   }
@@ -6107,7 +6135,7 @@ function activateSkill(aimAng){
   else if(weapon==='spear'){ throwSuperSpear(hasAim?aimAng:undefined); }
   else if(weapon==='bow'){ buffType='bow'; buffT=10; }
   else if(weapon==='mage'){ buffType='mage'; buffT=10; }
-  else if(weapon==='greatsword'){ buffType='greatsword'; buffT=5; gsSpinAng=player.rotation.y; for(const e of enemies)e._gsCd=0; startGsSpin(); }
+  else if(weapon==='greatsword'){ buffType='greatsword'; buffT=5; gsSpinAng=player.rotation.y; for(const e of enemies)if(e.gsHitCd)e.gsHitCd.delete(player); startGsSpin(); }
   else if(weapon==='knuckle'){ buffType='knuckle'; buffT=5; startKnAura(); }
   else if(weapon==='twin'){ buffType='twin'; buffT=10; }
   else if(weapon==='scythe'){ scytheReapStart(); }
@@ -6548,6 +6576,7 @@ function clearArr(arr){ for(const x of arr){
   if(x.mesh){removeShadowFor(x.mesh);removeAndDispose(x.mesh);} if(x.m)removeAndDispose(x.m); if(x.tele)removeAndDispose(x.tele); if(x.extra)removeAndDispose(x.extra);
 } arr.length=0; }
 function clearField(){
+  if(player)player.userData.gsAttackT=0;if(ally){ally.grp.userData.gsAttackT=0;if(ally.gsSpin){removeAndDispose(ally.gsSpin);ally.gsSpin=null;}}
   resetContactDamage();
   clearAllIaiEchoes();
   clearUpgradeVisuals();
@@ -6871,10 +6900,11 @@ function bossKeyForStage(){return chapterBossKey();}
 function update(dt){
   if(introActive){ updateBossIntro(dt); return; }
   gameTime+=dt; readInput();
+  updateTwinDashRecharge(dt);const actorMoveDt=greatswordMovementTime(dt);
   if(PLAYER.dashCd>0)PLAYER.dashCd-=dt;
-  if(PLAYER.dashT>0){ PLAYER.dashT-=dt; player.position.x+=PLAYER.dashVX*dt; player.position.z+=PLAYER.dashVZ*dt; }
-  else { player.position.x+=move.x*PLAYER.speed*runMoveMul()*dt; player.position.z+=move.z*PLAYER.speed*runMoveMul()*dt;
-    if(move.x||move.z){ const a=Math.atan2(move.x,move.z); let d=a-player.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); player.rotation.y+=d*Math.min(1,dt*10); } }
+  if(PLAYER.dashT>0){ PLAYER.dashT-=dt; player.position.x+=PLAYER.dashVX*actorMoveDt; player.position.z+=PLAYER.dashVZ*actorMoveDt; }
+  else { player.position.x+=move.x*PLAYER.speed*runMoveMul()*actorMoveDt; player.position.z+=move.z*PLAYER.speed*runMoveMul()*actorMoveDt;
+    if(actorMoveDt>0&&(move.x||move.z)){ const a=Math.atan2(move.x,move.z); let d=a-player.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); player.rotation.y+=d*Math.min(1,dt*10); } }
   updateRockShieldVisual(player,PLAYER.rockShield,dt);
   camera.position.lerp(new THREE.Vector3(player.position.x,16,player.position.z+13),Math.min(1,dt*6));
   camera.lookAt(player.position.x,0.8,player.position.z);
@@ -6909,7 +6939,7 @@ function update(dt){
   // チャージ＆発射＆バフ
   charge=Math.min(100,charge+passiveCharge()*dt);
   updateGunState(dt);
-  updateIaiState(dt);PLAYER.fireCd-=dt; if(PLAYER.fireCd<=0){ const okBuff=buffType!=='gun'&&buffType!=='greatsword'&&buffType!=='scythe'&&buffType!=='chain'&&buffType!=='hammer'; if(okBuff&&nearestEnemy(fireRange())){ doFire(); PLAYER.fireCd=fireInterval(); } else PLAYER.fireCd=0; }
+  updateIaiState(dt);PLAYER.fireCd-=dt; if(PLAYER.fireCd<=0){ const okBuff=!greatswordRooted()&&!(weapon==='greatsword'&&PLAYER.dashT>0)&&buffType!=='gun'&&buffType!=='greatsword'&&buffType!=='scythe'&&buffType!=='chain'&&buffType!=='hammer'; if(okBuff&&nearestEnemy(fireRange())){ doFire(); PLAYER.fireCd=fireInterval(); } else PLAYER.fireCd=0; }
   if(buffType==='greatsword') updateGreatswordSpin(dt);
   if(buffType==='scythe') updateScReap(dt);
   if(buffType==='chain') updateChainWard(dt);
