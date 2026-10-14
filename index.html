@@ -1631,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.65</span>
+  <span class="title-version">v1.7.66</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2175,6 +2175,7 @@ function attachBodyHitboxRing(grp,r,col){
 }
 function updateBodyHitboxRing(grp){
   if(!grp)return;const ring=grp.userData.bodyHitboxRing;if(!ring)return;
+  if(grp.userData.bossArt===166){pinBossArtGroundRing(grp,ring);return;}
   const sx=grp.scale.x||.01,sy=grp.scale.y||.01,sz=grp.scale.z||.01;
   ring.position.set(0,(.045-grp.position.y)/sy,0);ring.scale.set(1/sx,1/sz,1/sy);ring.visible=true;
 }
@@ -3919,7 +3920,7 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){animateClientMobModels(dt);updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function updateClientFx(dt){animateClientMobModels(dt);animateClientBossArt(dt);updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
 function clearClient(){clearPuppetClient();clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
@@ -3958,7 +3959,7 @@ function applySnapshot(d){syncEarthField(d.er);syncPuppetFields(d.pf);
   $('hLv').textContent=d.lv; $('hKills').textContent=d.ki; $('hTime').textContent=fmtTime(d.gt);
   setBossBar((d.bh!=null&&!d.bi)?d.bh:null,d.bk);
   if(d.bs&&d.bk)activeBossAudioKey=d.bk;
-  syncClientBossFx(d.bf||null);
+  syncClientBossFx(d.bf||null);syncBossArtState(d);
   updateBossArrow((d.bx!=null&&!d.bi)?d.bx:null,(d.bzz!=null&&!d.bi)?d.bzz:undefined);
   if(d.mr){ if(!maouRing)buildMaouRing(d.mr[0],d.mr[1],d.mr[2]); } else if(maouRing){ destroyMaouRing(); }
   if(!document.body.classList.contains('playing')){ document.body.classList.add('playing'); showOv(null); initAudio(); playTrack(d.bs?(d.bk==='maou'?'maou':'boss'):stageTrackName(d.md),d.bk); }
@@ -4705,7 +4706,161 @@ function addEnemyArtDirection(g,key,def,ud,mats){
   }
 }
 
+/* Six chapter guardians. Maou deliberately stays on its existing factory. */
+const BOSS_ART_KEYS=['boss','wolf','stump','scorpion','golem','thunderbird'];
+const BOSS_ART_CACHE=new Map();
+const BOSS_ART_FLOOR_Q=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0));
+const BOSS_ART_FLOOR_INV=new THREE.Quaternion(),BOSS_ART_FLOOR_POS=new THREE.Vector3();
+function bossArtTemplate(key,R){
+ const root=new THREE.Group(),body=new THREE.Group();body.name='guardianBody';root.add(body);
+ const colors={boss:[0x315b68,0x142a3c,0xadcfca,0x68dae9],wolf:[0x66505a,0x282631,0xd0ad72,0xff9543],stump:[0x80694a,0x3a352b,0xa4b66c,0x90e7aa],scorpion:[0xb19054,0x5a4730,0xe4c787,0xc4ef73],golem:[0x6e899c,0x334958,0xc6eaf3,0x77dcff],thunderbird:[0x6a839f,0x2e425b,0xedcf8c,0xffe278]}[key];
+ const shell=mobArtMaterial(colors[0],colors[0],.1,.22),dark=mobArtMaterial(colors[1],colors[1],.06,.18),ivory=mobArtMaterial(colors[2],0x000000,0,.25),glint=mobArtMaterial(colors[3],colors[3],.8,.25),coreMat=mobArtMaterial(colors[3],colors[3],1.1,.35);
+ const warm=mobArtMaterial(key==='stump'?0xb86d5a:key==='wolf'?0xc34b29:colors[0],key==='wolf'?0xff5d1e:colors[0],key==='wolf'?.65:.12,.1);
+ const joint=(name,p,x=0,y=0,z=0)=>{const g=new THREE.Group();g.name=name;g.position.set(x*R,y*R,z*R);p.add(g);return g;};
+ const part=(p,geo,m,x,y,z,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(geo,m);o.position.set(x*R,y*R,z*R);o.scale.set(sx,sy,sz);p.add(o);return o;};
+ const stone=(p,m,x,y,z,r,sx=1,sy=1,sz=1)=>part(p,new THREE.IcosahedronGeometry(r*R,1),m,x,y,z,sx,sy,sz);
+ const block=(p,m,x,y,z,w,h,d)=>part(p,new THREE.BoxGeometry(w*R,h*R,d*R),m,x,y,z);
+ const cone=(p,m,x,y,z,r,h,rx=0,rz=0,n=6)=>{const o=part(p,new THREE.ConeGeometry(r*R,h*R,n),m,x,y,z);o.rotation.set(rx,0,rz);return o;};
+ const rod=(p,m,a,b,r,rb=r)=>{const start=new THREE.Vector3(...a).multiplyScalar(R),end=new THREE.Vector3(...b).multiplyScalar(R),delta=end.clone().sub(start),o=new THREE.Mesh(new THREE.CylinderGeometry(r*R,rb*R,delta.length(),7),m);o.position.copy(start.add(end).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());p.add(o);return o;};
+ const loop=(p,m,x,y,z,r,t,rx=0,ry=0)=>{const o=part(p,new THREE.TorusGeometry(r*R,t*R,5,32),m,x,y,z);o.rotation.set(rx,ry,0);return o;};
+ const plate=(p,m,points,z)=>{const s=new THREE.Shape();points.forEach(([x,y],i)=>i?s.lineTo(x*R,y*R):s.moveTo(x*R,y*R));s.closePath();return part(p,new THREE.ShapeGeometry(s),m,0,0,z);};
+ const eye=(p,x,y,z,rx=.13,ry=.08)=>{stone(p,dark,x,y,z,.18,1.25,.68,.35);stone(p,glint,x,y,z+.048,.13,rx/.13,ry/.13,.23);};
+ const core=(p,x,y,z,r)=>{const c=joint('guardianCore',p,x,y,z);stone(c,coreMat,0,0,0,r);return c;};
+ if(key==='boss'){
+  // A broken ritual vessel, with an eye suspended inside a water astrolabe.
+  const heart=core(body,0,1.28,0,.48);stone(heart,dark,0,0,-.2,.71,1,1.13,.45);eye(heart,0,.03,.61,.3,.17);
+  const cage=joint('guardianHalo',body,0,1.28,0);loop(cage,ivory,0,0,0,1.14,.075,Math.PI/2);loop(cage,glint,0,0,0,1.4,.025,Math.PI/2);loop(cage,shell,0,0,0,1.02,.08,0,.3);
+  for(let i=0;i<8;i++){const a=i*TAU/8;const shard=joint('guardianShard'+i,cage,Math.cos(a)*1.17,0,Math.sin(a)*1.17);cone(shard,shell,0,.17,0,.12,.72,0,.2);cone(shard,ivory,0,-.29,0,.08,.33,Math.PI);}
+  const eyes=joint('guardianEyes',body,0,1.28,0);for(let i=0;i<5;i++){const a=i*TAU/5,q=joint('guardianEye'+i,eyes,Math.sin(a)*1.42,(i%2?-.18:.22),Math.cos(a)*1.42);q.rotation.y=a;stone(q,shell,0,0,0,.23,1.2,1,.55);eye(q,0,0,.17,.15,.095);}
+  const streams=joint('guardianStreams',body,0,1.03,0);for(let i=0;i<5;i++){const a=i*TAU/5,q=joint('guardianStream'+i,streams,Math.sin(a)*.7,0,Math.cos(a)*.7);q.rotation.y=a;plate(q,shell,[[-.12,0],[.13,0],[.21,-.47],[.06,-1.03],[-.08,-.65]],0);rod(q,glint,[0,-.12,.015],[.07,-.74,.015],.014);}
+ }else if(key==='wolf'){
+  // Muscular quadruped, swept ears, burning mane and a forked flame tail.
+  stone(body,shell,0,1.04,-.15,.85,.87,.72,1.48);stone(body,dark,0,.78,-.1,.7,.8,.7,1.28);stone(body,shell,0,1.25,.75,.58,.95,1.3,1);
+  const head=joint('guardianHead',body,0,1.68,1.16);stone(head,shell,0,0,0,.46,.9,.85,1.1);stone(head,dark,0,-.06,.49,.29,.76,.63,1.24);stone(head,ivory,0,.03,.64,.23,.7,.25,1.04);
+  const jaw=joint('guardianJaw',head,0,-.23,.23);stone(jaw,dark,0,0,.24,.25,.8,.42,1.5);for(const s of [-1,1]){eye(head,s*.27,.08,.24,.1,.07);cone(head,shell,s*.29,.47,-.18,.18,.64,-.12,-s*.35);cone(head,ivory,s*.16,-.13,.46,.052,.28,Math.PI);cone(jaw,ivory,s*.14,.05,.38,.04,.19);}
+  core(body,0,1.11,1.36,.17);
+  for(let i=0;i<4;i++){const s=i%2?1:-1,z=i<2?.72:-.94,leg=joint('guardianLeg'+i,body,s*.53,.86,z);stone(leg,shell,0,-.18,0,.25,.9,1.48,.88);rod(leg,dark,[0,-.3,0],[0,-.69,.11],.13,.16);stone(leg,dark,0,-.74,.18,.22,1.03,.45,1.4);for(let n=-1;n<=1;n++)cone(leg,ivory,n*.11,-.75,.39,.032,.16,Math.PI/2);stone(leg,ivory,0,-.12,.06,.25,1.05,.38,1);}
+  const flames=joint('guardianFlames',body);for(let i=0;i<7;i++){const q=joint('guardianFlame'+i,flames,0,1.47-i*.035,.88-i*.27);cone(q,warm,0,.17,0,.22,.82,-.36);cone(q,glint,0,.21,.035,.09,.56,-.4);}
+  const tail=joint('guardianTail',body,0,1.15,-1.22);rod(tail,dark,[0,0,0],[0,.55,-.67],.12,.19);for(const s of [-1,1]){cone(tail,warm,s*.16,.65,-.64,.22,1.15,-.5,-s*.21);cone(tail,glint,s*.16,.74,-.61,.09,.76,-.5,-s*.21);}
+  for(const s of [-1,1]){stone(body,ivory,s*.64,1.24,.53,.38,.43,.8,1.12);rod(body,warm,[s*.73,1.33,.8],[s*.75,1.07,.25],.035);}
+ }else if(key==='stump'){
+  // Hollow tree face, layered bark, antler branches and shelf fungi.
+  const trunk=part(body,new THREE.CylinderGeometry(.72*R,.97*R,1.85*R,11,1,true),shell,0,.98,0);trunk.rotation.y=.18;
+  const rim=loop(body,ivory,0,1.91,0,.72,.095,Math.PI/2);loop(body,dark,0,1.88,0,.55,.055,Math.PI/2);stone(body,dark,0,1.64,0,.61,1,.42,1);
+  for(let i=0;i<9;i++){const a=i*TAU/9;const slab=stone(body,i%2?dark:shell,Math.sin(a)*.81,.93,Math.cos(a)*.81,.37,.45,2.05,.52);slab.rotation.y=a;const r=joint('guardianRoot'+i,body,Math.sin(a)*.74,.27,Math.cos(a)*.74);r.rotation.y=a;rod(r,dark,[0,0,0],[0,-.08,.83],.085,.22);rod(r,shell,[0,-.08,.83],[.16,-.19,1.2],.035,.085);}
+  const face=joint('guardianHead',body,0,1.16,.91);for(const s of [-1,1]){const p=stone(face,dark,s*.25,.15,.035,.21,1.2,.5,.32);p.rotation.z=s*.16;stone(face,glint,s*.25,.13,.09,.13,1,.22,.2);rod(face,ivory,[s*.43,.39,0],[s*.06,.29,.11],.04);}
+  stone(face,dark,0,-.3,.01,.32,1.55,.35,.19);for(const s of [-1,1])cone(face,ivory,s*.23,-.21,.05,.06,.18,Math.PI);
+  core(body,0,.86,.99,.12);
+  const branches=joint('guardianBranches',body,0,1.58,0);for(const s of [-1,1]){rod(branches,shell,[s*.42,0,0],[s*.96,.68,-.03],.14,.22);rod(branches,shell,[s*.96,.68,-.03],[s*1.4,1.06,.05],.06,.14);rod(branches,ivory,[s*.96,.63,-.03],[s*.77,1.42,-.09],.045,.11);rod(branches,shell,[s*1.25,.91,.01],[s*1.48,.64,.21],.05,.085);stone(branches,ivory,s*1.23,1.1,.03,.28,1.35,.43,1.2);stone(branches,glint,s*.81,1.43,-.09,.08);}
+  for(let i=0;i<6;i++){const a=i*2.2+.5,y=.53+(i%3)*.38;const fungus=part(body,new THREE.SphereGeometry(.24*R,9,5,0,TAU,0,Math.PI*.5),warm,Math.sin(a)*.9,y,Math.cos(a)*.9,1.1,.4,.84);fungus.rotation.y=-a;loop(body,ivory,Math.sin(a)*.9,y,Math.cos(a)*.9,.16,.015,Math.PI/2);}
+  const wisps=joint('guardianWisps',body,0,1.25,0);for(let i=0;i<4;i++){const a=i*TAU/4;stone(wisps,glint,Math.sin(a)*1.2,(i%2?-.28:.36),Math.cos(a)*1.2,.055);}
+ }else if(key==='scorpion'){
+  // Overlapping sandstone plates and a tall articulated poison tail.
+  stone(body,dark,0,.49,-.14,.73,1.12,.55,1.47);for(let i=0;i<4;i++){const a=stone(body,i%2?shell:ivory,0,.69,-.8+i*.43,.4,1.45,.46,.68);a.rotation.x=.05*i;}
+  stone(body,shell,0,.51,.88,.48,1.2,.65,.75);for(const s of [-1,1]){eye(body,s*.21,.64,1.19,.07,.05);rod(body,ivory,[s*.14,.4,1.18],[s*.22,.24,1.4],.035,.065);}
+  core(body,0,.61,1.3,.13);
+  for(let i=0;i<8;i++){const s=i%2?1:-1,z=.54-Math.floor(i/2)*.4,j=joint('guardianLeg'+i,body,s*.63,.52,z);rod(j,shell,[0,0,0],[s*.53,-.12,.09],.065,.11);rod(j,dark,[s*.53,-.12,.09],[s*.66,-.46,.24],.034,.065);}
+  for(const s of [-1,1]){const claw=joint('guardianClaw'+s,body,s*.65,.56,.87);rod(claw,shell,[0,0,0],[s*.37,.03,.68],.14,.21);stone(claw,ivory,s*.39,.03,.77,.27,1,.6,1.18);
+   for(const n of [-1,1]){const finger=joint('guardianPincer'+s+','+n,claw,s*.37+n*.17,.03,.85);rod(finger,shell,[0,0,0],[n*.08,0,.41],.07,.1);cone(finger,ivory,n*.04,0,.53,.08,.35,Math.PI/2,n*.3);}
+  }
+  const tail=joint('guardianTail',body,0,.55,-.94);for(let i=0;i<6;i++){const q=joint('guardianTailPart'+i,tail,0,.12+i*.3,-i*.18+(i/5)**2*.8);stone(q,i%2?ivory:shell,0,0,0,.23-i*.012,1,.83,1.05);}
+  const sting=joint('guardianSting',tail,0,1.98,-.1);stone(sting,glint,0,0,0,.18,.65,.95,.85);cone(sting,dark,0,-.21,.16,.09,.55,-.55,Math.PI);rod(sting,glint,[0,-.03,.06],[0,-.19,.22],.032);
+ }else if(key==='golem'){
+  // Layered slate, glacier shoulders, crystal seams and massive stone hands.
+  stone(body,dark,0,1.04,0,.77,1.12,1.2,.71);stone(body,shell,0,1.47,0,.72,1.3,.81,.79);stone(body,shell,0,.85,0,.53,1.22,.5,.84);
+  const head=joint('guardianHead',body,0,2.02,.05);stone(head,shell,0,0,0,.38,.98,.76,.8);block(head,dark,0,-.01,.29,.58,.12,.03);block(head,glint,0,-.015,.31,.4,.032,.025);
+  core(body,0,1.44,.57,.23);for(const s of [-1,1]){rod(body,glint,[s*.09,1.45,.62],[s*.42,1.29,.54],.022);rod(body,glint,[s*.42,1.29,.54],[s*.55,1.08,.41],.022);
+   const arm=joint('guardianArm'+s,body,s*.88,1.61,0);stone(arm,shell,s*.02,0,0,.46,1.06,.81,.97);stone(arm,dark,s*.12,-.43,.03,.31,.98,1.4,.84);stone(arm,shell,s*.17,-.94,.18,.41,1.14,.75,1.04);for(let i=-1;i<=1;i++)stone(arm,ivory,s*.17+i*.13,-1.02,.44,.13,.8,.7,.6);
+   for(let i=0;i<3;i++)cone(arm,ivory,s*(.02+i*.16),.38+i*.1,-.03,.12,.54+i*.13,0,-s*.22);
+   const leg=joint('guardianLeg'+(s<0?0:1),body,s*.42,.64,0);stone(leg,dark,0,-.19,0,.32,1,1.2,.92);stone(leg,shell,0,-.42,.16,.38,1.04,.48,1.24);}
+  const crystals=joint('guardianCrystals',body,0,1.68,-.4);for(let i=0;i<5;i++){const x=(i-2)*.2;cone(crystals,ivory,x,.37-Math.abs(x)*.3,0,.16,.87-Math.abs(x)*.45,0,-x*.3);cone(crystals,glint,x,.31-Math.abs(x)*.3,.04,.055,.66-Math.abs(x)*.35,0,-x*.3);}
+  loop(body,ivory,0,1.44,.63,.34,.025);loop(body,glint,0,1.44,.65,.27,.012);
+ }else{
+  // Long beak, swept feather layers and three forked lightning tail feathers.
+  stone(body,shell,0,1.21,0,.59,.7,1.12,.87);stone(body,ivory,0,1.14,.32,.42,.71,.95,.29);
+  const head=joint('guardianHead',body,0,1.79,.23);stone(head,shell,0,0,0,.33,.86,.95,1.06);cone(head,ivory,0,-.02,.55,.13,.8,Math.PI/2,0,4);for(const s of [-1,1]){eye(head,s*.22,.045,.19,.075,.04);cone(head,glint,s*.15,.42,-.05,.065,.67,0,-s*.35,4);}
+  core(body,0,1.28,.48,.15);
+  for(const s of [-1,1]){const wing=joint('guardianWing'+s,body,s*.34,1.36,0);rod(wing,shell,[0,0,0],[s*.9,.14,-.1],.14,.22);rod(wing,ivory,[s*.9,.14,-.1],[s*1.56,.21,-.37],.07,.14);
+   for(let i=0;i<7;i++){const f=joint('guardianFeather'+s+','+i,wing,s*(.42+i*.18),.03+i*.027,-.03-i*.09);plate(f,i%2?shell:ivory,[[0,.11],[s*.24,.04],[s*(.36+i*.025),-.62-i*.04],[s*.05,-.55] ],0).rotation.x=Math.PI/2;rod(f,ivory,[s*.06,.025,0],[s*(.2+i*.025),.025,-.51-i*.04],.014);}
+   const zap=joint('guardianBolt'+s,wing,s*1.03,.14,-.18);rod(zap,glint,[0,0,0],[s*.35,.015,.28],.025);rod(zap,glint,[s*.35,.015,.28],[s*.18,.015,.42],.025);rod(zap,glint,[s*.18,.015,.42],[s*.52,.015,.81],.025);
+   rod(body,dark,[s*.23,.8,.15],[s*.28,.42,.28],.08,.11);for(let n=-1;n<=1;n++)rod(body,ivory,[s*.28,.42,.28],[s*.28+n*.11,.38,.55],.03,.055);
+  }
+  const tail=joint('guardianTail',body,0,.97,-.43);for(let i=-1;i<=1;i++){const q=joint('guardianTailPart'+(i+1),tail,i*.22,-Math.abs(i)*.03,0);plate(q,ivory,[[-.09,0],[.12,0],[.21,-.83],[.03,-1.5],[-.1,-.9]],0);q.rotation.x=1.09;rod(q,glint,[0,-.05,.025],[.08,-.62,.025],.024);rod(q,glint,[.08,-.62,.025],[-.03,-.8,.025],.024);rod(q,glint,[-.03,-.8,.025],[.03,-1.23,.025],.024);}
+ }
+ mobBatchDetails(body);return root;
+}
+function buildBossArtModel(key,def){
+ const id=key+':'+def.r;let template=BOSS_ART_CACHE.get(id);if(!template){template=bossArtTemplate(key,def.r);BOSS_ART_CACHE.set(id,template);}
+ const g=template.clone(true),mats=new Map();g.traverse(o=>{if(o.material){if(!mats.has(o.material)){const m=o.material.clone();m.userData_base=m.emissiveIntensity;mats.set(o.material,m);}o.material=mats.get(o.material);}});
+ const ref=name=>g.getObjectByName(name),group=ref('guardianCore'),ud={key,bossArt:166,mats:[...mats.values()],bob:rand(0,TAU),artClock:0,body:ref('guardianBody'),core:group.children.find(o=>o.isMesh),heart:group,head:ref('guardianHead'),jaw:ref('guardianJaw'),halo:ref('guardianHalo'),eyes:ref('guardianEyes'),streams:ref('guardianStreams'),tail:ref('guardianTail'),branches:ref('guardianBranches'),wisps:ref('guardianWisps'),crystals:ref('guardianCrystals'),legs:[],arms:[],wings:[],claws:[],pincers:[],flames:[],tailParts:[]};
+ for(let i=0;i<8;i++){const j=ref('guardianLeg'+i);if(j)ud.legs.push(j);const f=ref('guardianFlame'+i);if(f)ud.flames.push(f);const t=ref('guardianTailPart'+i);if(t)ud.tailParts.push(t);}
+ for(const s of [-1,1]){for(const [prefix,prop]of [['guardianArm','arms'],['guardianWing','wings'],['guardianClaw','claws']]){const j=ref(prefix+s);if(j)ud[prop].push(j);}for(const n of [-1,1]){const j=ref('guardianPincer'+s+','+n);if(j)ud.pincers.push(j);}}
+ g.userData=ud;return g;
+}
+function animateBossArt(e,dt,preview=false){
+ const g=e.mesh,u=g.userData;if(u.bossArt!==166)return false;
+ u.artClock+=Math.max(0,dt);const t=u.artClock,p=u.bob,ai=e.bossAI||u.clientBossArt||{},phase=preview?'':ai.state||'',pattern=ai.pattern||'';
+ if(u.artPhase!==phase){u.artPhase=phase;u.artPhaseClock=0;}else u.artPhaseClock+=Math.max(0,dt);
+ const angry=!!e.enraged||!!ai.enraged,rest=phase==='recovery',rage=phase==='rage',wind=phase==='windup',active=phase==='pressure';
+ // Retain the existing defense aura, with enough transparency to read the body
+ // and the red ground warnings through it on small screens.
+ if(ai.aura)ai.aura.material.opacity=Math.min(ai.aura.material.opacity,rage?.14:.075);
+ const prep=wind?(Number.isFinite(ai.t)&&ai.maxT?clamp(1-ai.t/ai.maxT,0,1):clamp(u.artPhaseClock/(angry?1.2:1.6),0,1)):0;
+ const burst=active?(Math.sin(u.artPhaseClock*7)*.5+.5):0,step=Math.sin(t*(angry?4.8:3.6)+p)*(rest?.18:1),flap=Math.sin(t*(angry?6.8:4.8)+p);
+ // Animate a child group. Gameplay owns root coordinates, scale, yaw and rest tilt.
+ u.body.position.y=preview?0:(u.key==='boss'?.16+Math.sin(t*1.7+p)*.1:u.key==='thunderbird'?.24+Math.sin(t*2.3+p)*.13:0);
+ u.body.rotation.x=rest?.08:0;u.body.rotation.z=rage?Math.sin(t*15)*.025:0;
+ if(u.key==='boss'){
+  u.halo.rotation.y=t*(rest?.17:angry?.65:.4);u.halo.rotation.z=Math.sin(t*.7+p)*.13;
+  u.eyes.rotation.y=-t*.27;u.heart.rotation.y=Math.sin(t*.8)*.12;
+  for(let i=0;i<u.streams.children.length;i++){const q=u.streams.children[i];if(q.isGroup)q.rotation.x=Math.sin(t*2+i)*.11+prep*.12;}
+  u.halo.scale.setScalar(1+prep*.07+(rage?.07:0));
+ }else if(u.key==='wolf'){
+  u.legs.forEach((j,i)=>j.rotation.x=step*(i===1||i===2?-1:1)*.36);
+  u.head.rotation.x=rest?.15:pattern==='howl'&&active?-.3:-prep*.12;u.head.rotation.y=Math.sin(t*1.8+p)*.06;
+  u.jaw.rotation.x=rest?.06:.13+prep*.2+burst*.17;u.tail.rotation.y=Math.sin(t*3+p)*.25;
+  u.flames.forEach((j,i)=>{j.scale.y=.85+Math.sin(t*8+i)*.16+(angry?.25:0);j.rotation.z=Math.sin(t*5+i)*.1;});
+  u.body.position.y=-(prep*.11)+Math.abs(step)*.035;
+ }else if(u.key==='stump'){
+  u.branches.rotation.z=Math.sin(t*.8+p)*.03;u.branches.rotation.x=-prep*.12+(active&&pattern==='slam'?burst*.12:0);
+  u.wisps.rotation.y=t*(angry?.7:.33);u.head.rotation.x=Math.sin(t*.6+p)*.025;
+  u.body.scale.y=1-prep*.035+(active&&pattern==='slam'?burst*.025:0);
+ }else if(u.key==='scorpion'){
+  u.legs.forEach((j,i)=>j.rotation.y=step*(i%2?-1:1)*.09);
+  u.claws.forEach((j,i)=>{j.rotation.y=(i?1:-1)*(.05+prep*.19+burst*.05);j.rotation.x=-prep*.1;});
+  u.pincers.forEach((j,i)=>j.rotation.y=(i%2?-1:1)*(.12+Math.sin(t*2.4+p)*.07+prep*.16));
+  u.tail.rotation.x=prep*.18+(active&&pattern==='tailStrike'?-burst*.25:0);u.tail.rotation.y=Math.sin(t*1.7+p)*.13;
+  u.tailParts.forEach((j,i)=>j.rotation.y=Math.sin(t*2+i*.6)*.045);
+ }else if(u.key==='golem'){
+  u.legs.forEach((j,i)=>j.rotation.x=step*(i?1:-1)*.1);
+  u.arms.forEach((j,i)=>j.rotation.x=(pattern==='golemSlam'?-.5:pattern==='rockRain'?-.28:-.18)*prep+(active&&pattern==='golemSlam'?burst*.24:step*(i?1:-1)*.065));
+  u.crystals.rotation.z=Math.sin(t*1.3+p)*.03;u.heart.rotation.y=t*.6;u.body.rotation.z+=step*.02;
+ }else{
+  u.wings.forEach((j,i)=>{j.rotation.z=(i?1:-1)*(.09+flap*(rest?.12:.28)-prep*.21);j.rotation.y=(i?-1:1)*prep*.09;});
+  u.tail.rotation.y=Math.sin(t*2+p)*.11;u.head.rotation.x=rest?.1:-prep*.14;u.head.rotation.y=Math.sin(t*1.5+p)*.06;
+  u.tailParts.forEach((j,i)=>j.rotation.z=Math.sin(t*3+i)*.06);
+ }
+ u.heart.scale.setScalar(1+Math.sin(t*(rage?12:3.5))*.045+prep*.07);
+ // Existing hit flash runs afterwards in animateEnemy. Dedicated core material
+ // keeps recovery/rage lighting separate from shell and from other instances.
+ u.core.material.emissiveIntensity=rest?.4:rage?1.6+Math.sin(t*12)*.25:angry?1.3:1.1+prep*.25;
+ return true;
+}
+function pinBossArtGroundRing(g,ring,height=.045){
+ BOSS_ART_FLOOR_INV.copy(g.quaternion).invert();
+ BOSS_ART_FLOOR_POS.set(0,height-g.position.y,0).applyQuaternion(BOSS_ART_FLOOR_INV);
+ ring.position.set(BOSS_ART_FLOOR_POS.x/(g.scale.x||.01),BOSS_ART_FLOOR_POS.y/(g.scale.y||.01),BOSS_ART_FLOOR_POS.z/(g.scale.z||.01));
+ ring.quaternion.copy(BOSS_ART_FLOOR_INV).multiply(BOSS_ART_FLOOR_Q);ring.scale.set(1/(g.scale.x||.01),1/(g.scale.z||.01),1/(g.scale.y||.01));ring.visible=true;
+}
+function syncBossArtState(d){
+ for(const m of C.enemies.values())if(m.userData.bossArt===166)m.userData.clientBossArt={state:d.bi?'intro':d.bf&&d.bf.s||'',pattern:d.bf&&d.bf.p||'',enraged:Number.isFinite(d.bh)&&d.bh<=.5};
+}
+function animateClientBossArt(dt){
+ for(const m of C.enemies.values())if(m.userData.bossArt===166){animateBossArt({mesh:m},dt);const ring=m.userData.clientVisRing;if(ring){const visible=ring.visible;pinBossArtGroundRing(m,ring,.03);ring.visible=visible;}}
+}
+
 function buildEnemyModel(key,def){
+  if(BOSS_ART_KEYS.includes(key))return buildBossArtModel(key,def);
   if(['imp','bat','caster','brute'].includes(key))return buildMobModel(key,def);
   const g=new THREE.Group(), mats=[], ud={key};
   if(key==='imp'){
@@ -4943,6 +5098,7 @@ const ETYPES={
 function animateEnemy(e,dt){
   const ud=e.mesh.userData,t=gameTime;
   if(ud.mobArt===165)animateMobModel(e,dt);
+  else if(ud.bossArt===166)animateBossArt(e,dt);
   else if(ud.key==='imp'){
     e.mesh.position.y=Math.abs(Math.sin(t*7+ud.bob))*0.25;
     if(ud.horns)ud.horns.rotation.y=Math.sin(t*5+ud.bob)*.08;
@@ -7201,7 +7357,7 @@ function dexShow(k){ dexViewerInit(); if(!dexR)return;
   const cv=$('dexCanvas'); const w=cv.clientWidth||210,h=cv.clientHeight||210; dexR.setSize(w,h,false); dexCam.aspect=w/h; dexCam.position.set(0,0.4,5.4); dexCam.lookAt(0,0,0); dexCam.updateProjectionMatrix();
   dexOn=true; if(!dexRAF)dexLoop();
 }
-function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel){dexModel.rotation.y+=0.012;animateMobModel({mesh:dexModel},1/60,true);} if(dexR)dexR.render(dexScene,dexCam); }
+function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel){dexModel.rotation.y+=0.012;animateMobModel({mesh:dexModel},1/60,true);animateBossArt({mesh:dexModel},1/60,true);} if(dexR)dexR.render(dexScene,dexCam); }
 function dexStop(){
   dexOn=false; if(dexRAF){cancelAnimationFrame(dexRAF);dexRAF=0;}
   if(dexModel&&dexScene)dexScene.remove(dexModel); dexModel=null;
