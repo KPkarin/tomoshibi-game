@@ -1631,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.66</span>
+  <span class="title-version">v1.7.67</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2175,7 +2175,7 @@ function attachBodyHitboxRing(grp,r,col){
 }
 function updateBodyHitboxRing(grp){
   if(!grp)return;const ring=grp.userData.bodyHitboxRing;if(!ring)return;
-  if(grp.userData.bossArt===166){pinBossArtGroundRing(grp,ring);return;}
+  if(grp.userData.bossArt===166||grp.userData.maouArt===167){pinBossArtGroundRing(grp,ring);return;}
   const sx=grp.scale.x||.01,sy=grp.scale.y||.01,sz=grp.scale.z||.01;
   ring.position.set(0,(.045-grp.position.y)/sy,0);ring.scale.set(1/sx,1/sz,1/sy);ring.visible=true;
 }
@@ -3920,7 +3920,7 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){animateClientMobModels(dt);animateClientBossArt(dt);updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function updateClientFx(dt){animateClientMobModels(dt);animateClientBossArt(dt);animateClientMaouArt(dt);updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
 function clearClient(){clearPuppetClient();clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
@@ -3959,7 +3959,7 @@ function applySnapshot(d){syncEarthField(d.er);syncPuppetFields(d.pf);
   $('hLv').textContent=d.lv; $('hKills').textContent=d.ki; $('hTime').textContent=fmtTime(d.gt);
   setBossBar((d.bh!=null&&!d.bi)?d.bh:null,d.bk);
   if(d.bs&&d.bk)activeBossAudioKey=d.bk;
-  syncClientBossFx(d.bf||null);syncBossArtState(d);
+  syncClientBossFx(d.bf||null);syncBossArtState(d);syncMaouArtState(d);
   updateBossArrow((d.bx!=null&&!d.bi)?d.bx:null,(d.bzz!=null&&!d.bi)?d.bzz:undefined);
   if(d.mr){ if(!maouRing)buildMaouRing(d.mr[0],d.mr[1],d.mr[2]); } else if(maouRing){ destroyMaouRing(); }
   if(!document.body.classList.contains('playing')){ document.body.classList.add('playing'); showOv(null); initAudio(); playTrack(d.bs?(d.bk==='maou'?'maou':'boss'):stageTrackName(d.md),d.bk); }
@@ -4859,7 +4859,117 @@ function animateClientBossArt(dt){
  for(const m of C.enemies.values())if(m.userData.bossArt===166){animateBossArt({mesh:m},dt);const ring=m.userData.clientVisRing;if(ring){const visible=ring.visible;pinBossArtGroundRing(m,ring,.03);ring.visible=visible;}}
 }
 
+/* The black-gold emperor and the fire imprisoned inside his armor. */
+const MAOU_ART_CACHE=new Map();
+function prepareMaouFlame(m,R){
+ m.maouUniforms={maouTime:{value:0},maouShift:{value:R*.055},maouOpen:{value:0}};
+ m.customProgramCacheKey=()=> 'tomoshibi-maou-flame-167';m.depthWrite=false;
+ m.onBeforeCompile=shader=>{
+  Object.assign(shader.uniforms,m.maouUniforms);
+  const declarations='\nuniform float maouTime;uniform float maouShift;uniform float maouOpen;varying vec3 vMaouFlame;\n';
+  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>'+declarations).replace('#include <begin_vertex>','#include <begin_vertex>\nvMaouFlame=position;float maouHeight=clamp(abs(position.y)*.7,0.0,1.0);transformed.x+=sin(position.y*5.7-maouTime*4.2+position.z*2.0)*maouShift*maouHeight;transformed.z+=cos(position.y*4.4-maouTime*3.7+position.x*2.1)*maouShift*.6*maouHeight;');
+  shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+declarations).replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat maouWave=.5+.5*sin(vMaouFlame.y*7.0-maouTime*5.1+sin(vMaouFlame.x*5.0)*1.8);float maouHeat=pow(maouWave,5.0);totalEmissiveRadiance+=vec3(.27,.035,.105)*maouHeat*(.3+maouOpen*.7);diffuseColor.a*=.72+.28*maouWave;');
+ };
+}
+function maouArtTemplate(R){
+ const root=new THREE.Group(),body=new THREE.Group();body.name='emperorBody';root.add(body);
+ const material=(name,color,emissive=0,intensity=0,metal=.15,fade=false)=>{const m=new THREE.MeshStandardMaterial({name,color,emissive,emissiveIntensity:intensity,metalness:metal,roughness:.47,flatShading:true,side:THREE.DoubleSide,transparent:fade,opacity:1});return m;};
+ const iron=material('emperorIron',0x282733,0x21121e,.12,.65),gold=material('emperorGold',0xd0aa69,0x835426,.16,.65),red=material('emperorCloth',0x8d2938,0x4b122b,.16,.1,true),lining=material('emperorLining',0x421829,0x310e23,.15),breakIron=material('emperorBreakIron',0x393642,0x24101b,.17,.64,true),breakGold=material('emperorBreakGold',0xd9b577,0x9f5123,.23,.6,true),black=material('emperorBlackFlame',0x120f1c,0x2d102f,.3,.12,true),edge=material('emperorFlameEdge',0x5c2c58,0x93475e,.4,.2,true),heartMat=material('emperorHeart',0xffb65a,0xff9d41,.95,.3);
+ const embers=[material('emperorEmber0',0xffd78c,0xffb754,.9),material('emperorEmber1',0xb0e9f2,0x79b8ea,.75),material('emperorEmber2',0xf8abb0,0xd56998,.75),material('emperorEmber3',0xc1e4ae,0x7acb9c,.75)];
+ const j=(name,p,x=0,y=0,z=0)=>{const g=new THREE.Group();g.name=name;g.position.set(x*R,y*R,z*R);p.add(g);return g;};
+ const part=(p,geo,m,x,y,z,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(geo,m);o.position.set(x*R,y*R,z*R);o.scale.set(sx,sy,sz);p.add(o);return o;};
+ const stone=(p,m,x,y,z,r,sx=1,sy=1,sz=1)=>part(p,new THREE.IcosahedronGeometry(r*R,1),m,x,y,z,sx,sy,sz);
+ const box=(p,m,x,y,z,w,h,d)=>part(p,new THREE.BoxGeometry(w*R,h*R,d*R),m,x,y,z);
+ const rod=(p,m,a,b,r,rb=r)=>{const start=new THREE.Vector3(...a).multiplyScalar(R),end=new THREE.Vector3(...b).multiplyScalar(R),d=end.clone().sub(start),o=new THREE.Mesh(new THREE.CylinderGeometry(r*R,rb*R,d.length(),6),m);o.position.copy(start.add(end).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());p.add(o);return o;};
+ const plate=(p,m,points,z,thick=0)=>{const s=new THREE.Shape();points.forEach(([x,y],i)=>i?s.lineTo(x*R,y*R):s.moveTo(x*R,y*R));s.closePath();const geo=thick?new THREE.ExtrudeGeometry(s,{depth:thick*R,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:.018*R,bevelThickness:.018*R}):new THREE.ShapeGeometry(s);return part(p,geo,m,0,0,z);};
+ const loop=(p,m,x,y,z,r,t,rx=0)=>{const o=part(p,new THREE.TorusGeometry(r*R,t*R,5,36),m,x,y,z);o.rotation.x=rx;return o;};
+ const spike=(p,m,x,y,z,r,h,rx=0,rz=0)=>{const o=part(p,new THREE.ConeGeometry(r*R,h*R,5),m,x,y,z);o.rotation.set(rx,0,rz);return o;};
+ const flame=(name,p,x,y,z,r,h,m=black)=>{const q=j(name,p,x,y,z);stone(q,m,0,h*.25,0,r,.8,h/(r*2),.52);spike(q,m,r*.12,h*.75,0,r*.5,h*.7,0,-.14);return q;};
+ // Tailored haori, plated skirt and a tall, narrow crowned silhouette.
+ stone(body,iron,0,1.68,0,.61,.92,1.25,.65);box(body,iron,0,1.12,.03,.84,.3,.57);box(body,gold,0,1.16,.37,.86,.09,.07);
+ const skirt=j('emperorSkirt',body,0,1.08,0);part(skirt,new THREE.CylinderGeometry(.41*R,.78*R,.94*R,10,1,true),lining,0,-.43,0);
+ for(let n=0;n<5;n++){const a=(n-2)*.48,q=j('emperorSkirtPlate'+n,skirt,Math.sin(a)*.5,-.1,Math.cos(a)*.46);q.rotation.y=a;plate(q,iron,[[-.15,0],[.15,0],[.2,-.76],[-.17,-.82]],0,.035);rod(q,gold,[-.13,-.08,.055],[-.13,-.68,.055],.013);rod(q,gold,[-.13,-.7,.055],[.16,-.65,.055],.013);}
+ for(const s of [-1,1]){const leg=j('emperorLeg'+s,body,s*.23,.6,0);box(leg,iron,0,-.14,0,.24,.45,.29);stone(leg,gold,0,-.35,.08,.16,.85,.42,1.4);}
+ const head=j('emperorHead',body,0,2.46,.03);stone(head,iron,0,0,0,.34,.93,1,.82);
+ for(const s of [-1,1]){
+  const mask=j('emperorMask'+s,head,s*.11,-.025,.27);plate(mask,breakIron,[[s*-.1,.23],[s*.14,.2],[s*.2,-.12],[s*.03,-.31],[s*-.1,-.16]],0,.04);rod(mask,breakGold,[s*-.065,.17,.065],[s*.11,.13,.065],.026);rod(mask,breakGold,[s*.11,.13,.065],[s*.06,-.19,.065],.014);
+  box(head,embers[0],s*.115,.015,.344,.13,.035,.026);spike(head,gold,s*.26,.36,-.06,.08,.59,-.18,-s*.24);
+  const crown=j('emperorCrown'+s,head,s*.13,.38,-.02);plate(crown,gold,[[-.12,0],[.12,0],[.17,.42],[.035,.29],[-.05,.6],[-.1,.25]],0,.025);
+  const arm=j('emperorArm'+s,body,s*.66,2.02,0);stone(arm,iron,0,-.17,0,.21,.8,1.5,.84);stone(arm,iron,s*.03,-.65,.07,.19,.76,1.65,.85);box(arm,gold,s*.03,-.63,.22,.2,.09,.04);
+  const hand=j('emperorHand'+s,arm,s*.03,-.96,.19);stone(hand,iron,0,0,0,.15,1,.85,.7);for(let n=-1;n<=1;n++)rod(hand,gold,[n*.06,-.06,.02],[n*.075,-.23,.13],.019,.025);
+  const shoulder=j('emperorShoulder'+s,body,s*.68,2.13,-.01);plate(shoulder,breakIron,[[s*-.22,.13],[s*.24,.21],[s*.43,-.02],[s*.28,-.24],[s*-.2,-.15]],0,.18);rod(shoulder,breakGold,[s*-.14,.16,.23],[s*.29,.12,.23],.028);
+  const chest=j('emperorChest'+s,body,s*.24,1.84,.43);plate(chest,breakIron,[[s*-.15,.33],[s*.21,.32],[s*.29,-.05],[s*.07,-.35],[s*-.17,-.2]],0,.06);rod(chest,breakGold,[s*-.1,.24,.1],[s*.17,.2,.1],.028);rod(chest,breakGold,[s*.17,.2,.1],[s*.07,-.25,.1],.021);
+  const coat=j('emperorCoat'+s,body,s*.67,2.13,-.13);plate(coat,red,[[s*-.21,.04],[s*.22,0],[s*.32,-1.12],[s*.1,-1.35],[s*-.2,-1.18]],0);rod(coat,gold,[s*.22,-.05,.018],[s*.29,-1.1,.018],.016);coat.rotation.y=-s*.25;
+ }
+ const cape=j('emperorCape',body,0,2.12,-.38);for(let n=-1;n<=1;n++){const q=j('emperorCapeStrip'+n,cape,n*.29,0,0);plate(q,red,[[-.19,0],[.19,0],[.3,-1.23],[.11,-1.61],[-.03,-1.36],[-.23,-1.5]],0);rod(q,gold,[.15,-.07,.02],[.23,-1.16,.02],.012);}
+ // A small closed seal in armor; the open cage contains twelve distinct fires.
+ const heart=j('emperorHeart',body,0,1.78,.5);stone(heart,heartMat,0,0,0,.17,.85,1.15,.6);loop(heart,gold,0,0,.08,.255,.027);for(let i=0;i<4;i++){const a=i*TAU/4;rod(heart,gold,[Math.sin(a)*.2,Math.cos(a)*.2,.08],[Math.sin(a)*.11,Math.cos(a)*.11,.14],.014);}
+ const prison=j('emperorPrison',body,0,1.78,.22);loop(prison,gold,0,0,0,.49,.027);loop(prison,breakGold,0,0,0,.44,.02,Math.PI/2);
+ const souls=j('emperorSouls',body,0,1.78,.24);for(let i=0;i<12;i++){const a=i*TAU/12,q=flame('emperorSoul'+i,souls,Math.sin(a)*.37,(i%3-1)*.16,Math.cos(a)*.37,.046,.16,embers[i%4]);q.rotation.z=Math.sin(a)*.3;}
+ const beast=j('emperorBeast',body);stone(beast,black,0,1.53,0,.57,1.04,1.35,.73);stone(beast,edge,0,1.93,-.19,.48,1.12,.9,.46);
+ for(let i=0;i<7;i++){const a=i*TAU/7;flame('emperorTongue'+i,beast,Math.sin(a)*.47,.46,Math.cos(a)*.4,.17,.95+(i%3)*.16);}
+ const beastHead=j('emperorBeastHead',beast,0,2.46,.03);stone(beastHead,black,0,0,0,.38,.97,1.1,.86);for(const s of [-1,1]){rod(beastHead,embers[0],[s*.055,.04,.35],[s*.22,.085,.28],.027);spike(beastHead,edge,s*.3,.4,-.05,.09,.68,-.2,-s*.28);rod(beastHead,gold,[s*.07,-.17,.28],[s*.16,-.26,.23],.021);}
+ for(const s of [-1,1]){const q=j('emperorBeastArm'+s,beast,s*.66,2.02,0);rod(q,black,[0,0,0],[s*.08,-.65,.08],.14,.2);rod(q,black,[s*.08,-.65,.08],[s*.14,-1.07,.23],.1,.15);stone(q,black,s*.14,-1.05,.23,.19,.9,.8,.7);for(let n=-1;n<=1;n++){rod(q,edge,[s*.14+n*.07,-1.1,.26],[s*.18+n*.11,-1.43,.36],.021,.04);spike(q,gold,s*.18+n*.11,-1.43,.36,.024,.14,Math.PI);}}
+ for(const s of [-1,1]){
+  const wing=j('emperorWing'+s,body,s*.49,2.04,-.35);rod(wing,iron,[0,0,0],[s*.85,.49,-.04],.055,.11);rod(wing,gold,[s*.85,.49,-.04],[s*1.9,.75,-.12],.018,.04);
+  plate(wing,black,[[0,0],[s*.8,.49],[s*1.9,.75],[s*1.42,.21],[s*1.65,-.17],[s*.95,-.04],[s*1.08,-.7],[s*.49,-.49]],0);
+  for(let i=0;i<4;i++){const q=flame('emperorWingFlame'+s+','+i,wing,s*(.65+i*.3),-.28-i*.035,-.015,.13,.55+(i%2)*.24);q.rotation.z=-s*(.75+i*.1);rod(wing,edge,[s*(.52+i*.26),.28+i*.08,.015],[s*(.74+i*.28),-.25-i*.06,.015],.022);}
+ }
+ const halo=j('emperorHalo',body,0,2.43,-.33);const h=part(halo,new THREE.TorusGeometry(.89*R,.026*R,5,40,Math.PI*1.7),gold,0,0,0);h.rotation.z=-.35;
+ for(let i=0;i<7;i++){const a=i*TAU/7;const q=j('emperorHaloShard'+i,halo,Math.sin(a)*1.01,Math.cos(a)*1.01,0);q.rotation.z=-a;spike(q,gold,0,.12,0,.035,.3);}
+ const swords=j('emperorSwords',body,0,1.49,0);for(let i=0;i<5;i++){const a=i*TAU/5,q=j('emperorSword'+i,swords,Math.sin(a)*1.14,(i%2?-.1:.25),Math.cos(a)*1.14);q.rotation.y=a;plate(q,gold,[[-.035,-.38],[.035,-.38],[.075,.4],[0,.74],[-.075,.4]],0,.018);plate(q,iron,[[-.02,-.33],[.02,-.33],[.035,.4],[0,.64],[-.035,.4]],.025);box(q,gold,0,-.33,0,.3,.045,.08);rod(q,red,[0,-.35,0],[0,-.62,0],.032);}
+ mobBatchDetails(body);return root;
+}
+function buildMaouArtModel(def){
+ let template=MAOU_ART_CACHE.get(def.r);if(!template){template=maouArtTemplate(def.r);MAOU_ART_CACHE.set(def.r,template);}
+ const g=template.clone(true),mats=new Map();g.traverse(o=>{if(o.material){if(!mats.has(o.material)){const m=o.material.clone();m.userData_base=m.emissiveIntensity;if(m.name==='emperorBlackFlame')prepareMaouFlame(m,def.r);mats.set(o.material,m);}o.material=mats.get(o.material);}});
+ const ref=n=>g.getObjectByName(n),u={key:'maou',maouArt:167,mats:[...mats.values()],body:ref('emperorBody'),head:ref('emperorHead'),heart:ref('emperorHeart'),prison:ref('emperorPrison'),souls:ref('emperorSouls'),beast:ref('emperorBeast'),beastHead:ref('emperorBeastHead'),halo:ref('emperorHalo'),swords:ref('emperorSwords'),cape:ref('emperorCape'),clock:0,maouMorph:0,maouPreview:0,arms:[],coats:[],wings:[],panels:[],flames:[],soulList:[],bladeList:[]};
+ u.radius=def.r;u.skirt=ref('emperorSkirt');u.normalFace=u.head.children.filter(o=>o.isMesh);u.legs=[];u.beastArms=[];
+ u.core=u.heart.children.find(o=>o.isMesh);for(const s of [-1,1]){u.legs.push(ref('emperorLeg'+s));u.beastArms.push(ref('emperorBeastArm'+s));u.arms.push(ref('emperorArm'+s));u.coats.push(ref('emperorCoat'+s));u.wings.push(ref('emperorWing'+s));for(const kind of ['Chest','Shoulder','Mask','Crown']){const q=ref('emperor'+kind+s);u.panels.push({q,base:q.position.clone(),side:s,kind});}}
+ g.traverse(o=>{if(o.isGroup&&/^emperor(?:Tongue|WingFlame)/.test(o.name))u.flames.push(o);});for(let i=0;i<12;i++)u.soulList.push(ref('emperorSoul'+i));for(let i=0;i<5;i++)u.bladeList.push(ref('emperorSword'+i));
+ g.userData=u;animateMaouArt({mesh:g},0);return g;
+}
+function animateMaouArt(e,dt,preview=false){
+ const g=e.mesh,u=g.userData;if(u.maouArt!==167)return false;const step=Math.max(0,dt);u.clock+=step;const t=u.clock,ai=e.bossAI||u.clientMaouArt||{},phase=preview?'':ai.state||'',rage=phase==='rage',rest=phase==='recovery';
+ const angry=!!e.enraged||!!ai.enraged;
+ let morph=0;if(preview)morph=u.maouPreview||0;else if(angry){if(rage){const remaining=Number.isFinite(ai.t)?ai.t:Math.max(0,(ai.rageLeft||0)-step);if(!Number.isFinite(ai.t))ai.rageLeft=remaining;const p=clamp((1-remaining/BOSS_RAGE_TIME-.08)/.8,0,1);morph=Math.max(u.maouMorph,p*p*(3-2*p));}else morph=1;}
+ u.maouMorph=morph;u.body.position.y=preview?0:.13+Math.sin(t*1.5)*.065;u.body.rotation.x=rest?.055:0;u.body.rotation.z=rage?Math.sin(t*22)*.02*(1-morph):0;
+ if(ai.aura)ai.aura.material.opacity=Math.min(ai.aura.material.opacity,rage?.1:.045);
+ const prep=phase==='windup'?.5+.5*Math.sin(t*2):0,gesture=phase==='pressure'?.5+.5*Math.sin(t*4):0;
+ u.head.rotation.y=Math.sin(t*.65)*.055;u.head.rotation.x=rest?.07:-prep*.025;u.beastHead.rotation.y=u.head.rotation.y;
+ for(const p of u.panels){const split=p.kind==='Mask'?.15:p.kind==='Crown'?.19:p.kind==='Shoulder'?.3:.42;p.q.position.set(p.base.x+p.side*split*u.radius*morph,p.base.y+Math.sin(t*1.6+p.side)*morph*.065,p.base.z-morph*.06);p.q.rotation.z=-p.side*morph*(p.kind==='Chest'?.5:.22);p.q.rotation.y=p.side*morph*.34;}
+ for(const m of u.mats){if(m.name==='emperorBreakIron'){m.opacity=1-morph*.86;m.depthWrite=morph<.02;}else if(m.name==='emperorBreakGold'){m.opacity=1-morph*.52;m.depthWrite=morph<.02;}else if(m.name==='emperorCloth')m.opacity=1-morph*.48;if(m.maouUniforms){m.maouUniforms.maouTime.value=t;m.maouUniforms.maouOpen.value=morph;}}
+ u.skirt.scale.y=1-morph*.65;u.skirt.position.y=(1.08-morph*.45)*u.radius;u.legs.forEach(q=>q.scale.setScalar(1-morph*.7));u.normalFace.forEach(q=>q.visible=morph<.85);
+ u.arms.forEach((q,i)=>{q.rotation.x=-.09-prep*.12-gesture*(ai.pattern==='voidRain'?.35:.12);q.rotation.z=(i?1:-1)*(.07+morph*.2);});
+ u.beastArms.forEach((q,i)=>q.rotation.copy(u.arms[i].rotation));
+ u.coats.forEach((q,i)=>{q.rotation.x=.06+Math.sin(t*1.8+i)*.065+morph*.19;q.rotation.z=(i?1:-1)*morph*.15;});
+ u.cape.children.filter(o=>o.isGroup).forEach((q,i)=>{q.rotation.x=.12+Math.sin(t*1.7+i)*.06+morph*.3;q.rotation.z=Math.sin(t*1.3+i)*.035;});
+ u.wings.forEach((q,i)=>{const s=i?1:-1;q.rotation.y=-s*(.92*(1-morph)+Math.sin(t*1.7)*.07*morph);q.rotation.z=s*(.1+morph*(.04+Math.sin(t*2.8)*.075));q.scale.setScalar(.48+morph*.52);});
+ u.beast.visible=morph>.008;u.beast.scale.setScalar(Math.max(.001,.68+morph*.32));u.flames.forEach((q,i)=>{q.scale.y=.82+Math.sin(t*6.5+i*.9)*.14+morph*.23;q.rotation.x=Math.sin(t*3.2+i)*.09;});
+ u.prison.scale.setScalar(.55+morph*.58);u.prison.rotation.y=t*(.1+morph*.5);u.prison.rotation.z=Math.sin(t*.9)*.09;
+ u.souls.rotation.y=t*(.22+morph*.9);u.souls.scale.setScalar(.55+morph*.9);u.soulList.forEach((q,i)=>{q.rotation.z=Math.sin(t*2+i)*.17;q.scale.setScalar(.8+Math.sin(t*2.6+i)*.13);});
+ u.heart.scale.setScalar(1+morph*.47+Math.sin(t*(rage?12:3))*.035);u.core.material.emissiveIntensity=rest?.7:rage?1.35:1+morph*.16;
+ u.halo.rotation.z=t*.055;u.halo.rotation.y=Math.sin(t*.6)*.055;u.halo.scale.setScalar(1+morph*.12);
+ u.swords.rotation.y=t*(rest?.11:.28);u.bladeList.forEach((q,i)=>{q.rotation.x=(ai.pattern==='voidRain'&&phase==='pressure'?Math.PI*.8:.1)+Math.sin(t*1.4+i)*.06;});
+ return true;
+}
+function syncMaouArtState(d){
+ for(const [id,m]of C.enemies)if(m.userData.maouArt===167){const packet=d.en.find(q=>q.i===id),state=d.bi?'intro':d.bf&&d.bf.s||'',enraged=Number.isFinite(d.bh)&&d.bh<=.5;const u=m.userData;u.clientMaouArt={state,pattern:d.bf&&d.bf.p||'',enraged,rageLeft:state==='rage'&&packet&&Number.isFinite(packet.iv)?packet.iv:0};if(enraged&&state!=='rage')u.maouMorph=1;}
+}
+function animateClientMaouArt(dt){
+ for(const m of C.enemies.values())if(m.userData.maouArt===167){animateMaouArt({mesh:m},dt);const r=m.userData.clientVisRing;if(r){const visible=r.visible;pinBossArtGroundRing(m,r,.03);r.visible=visible;}}
+}
+function fitMaouArtDex(m){
+ const u=m.userData,box=new THREE.Box3();for(const v of [0,1]){u.maouPreview=v;animateMaouArt({mesh:m},0,true);m.updateMatrixWorld(true);box.union(new THREE.Box3().setFromObject(m));}u.maouPreview=0;animateMaouArt({mesh:m},0,true);
+ const c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()),scale=3/Math.max(sz.x,sz.y,sz.z);m.scale.setScalar(scale);m.position.set(-c.x*scale,-c.y*scale,-c.z*scale);
+}
+function maouArtDexControls(key){
+ let row=document.getElementById('maouFormControls');if(!row){row=document.createElement('div');row.id='maouFormControls';row.setAttribute('role','group');row.setAttribute('aria-label','魔王の表示形態');row.style.cssText='display:flex;gap:8px;justify-content:center;margin:10px 0';for(const [value,label]of [[0,'甲冑'],[1,'異形']]){const b=document.createElement('button');b.className='btn ghost';b.style.cssText='min-height:44px;min-width:88px;white-space:nowrap;padding:8px 18px';b.textContent=label;b.dataset.form=String(value);b.onclick=()=>{if(!dexModel||dexModel.userData.maouArt!==167)return;dexModel.userData.maouPreview=value;animateMaouArt({mesh:dexModel},0,true);for(const button of row.children)button.setAttribute('aria-pressed',String(button===b));};row.appendChild(b);}const canvas=document.getElementById('dexCanvas');canvas.parentNode.parentNode.insertBefore(row,canvas.parentNode.nextSibling);}
+ row.style.display=key==='maou'?'flex':'none';if(key==='maou')for(const b of row.children)b.setAttribute('aria-pressed',String(Number(b.dataset.form)===(dexModel?dexModel.userData.maouPreview:0)));
+}
+
 function buildEnemyModel(key,def){
+  if(key==='maou')return buildMaouArtModel(def);
   if(BOSS_ART_KEYS.includes(key))return buildBossArtModel(key,def);
   if(['imp','bat','caster','brute'].includes(key))return buildMobModel(key,def);
   const g=new THREE.Group(), mats=[], ud={key};
@@ -5099,6 +5209,7 @@ function animateEnemy(e,dt){
   const ud=e.mesh.userData,t=gameTime;
   if(ud.mobArt===165)animateMobModel(e,dt);
   else if(ud.bossArt===166)animateBossArt(e,dt);
+  else if(ud.maouArt===167)animateMaouArt(e,dt);
   else if(ud.key==='imp'){
     e.mesh.position.y=Math.abs(Math.sin(t*7+ud.bob))*0.25;
     if(ud.horns)ud.horns.rotation.y=Math.sin(t*5+ud.bob)*.08;
@@ -7348,16 +7459,16 @@ function dexViewerInit(){ if(dexR)return; const cv=$('dexCanvas');
   const pl=new THREE.PointLight(0xffd0a0,1.3,40,2); pl.position.set(0,4,6); dexScene.add(pl);
   dexCam=new THREE.PerspectiveCamera(42,1,0.1,200);
 }
-function dexFit(m){ const box=new THREE.Box3().setFromObject(m); const c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
+function dexFit(m){if(m.userData.maouArt===167){fitMaouArtDex(m);return;} const box=new THREE.Box3().setFromObject(m); const c=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
   const maxd=Math.max(sz.x,sz.y,sz.z)||1; const s=3.0/maxd; m.scale.setScalar(s); m.position.set(-c.x*s,-c.y*s,-c.z*s); }
 function dexShow(k){ dexViewerInit(); if(!dexR)return;
   if(dexModel)dexScene.remove(dexModel);
   let m=dexCache[k]; if(m===undefined){ try{ m=buildEnemyModel(k,ETYPES[k]); dexFit(m); }catch(e){ m=null; } dexCache[k]=m; }
   dexModel=m||null; if(dexModel){ dexModel.rotation.y=0; dexScene.add(dexModel); }
   const cv=$('dexCanvas'); const w=cv.clientWidth||210,h=cv.clientHeight||210; dexR.setSize(w,h,false); dexCam.aspect=w/h; dexCam.position.set(0,0.4,5.4); dexCam.lookAt(0,0,0); dexCam.updateProjectionMatrix();
-  dexOn=true; if(!dexRAF)dexLoop();
+  maouArtDexControls(k);dexOn=true; if(!dexRAF)dexLoop();
 }
-function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel){dexModel.rotation.y+=0.012;animateMobModel({mesh:dexModel},1/60,true);animateBossArt({mesh:dexModel},1/60,true);} if(dexR)dexR.render(dexScene,dexCam); }
+function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel){dexModel.rotation.y+=0.012;animateMobModel({mesh:dexModel},1/60,true);animateBossArt({mesh:dexModel},1/60,true);animateMaouArt({mesh:dexModel},1/60,true);} if(dexR)dexR.render(dexScene,dexCam); }
 function dexStop(){
   dexOn=false; if(dexRAF){cancelAnimationFrame(dexRAF);dexRAF=0;}
   if(dexModel&&dexScene)dexScene.remove(dexModel); dexModel=null;
