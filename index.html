@@ -1631,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.64</span>
+  <span class="title-version">v1.7.65</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -3919,7 +3919,7 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function updateClientFx(dt){animateClientMobModels(dt);updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
 function clearClient(){clearPuppetClient();clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
@@ -4435,6 +4435,141 @@ function addShadow(obj,r){ const m=new THREE.Mesh(SHADOW_GEO,SHADOW_MAT); m.rota
 function updateShadows(){ for(const s of shadows){ if(s.obj&&s.obj.parent){ s.m.visible=true; s.m.position.x=s.obj.position.x; s.m.position.z=s.obj.position.z; } else s.m.visible=false; } }
 
 /* ===== 敵モデル ===== */
+/* Four rebuilt yokai silhouettes. Cached geometry, private flash materials. */
+const MOB_MODEL_CACHE=new Map();
+function mobArtMaterial(color,emissive=0x000000,intensity=0,metalness=.1){
+ return new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity:intensity,roughness:.7,metalness,flatShading:true,side:THREE.DoubleSide});
+}
+// Bake static details by material inside each joint. Never merge across a joint.
+function mobBatchDetails(group){
+ for(const child of [...group.children])if(child.isGroup)mobBatchDetails(child);
+ const batches=new Map();
+ for(const child of [...group.children])if(child.isMesh){
+  child.updateMatrix();const geo=child.geometry.index?child.geometry.toNonIndexed():child.geometry.clone();geo.applyMatrix4(child.matrix);
+  if(!batches.has(child.material))batches.set(child.material,[]);batches.get(child.material).push(geo);
+  group.remove(child);child.geometry.dispose();
+ }
+ for(const [material,geos] of batches){
+  const merged=new THREE.BufferGeometry();
+  for(const name of ['position','normal','uv']){
+   if(!geos.every(g=>g.getAttribute(name)))continue;
+   const size=geos[0].getAttribute(name).itemSize,arrays=geos.map(g=>g.getAttribute(name).array),a=new Float32Array(arrays.reduce((n,v)=>n+v.length,0));let offset=0;
+   for(const v of arrays){a.set(v,offset);offset+=v.length;}merged.setAttribute(name,new THREE.BufferAttribute(a,size));
+  }
+  merged.computeBoundingSphere();pinGpuResource(merged);group.add(new THREE.Mesh(merged,material));for(const geo of geos)geo.dispose();
+ }
+}
+function mobTemplate(key,R){
+ const root=new THREE.Group(),body=new THREE.Group();body.name='mobBody';root.add(body);
+ const palette=key==='imp'?[0xa93e32,0xf1d8aa,0x362635,0xff8b43]:key==='bat'?[0x5a3559,0xc89450,0x291e36,0xffd379]:key==='caster'?[0x594375,0xe9dbbf,0x252239,0xc799ff]:[0x496479,0xa4b9b9,0x263541,0x88d9ff];
+ const skin=mobArtMaterial(palette[0],palette[0],.07),bone=mobArtMaterial(palette[1]),dark=mobArtMaterial(palette[2]),light=mobArtMaterial(palette[3],palette[3],1.05),metal=mobArtMaterial(key==='brute'?0x648b9b:0xb39462,0x18252f,.06,.5),cloth=mobArtMaterial(key==='imp'?0x713443:key==='caster'?0x786187:0x49353e);
+ const joint=(name,parent,x,y,z)=>{const g=new THREE.Group();g.name=name;g.position.set(x*R,y*R,z*R);parent.add(g);return g;};
+ const part=(parent,geo,m,x,y,z,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(geo,m);o.position.set(x*R,y*R,z*R);o.scale.set(sx,sy,sz);parent.add(o);return o;};
+ const box=(p,m,x,y,z,w,h,d)=>part(p,new THREE.BoxGeometry(w*R,h*R,d*R),m,x,y,z);
+ const orb=(p,m,x,y,z,r,sx=1,sy=1,sz=1)=>part(p,new THREE.IcosahedronGeometry(r*R,0),m,x,y,z,sx,sy,sz);
+ const spike=(p,m,x,y,z,r,h,rx=0,rz=0)=>{const o=part(p,new THREE.ConeGeometry(r*R,h*R,5),m,x,y,z);o.rotation.set(rx,0,rz);return o;};
+ const rod=(p,m,a,b,r)=>{const start=new THREE.Vector3(...a).multiplyScalar(R),end=new THREE.Vector3(...b).multiplyScalar(R),d=end.clone().sub(start),o=new THREE.Mesh(new THREE.CylinderGeometry(r*R,r*R,d.length(),5),m);o.position.copy(start.add(end).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());p.add(o);return o;};
+ const plate=(p,m,points,z)=>{const shape=new THREE.Shape();points.forEach(([x,y],i)=>i?shape.lineTo(x*R,y*R):shape.moveTo(x*R,y*R));shape.closePath();return part(p,new THREE.ShapeGeometry(shape),m,0,0,z);};
+ if(key==='imp'){
+  // Hunched red body, cream oni mask, asymmetric horns and short hooked blade.
+  orb(body,skin,0,.8,0,.58,1,1.05,.74);box(body,cloth,0,.48,0,1.01,.27,.68);
+  const head=joint('mobHead',body,0,1.34,.11);orb(head,skin,0,0,0,.44,1,1,.88);orb(head,bone,0,-.04,.34,.44,.92,.97,.28);
+  for(const s of [-1,1]){
+   const eye=box(head,dark,s*.17,.045,.449,.24,.13,.035);eye.rotation.z=s*.18;box(head,light,s*.17,.03,.477,.115,.04,.015);
+   spike(head,bone,s*.31,.52,-.02,.13,s<0?.68:.48,0,-s*.32);
+   spike(head,bone,s*.17,-.31,.46,.065,.22,Math.PI);
+   const leg=joint('mobLeg'+s,body,s*.29,.46,0);box(leg,dark,0,-.16,0,.23,.4,.25);box(leg,bone,0,-.32,.08,.29,.14,.4);
+   const arm=joint('mobArm'+s,body,s*.5,.96,0);orb(arm,skin,0,-.2,.04,.23,.75,1.25,.8);box(arm,dark,0,-.39,.08,.25,.14,.25);
+  }
+  box(head,dark,0,-.2,.459,.38,.1,.025);box(head,bone,0,-.21,.477,.06,.1,.028);
+  const weapon=joint('mobWeapon',body,.64,.63,.19);rod(weapon,dark,[0,-.08,0],[0,.34,0],.065);box(weapon,bone,0,.34,0,.37,.055,.12);
+  plate(weapon,metal,[[-.08,.35],[.08,.35],[.2,.87],[.04,1.02],[-.06,.68]],.02);
+  const sash=joint('mobSash',body,-.3,.54,-.31);plate(sash,cloth,[[-.13,0],[.13,0],[.26,-.37],[-.05,-.48]],0);box(sash,bone,.06,-.24,.012,.045,.16,.03);
+ }else if(key==='bat'){
+  // Scalloped wings lie in the ground plane so their shape reads from above.
+  orb(body,skin,0,1.08,0,.43,.85,1.1,1.05);orb(body,bone,0,1.07,.35,.3,.8,.8,.36);
+  for(const s of [-1,1]){
+   spike(body,skin,s*.23,1.63,0,.17,.59,0,-s*.22);spike(body,bone,s*.22,1.64,.075,.075,.36,0,-s*.22);
+   orb(body,light,s*.16,1.22,.39,.095);spike(body,bone,s*.115,.87,.38,.04,.19,Math.PI);
+   const wing=joint('mobWing'+s,body,s*.28,1.2,-.06);const shape=new THREE.Shape();
+   shape.moveTo(0,0);shape.lineTo(s*.7*R,.37*R);shape.lineTo(s*1.82*R,.15*R);shape.quadraticCurveTo(s*1.15*R,-.03*R,s*1.52*R,-.72*R);shape.quadraticCurveTo(s*.75*R,-.38*R,s*.89*R,-1.05*R);shape.quadraticCurveTo(s*.3*R,-.62*R,0,-.63*R);shape.closePath();
+   const web=new THREE.Mesh(new THREE.ShapeGeometry(shape,6),cloth);web.rotation.x=-Math.PI/2;wing.add(web);
+   for(const end of [[s*1.82,.15],[s*1.52,-.72],[s*.89,-1.05]])rod(wing,bone,[0,.025,0],[end[0],.025,-end[1]],.024);
+   rod(wing,skin,[0,.04,0],[s*.7,.08,-.37],.06);rod(wing,metal,[s*.7,.08,-.37],[s*1.82,.04,-.15],.03);
+   spike(wing,bone,s*.7,.12,-.37,.04,.21,0,-s*.7);
+  }
+  const tail=joint('mobTail',body,0,.96,-.35);spike(tail,dark,0,-.04,-.26,.085,.68,-Math.PI/2);plate(tail,bone,[[-.13,0],[0,-.24],[.13,0],[0,.1]],-.52);
+  orb(body,light,0,1.08,.46,.07);
+ }else if(key==='caster'){
+  // Paper charms, a dark hollow face and a bell-topped ritual staff.
+  const robe=part(body,new THREE.CylinderGeometry(.39*R,.78*R,1.27*R,8),cloth,0,.85,0);robe.rotation.y=Math.PI/8;
+  box(body,dark,0,.87,.57,.2,1.13,.09);box(body,bone,0,1.1,.6,.065,.7,.035);
+  const head=joint('mobHead',body,0,1.62,0);orb(head,skin,0,.03,0,.54,1,1.1,.8);orb(head,dark,0,-.04,.39,.39,.95,.95,.16);
+  for(const s of [-1,1]){box(head,light,s*.12,-.02,.463,.14,.055,.018);box(body,skin,s*.54,1.27,0,.34,.55,.48);}
+  spike(head,cloth,0,.62,-.12,.27,.69,.1);box(head,bone,0,.16,.49,.19,.5,.025);box(head,skin,0,.14,.513,.08,.21,.015);
+  const staff=joint('mobStaff',body,.83,1.02,.04);rod(staff,metal,[0,-.9,0],[0,1.18,0],.055);
+  const hoop=part(staff,new THREE.TorusGeometry(.24*R,.034*R,5,16),bone,0,1.02,0);orb(staff,light,0,1.02,0,.12);
+  for(const s of [-1,1]){rod(staff,metal,[s*.17,.89,0],[s*.17,.63,0],.022);orb(staff,bone,s*.17,.58,0,.065);}
+  const charms=joint('mobCharms',body,0,1.15,0);
+  for(const s of [-1,1]){const strip=joint('mobCharm'+s,charms,s*.48,.06,.52);box(strip,bone,0,-.25,0,.18,.68,.025);box(strip,skin,0,-.15,.016,.07,.21,.015);box(strip,skin,0,-.35,.016,.105,.035,.015);}
+  const mantle=part(body,new THREE.ConeGeometry(.74*R,.54*R,8,1,true),skin,0,1.32,-.025);mantle.rotation.y=Math.PI/8;
+  const aura=joint('mobAura',body,0,1.06,0);for(let i=0;i<3;i++){const a=i*TAU/3;const q=orb(aura,light,Math.cos(a)*.98,(i-1)*.11,Math.sin(a)*.98,.07);q.rotation.z=a;}
+  hoop.name='mobStaffOrb';
+ }else if(key==='brute'){
+  // Broad lamellar armor, iron fists, paired horns, lowered centre of mass.
+  orb(body,skin,0,1.17,0,.79,1.03,1.02,.72);box(body,dark,0,.67,0,1.15,.38,.78);
+  for(let row=0;row<3;row++)for(const s of [-1,0,1]){const plate=box(body,metal,s*.31,1.42-row*.22,.57,.285,.19,.1);plate.rotation.z=-s*.07;}
+  box(body,bone,0,1.1,.64,.09,.57,.055);orb(body,light,0,1.43,.69,.105);
+  const head=joint('mobHead',body,0,1.94,.05);orb(head,skin,0,0,0,.42,1.05,.9,.85);orb(head,bone,0,-.02,.34,.36,1,.8,.28);
+  for(const s of [-1,1]){
+   spike(head,bone,s*.32,.43,-.1,.145,.7,0,-s*.48);box(head,dark,s*.16,.045,.438,.24,.1,.035);box(head,light,s*.16,.034,.46,.12,.028,.02);
+   spike(head,bone,s*.21,-.17,.43,.045,.21);const arm=joint('mobArm'+s,body,s*.8,1.42,0);
+   orb(arm,metal,s*.04,0,0,.39,1.1,.65,1.04);box(arm,skin,s*.13,-.38,.05,.4,.61,.42);orb(arm,metal,s*.14,-.74,.11,.31,1.03,.9,1.18);
+   for(let n=0;n<2;n++)box(arm,bone,s*.14,-.65-n*.17,.38,.39,.045,.04);
+   spike(arm,bone,s*.14,.23,-.06,.085,.36,0,-s*.35);
+   const leg=joint('mobLeg'+s,body,s*.36,.63,-.02);box(leg,skin,0,-.22,0,.42,.45,.48);box(leg,metal,0,-.43,.12,.48,.27,.64);
+   const skirt=box(body,metal,s*.38,.58,.45,.4,.35,.09);skirt.rotation.z=s*.16;
+  }
+  box(head,dark,0,-.19,.438,.31,.045,.02);box(body,cloth,0,1.03,-.57,.8,1.0,.06);
+ }
+ mobBatchDetails(body);return root;
+}
+function buildMobModel(key,def){
+ const id=key+':'+def.r;let template=MOB_MODEL_CACHE.get(id);if(!template){template=mobTemplate(key,def.r);MOB_MODEL_CACHE.set(id,template);}
+ const g=template.clone(true),mats=new Map();g.traverse(o=>{if(o.material){if(!mats.has(o.material)){const m=o.material.clone();m.userData_base=m.emissiveIntensity;mats.set(o.material,m);}o.material=mats.get(o.material);}});
+ const ref=name=>g.getObjectByName(name),ud={key,mobArt:165,mats:[...mats.values()],bob:rand(0,TAU),mobClock:0,mobBody:ref('mobBody'),head:ref('mobHead'),weapon:ref('mobWeapon'),staff:ref('mobStaff'),legs:[ref('mobLeg-1'),ref('mobLeg1')],arms:[ref('mobArm-1'),ref('mobArm1')],wings:[ref('mobWing-1'),ref('mobWing1')],charms:[ref('mobCharm-1'),ref('mobCharm1')],tail:ref('mobTail'),sash:ref('mobSash'),aura:ref('mobAura')};
+ g.userData=ud;return g;
+}
+function animateMobModel(e,dt,preview=false){
+ const g=e.mesh,u=g.userData;if(u.mobArt!==165)return false;
+ u.mobClock+=Math.max(0,dt);const t=u.mobClock,p=u.bob,attack=Math.sin(clamp((e.puppetPose||0)/.3,0,1)*Math.PI),idle=e.stun>0||!!e.forceMove;
+ const walk=Math.sin(t*(u.key==='brute'?3.5:8)+p)*(idle?.15:1);
+ if(u.key==='imp'){
+  if(!preview)g.position.y=Math.abs(walk)*.09;u.mobBody.rotation.x=.09+Math.sin(t*4+p)*.025;
+  u.legs.forEach((j,i)=>j.rotation.x=walk*(i?-1:1)*.38);u.arms.forEach((j,i)=>j.rotation.x=walk*(i?1:-1)*.23);
+  u.weapon.rotation.x=-.2+walk*.16;u.head.rotation.y=Math.sin(t*2+p)*.07;u.sash.rotation.x=.12+Math.sin(t*6+p)*.2;
+ }else if(u.key==='bat'){
+  if(!preview)g.position.y=.38+Math.sin(t*4+p)*.15;
+  const flap=Math.sin(t*16+p);u.wings.forEach((j,i)=>{j.rotation.z=(i?-1:1)*flap*.58;j.rotation.x=.08+Math.sin(t*16+p+.4)*.07;});u.tail.rotation.z=Math.sin(t*7+p)*.2;u.mobBody.rotation.x=Math.sin(t*4+p)*.05;
+ }else if(u.key==='caster'){
+  if(!preview)g.position.y=.22+Math.sin(t*2.2+p)*.12;
+  // A visual cue for the existing shot timer; no new attack or warmup.
+  const cast=Number.isFinite(e.fireCd)?clamp((.35-e.fireCd)/.35,0,1):0;
+  u.staff.rotation.z=-.08+Math.sin(t*1.8+p)*.06-cast*.19;u.staff.rotation.x=-cast*.22;
+  u.charms.forEach((j,i)=>{j.rotation.x=Math.sin(t*3+p+i)*.15;j.rotation.z=Math.sin(t*2+p+i)*.07;});u.aura.rotation.y=t*.7;u.aura.scale.setScalar(1+cast*.13);
+ }else{
+  if(!preview)g.position.y=Math.abs(walk)*.045;u.mobBody.rotation.z=walk*.035;
+  u.legs.forEach((j,i)=>j.rotation.x=walk*(i?-1:1)*.22);u.arms.forEach((j,i)=>j.rotation.x=walk*(i?1:-1)*.17-attack*.5);u.head.rotation.x=.035+Math.sin(t*2+p)*.025;
+ }
+ return true;
+}
+function animateClientMobModels(dt){
+ for(const m of C.enemies.values())if(m.userData.mobArt===165){
+  const e=m.userData.puppetShell||{mesh:m};animateMobModel(e,dt);
+  if(m.userData.clientVisRing)m.userData.clientVisRing.position.y=.03-m.position.y;
+ }
+}
+
 /*
  * 追加ディテール層
  * 既存の当たり判定・AI・ステータスはそのままに、遠目でも役割を判別できる
@@ -4571,6 +4706,7 @@ function addEnemyArtDirection(g,key,def,ud,mats){
 }
 
 function buildEnemyModel(key,def){
+  if(['imp','bat','caster','brute'].includes(key))return buildMobModel(key,def);
   const g=new THREE.Group(), mats=[], ud={key};
   if(key==='imp'){
     const bm=mat(def.color,0.5); mats.push(bm);
@@ -4806,7 +4942,8 @@ const ETYPES={
 };
 function animateEnemy(e,dt){
   const ud=e.mesh.userData,t=gameTime;
-  if(ud.key==='imp'){
+  if(ud.mobArt===165)animateMobModel(e,dt);
+  else if(ud.key==='imp'){
     e.mesh.position.y=Math.abs(Math.sin(t*7+ud.bob))*0.25;
     if(ud.horns)ud.horns.rotation.y=Math.sin(t*5+ud.bob)*.08;
     if(ud.weapon)ud.weapon.rotation.x=-.12+Math.sin(t*7+ud.bob)*.18;
@@ -7064,7 +7201,7 @@ function dexShow(k){ dexViewerInit(); if(!dexR)return;
   const cv=$('dexCanvas'); const w=cv.clientWidth||210,h=cv.clientHeight||210; dexR.setSize(w,h,false); dexCam.aspect=w/h; dexCam.position.set(0,0.4,5.4); dexCam.lookAt(0,0,0); dexCam.updateProjectionMatrix();
   dexOn=true; if(!dexRAF)dexLoop();
 }
-function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel)dexModel.rotation.y+=0.012; if(dexR)dexR.render(dexScene,dexCam); }
+function dexLoop(){ if(!dexOn){ dexRAF=0; return; } dexRAF=requestAnimationFrame(dexLoop); if(dexModel){dexModel.rotation.y+=0.012;animateMobModel({mesh:dexModel},1/60,true);} if(dexR)dexR.render(dexScene,dexCam); }
 function dexStop(){
   dexOn=false; if(dexRAF){cancelAnimationFrame(dexRAF);dexRAF=0;}
   if(dexModel&&dexScene)dexScene.remove(dexModel); dexModel=null;
