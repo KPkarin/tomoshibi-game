@@ -1442,6 +1442,147 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 @media(max-height:700px){#homeScreen{gap:8px;}.camp-brand{width:100px;}#homeScreen .home-card{padding:12px 16px;}#homeScreen .camp-goal{padding-bottom:8px;margin-bottom:5px;}#homeScreen .camp-entry{min-height:48px;padding:10px 4px;}#homeScreen #sortieBtn{min-height:46px;margin-top:8px;}}
 @media(prefers-reduced-motion:reduce){#campBackdrop{transition:none;}.camp-backdrop-mist{animation:none;}}
 </style>
+<style>
+/* Rarity shelves: one group never shares a row with another rarity. */
+#wsel.weapon-groups,#rwsel.weapon-groups{display:flex;flex-direction:column;gap:18px;}
+.weapon-tier{min-width:0;}
+.weapon-tier-title{display:flex;align-items:center;gap:12px;margin:0 0 9px;font-size:12px;font-family:var(--font-number);font-weight:500;}
+.weapon-tier-title::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,var(--tier-color),transparent);opacity:.28;}
+.weapon-tier-title b{color:var(--tier-color);font-size:14px;letter-spacing:.09em;}
+.weapon-tier-title span{color:#b3aa99;font-size:10px;order:2;white-space:nowrap;}
+.weapon-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.weapon-tier-grid .wb{min-height:76px;display:flex;flex-direction:column;justify-content:center;padding:16px 4px 9px!important;overflow:hidden;}
+.weapon-tier-grid .wb.locked{opacity:.45;}
+.weapon-tier-grid .wb .n{font-size:11px;line-height:1.35;min-height:15px;}
+.weapon-tier-grid .wrar{font-size:8px;padding:2px 5px;}
+.weapon-tier-grid .wb.on{box-shadow:inset 0 -2px var(--tier-color)!important;}
+.weapon-dupes{color:#aed6ae;font-size:9px;margin-top:3px;}
+.weapon-tier-grid .wb:focus-visible{outline:2px solid var(--tier-color);outline-offset:2px;}
+@media(min-width:640px){#weaponScreen .panel,#readyScreen .panel{max-width:640px;}.weapon-tier-grid{grid-template-columns:repeat(6,minmax(0,1fr));}}
+
+/* Three machines, with distinct lacquer palettes and shared, readable controls. */
+:is(#pachiScreen,#slotScreen,#hellScreen){--machine-accent:#daba81;--machine-ink:#171620;--machine-edge:#9a7449;}
+#pachiScreen{--machine-accent:#f2c886;--machine-ink:#261417;--machine-edge:#a16344;}
+#slotScreen{--machine-accent:#b7cfef;--machine-ink:#131d32;--machine-edge:#627b9d;}
+#hellScreen{--machine-accent:#b9d7ca;--machine-ink:#111e1e;--machine-edge:#668b7d;}
+:is(#pachiScreen,#slotScreen,#hellScreen).camp-screen .panel{border:1px solid var(--machine-edge);border-radius:16px!important;background:radial-gradient(ellipse at 50% 0,rgba(158,112,58,.1),transparent 50%),var(--machine-ink);box-shadow:0 24px 80px #0009,inset 0 0 0 4px #0003;gap:10px;padding:18px;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .ptitle{font-size:14px;color:#bbb5a7;border-bottom:1px solid #ffffff15;padding-bottom:10px;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .ptitle .x{min-width:36px;min-height:36px;display:grid;place-items:center;border-radius:50%;background:#0003;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .arcade-masthead{display:flex;align-items:center;justify-content:center;gap:13px;padding:8px 0 10px;text-align:left;}
+.arcade-masthead .arcade-emblem{width:34px;height:34px;color:var(--machine-accent);flex-shrink:0;}
+.arcade-masthead small{display:block;color:#aaa494;font-size:9px;letter-spacing:.17em;}
+.arcade-masthead h2{margin:2px 0 0;font-family:var(--font-heading);font-size:27px;line-height:1.25;letter-spacing:.09em;color:var(--machine-accent);font-weight:700;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .gcoins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .hpill{border:1px solid #ffffff13;border-radius:7px;background:#0002;color:#b9b2a4;padding:8px 10px;font-size:10px;min-width:0;text-align:center;}
+:is(#pachiScreen,#slotScreen,#hellScreen) .hpill b{color:#f4e5c9;font-size:15px;overflow-wrap:anywhere;}
+:is(#pachiScreen,#slotScreen,#hellScreen).camp-screen .btn{border-radius:8px!important;letter-spacing:.04em;min-height:46px;}
+:is(#pachiScreen,#slotScreen,#hellScreen).camp-screen .btn.ghost{min-height:42px;background:#0002!important;border-color:#ffffff20!important;}
+#pachiDropBtn{background:linear-gradient(#edcc93,#c78d58)!important;border-color:#f1cc8e!important;color:#331b18!important;text-shadow:none!important;font-size:15px;}
+#slotSpinBtn{background:linear-gradient(#d0e0f8,#8daace)!important;border-color:#b9d4f4!important;color:#17243a!important;text-shadow:none!important;font-size:15px;}
+#hellContinue{background:linear-gradient(#cce2d3,#8fac99)!important;color:#132d25!important;border-color:#bdd4c1!important;text-shadow:none!important;}
+:is(#pachiAutoBtn,#slotAutoBtn)[aria-pressed="true"]{color:var(--machine-accent)!important;border-color:var(--machine-edge)!important;}
+.arcade-rules{font-size:11px;color:#bcb6a7;border-top:1px solid #ffffff13;padding-top:8px;}
+.arcade-rules summary{cursor:pointer;padding:9px 0;min-height:36px;color:var(--machine-accent);}
+.arcade-rules table{width:100%;border-collapse:collapse;margin:8px 0;font-variant-numeric:tabular-nums;text-align:center;}
+.arcade-rules td,.arcade-rules th{padding:7px;border-bottom:1px solid #ffffff10;font-weight:500;}
+.arcade-rules td .original-icon{width:22px;height:22px;}
+
+/* Pachinko: warm brass, lanterns and lacquer. Physical canvas remains 360×440. */
+#pachiScreen .pachi-frame{align-self:center;width:max-content;max-width:100%;padding:3px;border:2px solid #c58b58;border-radius:13px;background:linear-gradient(120deg,#d5ac76,#6c352d,#ce9663);box-shadow:0 4px 14px #0007,inset 0 0 0 2px #2e1716;}
+#pachiCv{border-radius:8px;}
+#pachiScreen .pachi-bets button{background:#321e20;border:1px solid #84533c;color:#e4c4a0;border-radius:6px;min-height:36px;}
+#pachiScreen .pachi-bets button.on{background:linear-gradient(#dcb986,#b78151);border-color:#e6c58e;color:#2e1817;}
+#pachiScreen .pachi-betrow{margin-top:0;gap:8px;}
+#pachiScreen .pachi-legend{margin-top:0;gap:5px;}
+#pachiScreen .pachi-legend .lg{border-radius:5px;background:#ffffff06;border:1px solid #ffffff0b;padding:6px 2px;}
+#pachiScreen .pachi-legend .lg.jack{color:#f6c785;background:#8d3e3226;border-color:#b26747;}
+#pachiScreen .pachi-rush{border-radius:8px;background:linear-gradient(100deg,#76282a,#b45330);border-color:#e4b976;color:#ffe7b9;padding:8px;}
+#pachiScreen[data-phase="rush"] .pachi-frame{box-shadow:0 0 0 2px #d89d5a55,0 0 20px #ba51274d;}
+#pachiResult{font-size:13px;line-height:1.45;min-height:28px!important;color:#eaca98;}
+#pachiResult:empty{display:none;}
+#pachiScreen .pachi-foot{font-size:10px;color:#a99c8d;}
+#pachiScreen.tight .panel{padding:12px;gap:6px;}
+#pachiScreen.tight .arcade-masthead{padding:0 0 4px;gap:8px;}
+#pachiScreen.tight .arcade-masthead small{display:none;}
+#pachiScreen.tight .arcade-masthead h2{font-size:22px;}
+#pachiScreen.tight .arcade-masthead .arcade-emblem{width:24px;height:24px;}
+#pachiScreen.tight .pachi-legend .lg{padding:3px 1px;}
+#pachiScreen.tight .hpill{padding:5px 8px;}
+#pachiScreen.tight .pachi-bets button{min-height:32px;}
+#pachiScreen.tight .ptitle{padding-bottom:4px;font-size:13px;}
+
+/* Slots: indigo enamel, three marked stops and a real center payline. */
+#slotScreen .panel{max-width:450px;}
+#slotScreen .panel,#hellScreen .panel{max-height:92dvh;}
+#slotScreen .slot-cabinet{position:relative;padding:12px;border-radius:14px;border:2px solid #8194ae;background:linear-gradient(120deg,#3a4864,#15253e 45%,#293b57);box-shadow:inset 0 0 0 4px #090f234a,0 9px 26px #0005;}
+#slotScreen .arcade-masthead{padding:5px 0 8px;}
+#slotScreen .arcade-masthead h2{font-size:26px;color:#e1c987;}
+#slotScreen .slot-lights{justify-content:space-around;}
+#slotScreen .slot-lights span{width:5px;height:5px;background:#f0d193;box-shadow:0 0 5px #f0d19350;}
+#slotScreen .slot-window{padding:10px 8px;margin:12px 0;border:1px solid #aebbd0;border-radius:8px;background:#081020;box-shadow:inset 0 0 0 3px #ffffff10,inset 0 4px 12px #0008;gap:8px;}
+#slotScreen .reel{border:1px solid #92a7c1;border-radius:5px;background:linear-gradient(#a9b4c4,#dfe7ed 32%,#f3edda 50%,#dfe7ed 68%,#a9b4c4);width:var(--reel-w,72px);}
+#slotScreen .reel-cell{width:var(--reel-w,72px);}
+#slotScreen .reel-cell .original-icon{width:42px;height:42px;filter:drop-shadow(0 1px 1px #25344835);}
+#slotScreen .slot-payline{height:2px;background:#b04435;box-shadow:0 0 0 1px #fbd8a055;z-index:2;pointer-events:none;}
+#slotScreen .reel[data-stopped="yes"]{border-color:#e4c57f;}
+.slot-stops{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:0 14px;}
+.slot-stops span{display:block;border:1px solid #71869c;border-radius:50%;width:23px;height:23px;line-height:21px;justify-self:center;color:#8496ae;font-family:var(--font-number);font-size:10px;background:#0b172c;}
+.slot-stops span.on{background:#c8ae72;color:#202338;border-color:#ecd29b;box-shadow:0 0 8px #dfc58640;}
+#slotStatus{text-align:center;color:#b7cbe2;font-size:11px;margin-top:10px;min-height:17px;}
+#slotScreen .gcoins{grid-template-columns:1fr;}
+#slotScreen[data-phase="spin"] .slot-lights span{animation:arcadeTwinkle .9s ease-in-out infinite alternate;}
+#slotScreen[data-phase="spin"] .slot-lights span:nth-child(2n){animation-delay:.3s;}
+#slotScreen[data-phase="jackpot"] .slot-cabinet{border-color:#e2c286;box-shadow:inset 0 0 0 4px #ddb77c33,0 0 20px #dec48033;}
+#slotScreen[data-phase="jackpot"] .reel{box-shadow:inset 0 0 0 2px #d6a352;}
+#slotScreen[data-phase="win"] .slot-payline{background:#d89e50;}
+#slotResult{min-height:44px;font-size:12px;color:#d6cebb;padding:8px 0;}
+#slotResult:empty{display:none;}
+
+/* Fate cards: a flame and a feather, ink backs and distinct results. */
+#hellScreen .hell-title{font-size:27px;color:#e6caa0;letter-spacing:.045em;text-align:center;padding:10px 0 0;}
+#hellScreen .hell-title::before{content:'運命の二択';display:block;color:#a2b9ad;font-size:10px;letter-spacing:.25em;margin-bottom:7px;}
+#hellScreen .hell-cards{position:relative;gap:15px;padding:18px 12px;border:1px solid #a5b99c36;border-radius:14px;background:radial-gradient(ellipse at 45% 50%,#32443b,#182b29 70%);box-shadow:inset 0 0 0 4px #0002;perspective:800px;}
+#hellScreen .hell-card{position:relative;flex-shrink:0;width:112px;height:156px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #d2b284;border-radius:9px;background:linear-gradient(145deg,#fcf0d4,#deccb0);color:#623630;box-shadow:0 9px 14px #0004;font-size:47px;overflow:hidden;}
+#hellScreen .hell-card::after{inset:5px;border:1px solid #b4875d7a;border-radius:5px;}
+#hellScreen .hell-card small{margin:0;font-size:9px;color:inherit;opacity:.75;}
+#hellScreen .hell-face{font-size:47px;line-height:1;}
+#hellScreen .hell-card-art{display:block;height:33px;color:#9a5b43;}
+#hellScreen .hell-card-art .arcade-emblem{width:31px;height:31px;}
+#hellScreen .hell-card-corner{position:absolute;top:9px;left:11px;font-size:14px;line-height:1;font-weight:700;}
+#hellScreen #hellNext:not(.hidden){color:#234f4b;background:linear-gradient(145deg,#edf0da,#c5d4c2);border-color:#a6c2ad;}
+#hellScreen #hellNext .hell-card-art{color:#568d7a;}
+#hellScreen .hell-card.hidden{background:repeating-linear-gradient(45deg,transparent,transparent 10px,#b99d6320 10px,#b99d6320 11px),#19302e;color:#d4bb86;border-color:#9b865e;}
+#hellScreen .hell-card.hidden::after{border:3px double #b99a675c;}
+#hellScreen .hell-card.hidden .hell-face{font-size:36px;color:#d8bc82;}
+#hellScreen .hell-card.hidden .hell-card-art{color:#c9ae79;}
+#hellScreen .hell-card.hidden .hell-card-corner{font-size:16px;}
+#hellScreen .hell-vs{color:#b89d74;font-size:20px;}
+#hellScreen[data-phase="drawing"] #hellNext{animation:arcadeCardWait .65s ease-in-out both;}
+#hellScreen[data-phase="result"] #hellNext{animation:arcadeCardReveal .35s ease-out both;transform:none;}
+#hellScreen[data-outcome="win"] #hellNext{box-shadow:0 0 0 2px #a8d4b24d,0 0 24px #acd3a32d;}
+#hellScreen[data-outcome="lose"] #hellNext{border-color:#a76f56;box-shadow:0 0 0 2px #a7674940;}
+#hellScreen .hell-actions{gap:9px;}
+#hellScreen .hell-actions button{border-radius:8px;padding:12px 8px;display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(#254c46,#193c39);border:1px solid #709c8b;color:#dbecdf;min-height:52px;}
+#hellScreen .hell-actions button:last-child{background:linear-gradient(#784b36,#58372e);border-color:#b9855e;color:#f5dfbd;}
+#hellScreen .hell-actions button strong{font-size:16px;font-family:var(--font-number);}
+#hellScreen .hell-actions button small{font-size:10px;line-height:1.5;display:block;text-align:left;font-family:var(--font-number);}
+#hellScreen .hell-presets button{min-height:38px;border-radius:6px;background:#172c28;border-color:#5f817047;color:#ced3bc;}
+.hell-chances{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:-3px 0 5px;}
+.hell-chances>div{height:3px;background:#ffffff13;overflow:hidden;border-radius:2px;}
+.hell-chances i{display:block;height:100%;background:#88b99e;}
+.hell-chances>div:last-child i{background:#d7a06e;}
+#hellScreen[data-phase="result"] .hell-chances{display:none;}
+#hellScreen .hell-result{font-size:17px;line-height:1.5;text-align:center;color:#c3d1c6;}
+#hellScreen .hell-result.win{color:#bfe6bf;}#hellScreen .hell-result.lose{color:#e4ad8d;}
+@keyframes arcadeTwinkle{to{opacity:.35;box-shadow:none;}}
+@keyframes arcadeCardWait{50%{transform:translateY(-5px) rotateY(22deg);}100%{transform:rotateY(0);}}
+@keyframes arcadeCardReveal{from{transform:rotateY(-65deg);opacity:.4;}to{transform:rotateY(0);opacity:1;}}
+@media(max-width:380px){:is(#pachiScreen,#slotScreen,#hellScreen).camp-screen .panel{padding:12px;gap:8px;}#hellScreen .hell-card{width:96px;height:143px;}#hellScreen .hell-cards{gap:10px;padding:15px 8px;}#slotScreen .reel-cell .original-icon{width:31px;height:31px;}#slotScreen .slot-window{gap:6px;padding:8px 6px;}.weapon-tier-grid{gap:6px;}.weapon-tier-grid .wb .n{font-size:10px;}}
+@media(max-height:620px) and (orientation:landscape){:is(#hellScreen,#slotScreen).camp-screen .panel{max-height:94dvh;overflow-y:auto;}#pachiScreen.tight .arcade-masthead{display:none;}}
+@media(prefers-reduced-motion:reduce){:is(#pachiScreen,#slotScreen,#hellScreen) *{animation:none!important;transition-duration:.01ms!important;}}
+:is(#pachiScreen,#slotScreen,#hellScreen):not(.show) *{animation-play-state:paused!important;}
+
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -1490,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.63</span>
+  <span class="title-version">v1.7.64</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -1661,7 +1802,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
   <div class="panel" style="max-width:400px">
     <div class="ptitle"><span>【遊技札】 灯玉パチンコ</span><span class="x" id="pachiClose">【図:close】</span></div>
     <div id="pachiRush" class="pachi-rush">【図:element_fire】 <b id="pachiRushName">灯焔RUSH</b> 継続 <b id="pachiRushN">0</b> 連 ／ 残り <b id="pachiRushBalls">0</b>玉</div>
-    <div class="casino-machine-label">TOMOSHIBI <span>PACHINKO</span></div>
+    <div class="arcade-masthead"><svg class="arcade-emblem" viewBox="0 0 36 36" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 3c2 9 12 10 12 21a12 12 0 0 1-24 0c0-7 5-11 8-16 0 4 1 6 3 8 2-4 2-9 1-13Z"/></svg><div><small>一番台 · 玉遊び</small><h2>灯玉パチンコ</h2></div></div>
     <div class="pachi-frame"><canvas id="pachiCv" width="360" height="440"></canvas></div>
     <div class="gcoins" style="justify-content:center;gap:8px">
       <span class="hpill">【図:medal】 <b id="pachiCoins">0</b></span>
@@ -1690,7 +1831,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
   <input id="hellBet" type="range" min="1" max="1" value="1" step="1" aria-label="掛け金">
   <div class="hell-presets"><button data-hpct="10">10%</button><button data-hpct="25">25%</button><button data-hpct="50">50%</button><button data-hpct="90">MAX 90%</button></div>
   <div class="hell-actions"><button id="hellLow">▼ LOW</button><button id="hellHigh">▲ HIGH</button></div>
-  <div id="hellOdds" class="eline2" style="text-align:center;line-height:1.8"></div>
+  <div id="hellOdds" class="eline2" style="text-align:center;line-height:1.8"></div><div class="hell-chances" aria-hidden="true"><div><i id="hellLowChance"></i></div><div><i id="hellHighChance"></i></div></div>
   <div class="hell-result" id="hellResult" aria-live="polite"></div>
   <button class="btn" id="hellContinue" hidden>次の勝負</button>
   <div class="eline2" style="text-align:center">配当は掛け金込み · 同数は返却</div>
@@ -1700,7 +1841,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 <div class="ov dim camp-screen" id="slotScreen">
   <div class="panel">
     <div class="ptitle"><span>【図:slot】 スロット</span><span class="x" id="slotClose">【図:close】</span></div>
-    <div class="slot-cabinet"><div class="casino-machine-label">TOMOSHIBI <span>SLOTS</span></div>
+    <div class="slot-cabinet"><div class="arcade-masthead"><svg class="arcade-emblem" viewBox="0 0 36 36" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m18 3 4 10 11 2-8 7 2 11-9-6-9 6 2-11-8-7 11-2Z"/></svg><div><small>二番台 · 星を揃える</small><h2>星巡りスロット</h2></div></div>
       <div class="slot-lights">
         <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
       </div>
@@ -1714,10 +1855,12 @@ body.in-arcade .camp-backdrop-mist{display:none;}
         <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
       </div>
     </div>
-    <div class="gcoins" style="justify-content:center"><span class="hpill">【図:medal】 <b id="slotCoins">0</b></span></div>
+    <div class="slot-stops"><span id="slotLamp0">一</span><span id="slotLamp1">二</span><span id="slotLamp2">三</span></div><div id="slotStatus" role="status">三つの絵柄を揃えよう</div>
+    <div class="gcoins" style="justify-content:center"><span class="hpill">【図:medal】 所持 <b id="slotCoins">0</b></span></div>
     <div id="slotResult" style="text-align:center;min-height:44px"></div>
     <button class="btn" id="slotSpinBtn">【図:slot】 レバーを引く（【図:medal】<span id="slotCost">30</span>）</button>
     <button class="btn ghost" id="slotAutoBtn" style="margin-top:6px">【図:repeat】 オート：OFF</button>
+    <details class="arcade-rules"><summary>絵柄と配当</summary><table><thead><tr><th>絵柄</th><th>三揃い</th><th>二揃い</th></tr></thead><tbody id="slotPayTable"></tbody></table><p>配当はメダル。二揃いは位置不問、揃わなければ5メダル。</p></details>
   </div>
 </div>
 <div class="ov dim camp-screen" id="stageScreen">
@@ -2522,13 +2665,58 @@ function pachiPocketAt(x){
   for(let i=0;i<PACHI_POCKETS.length;i++){ if(x<PACHI_EDGES[i+1])return i; }
   return PACHI_POCKETS.length-1;
 }
+/* Presentation only: no random draws, stakes or settlement in these helpers. */
+const ARCADE_EMBLEMS={
+ flame:'<path d="M18 3c2 9 12 10 12 21a12 12 0 0 1-24 0c0-7 5-11 8-16 0 4 1 6 3 8 2-4 2-9 1-13Z"/><path d="M18 17c2 4 6 5 6 10a6 6 0 0 1-12 0c0-3 2-5 4-8 0 3 1 4 2 5 1-2 1-4 0-7Z" fill="currentColor" opacity=".35"/>',
+ star:'<path d="m18 3 4 10 11 2-8 7 2 11-9-6-9 6 2-11-8-7 11-2Z"/><circle cx="18" cy="19" r="4"/>',
+ feather:'<path d="M7 31C8 14 16 6 30 4c0 15-9 22-21 23M8 29 25 10M13 22l-1-7M18 17l-1-7M19 17l7-1"/>'
+};
+function arcadeEmblem(kind){return '<svg class="arcade-emblem" viewBox="0 0 36 36" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+ARCADE_EMBLEMS[kind]+'</svg>';}
+function arcadeCardHTML(id,n,hidden){
+ const face=n===1?'A':n===11?'J':n===12?'Q':n===13?'K':String(n),kind=id==='hellFirst'?'flame':'feather';
+ return '<small>'+(id==='hellFirst'?'基準の札':hidden?'次の札':'開いた札')+'</small><span class="hell-face">'+(hidden?'?':face)+'</span><i class="hell-card-art">'+arcadeEmblem(hidden?'star':kind)+'</i><span class="hell-card-corner" aria-hidden="true">'+(hidden?'✧':face)+'</span>';
+}
+let arcadeSlotToken=0;
+function arcadeSlotOpen(){
+ const screen=$('slotScreen');screen.dataset.phase=slotSpinning?'spin':'idle';
+ $('slotStatus').textContent=slotSpinning?'絵柄を追っています':'三つの絵柄を揃えよう';
+ if(!slotSpinning){arcadeSlotToken++;for(let i=0;i<3;i++){$('reel'+i).dataset.stopped='';$('slotLamp'+i).classList.remove('on');}}
+ const table=$('slotPayTable');if(!table.children.length){table.innerHTML=SLOT_SYMBOLS.map(s=>'<tr><td>'+s.icon+'</td><td>'+s.big.medals.toLocaleString()+'</td><td>'+s.pair.medals.toLocaleString()+'</td></tr>').join('');}
+}
+function arcadeSlotBegin(durations){
+ const token=++arcadeSlotToken;$('slotScreen').dataset.phase='spin';$('slotStatus').textContent='回転中 · 左から順に停止';
+ durations.forEach((duration,i)=>{const reel=$('reel'+i);reel.dataset.stopped='';$('slotLamp'+i).classList.remove('on');setTimeout(()=>{if(token!==arcadeSlotToken)return;reel.dataset.stopped='yes';$('slotLamp'+i).classList.add('on');},duration);});
+}
+function arcadeSlotResult(r){
+ const triple=r[0].k===r[1].k&&r[1].k===r[2].k,pair=r[0].k===r[1].k||r[1].k===r[2].k||r[0].k===r[2].k;
+ const outcome=triple?'jackpot':pair?'win':'miss';$('slotScreen').dataset.phase=outcome;$('slotStatus').textContent=triple?'三揃い · 大当たり':pair?'二揃い · 当たり':'次の星巡りへ';
+}
+function arcadeAutoState(id,on){const b=$(id);if(b)b.setAttribute('aria-pressed',String(on));}
+function arcadePachiState(){const s=$('pachiScreen');if(s)s.dataset.phase=pachiRushLeft>0?'rush':pachiBalls.length?'drop':'idle';}
+let arcadePachiPlate=null;
+function drawPachiBackplate(c){
+ if(!arcadePachiPlate){
+  const cv=document.createElement('canvas');cv.width=PACHI_W;cv.height=PACHI_H;const p=cv.getContext('2d');
+  const bg=p.createLinearGradient(0,0,360,440);bg.addColorStop(0,'#211015');bg.addColorStop(.45,'#462127');bg.addColorStop(1,'#130f18');p.fillStyle=bg;p.fillRect(0,0,360,440);
+  // Lacquer border, brass rails and a restrained wave pattern behind the real pegs.
+  for(let i=0;i<3;i++){p.strokeStyle=['#c89c5a','#704637','#e4bb76'][i];p.lineWidth=i===1?5:1;p.strokeRect(11+i*4,12+i*4,338-i*8,416-i*8);}
+  p.strokeStyle='rgba(205,151,89,.12)';p.lineWidth=1;
+  for(let y=54;y<372;y+=28)for(let x=-14;x<370;x+=56){p.beginPath();p.arc(x+(y%56?28:0),y,28,Math.PI,Math.PI*2);p.stroke();}
+  for(const x of [43,317]){
+   p.fillStyle='#b33b36';p.beginPath();p.ellipse(x,54,14,21,0,0,Math.PI*2);p.fill();p.strokeStyle='#eec27b';p.lineWidth=1.4;p.stroke();
+   p.fillStyle='#e4b877';p.fillRect(x-9,31,18,3);p.fillRect(x-9,74,18,3);p.fillRect(x-1,77,2,13);
+  }
+  p.fillStyle='#e5c99a';p.textAlign='center';p.font='700 21px '+PACHI_FONT;p.fillText('灯 玉',180,53);p.font='10px '+PACHI_FONT;p.fillStyle='#bc9477';p.fillText('一玉に、灯を託す',180,72);
+  const glow=p.createRadialGradient(180,290,8,180,290,120);glow.addColorStop(0,'rgba(192,111,65,.20)');glow.addColorStop(1,'rgba(0,0,0,0)');p.fillStyle=glow;p.fillRect(40,240,280,140);arcadePachiPlate=cv;
+ }c.drawImage(arcadePachiPlate,0,0);
+ if(pachiRushLeft>0){c.fillStyle='rgba(238,111,45,.13)';c.fillRect(20,24,320,342);}
+}
+
 function pachiDraw(){
   const cv=document.getElementById('pachiCv'); if(!cv)return; const c=cv.getContext('2d');
   c.clearRect(0,0,PACHI_W,PACHI_H);
   // 背景
-  const g=c.createLinearGradient(0,0,0,PACHI_H); g.addColorStop(0,'#163b32'); g.addColorStop(1,'#081c18');
-  c.fillStyle=g; c.fillRect(0,0,PACHI_W,PACHI_H);
-  if(pachiRushLeft>0){ c.fillStyle='rgba(255,90,60,0.10)'; c.fillRect(0,0,PACHI_W,PACHI_H); }
+  drawPachiBackplate(c);
   pachiFxUpdate(); pachiDrawLcd(c);
   // 釘
   for(const p of pachiPegs){
@@ -2686,7 +2874,7 @@ function pachiUpdateUI(){
     if(was!==(pachiRushLeft>0))pachiFit();
     const n=document.getElementById('pachiRushN'), bl=document.getElementById('pachiRushBalls');
     if(n)n.textContent=pachiRushN; if(bl)bl.textContent=pachiRushLeft; }
-  pachiSyncBets();
+  pachiSyncBets();arcadePachiState();
 }
 let _pachiBetsLocked=null, _pachiBetsCoins=-1;
 function pachiSyncBets(){
@@ -2714,7 +2902,7 @@ function pachiDrop(){
   pachiUpdateUI();
   pachiIdleStop(); if(!pachiRaf)pachiRaf=requestAnimationFrame(pachiLoop);
 }
-function pachiAutoUI(){ const b=document.getElementById('pachiAutoBtn'); if(b)b.textContent='【図:repeat】 オート：'+(pachiAuto?'ON':'OFF'); }
+function pachiAutoUI(){ const b=document.getElementById('pachiAutoBtn'); if(b)b.textContent='【図:repeat】 オート：'+(pachiAuto?'ON':'OFF');arcadeAutoState('pachiAutoBtn',pachiAuto); }
 function pachiToggleAuto(){ pachiAuto=!pachiAuto; pachiAutoUI(); if(pachiAuto&&pachiBalls.length===0)pachiDrop(); }
 /* 盤面の内部解像度(360x440)は物理演算の調整と直結しているため固定し、
    CSS上の表示サイズだけを端末の画面に合わせて縮める。 */
@@ -2722,6 +2910,7 @@ function pachiFit(){
   const scr=document.getElementById('pachiScreen'); if(!scr)return;
   const panel=scr.querySelector('.panel'), frame=scr.querySelector('.pachi-frame'), cv=document.getElementById('pachiCv');
   if(!panel||!frame||!cv)return;
+  const previousDisplay=scr.style.display,previousVisibility=scr.style.visibility;
   const wasHidden=(scr.style.display==='none'||getComputedStyle(scr).display==='none');
   if(wasHidden){ scr.style.visibility='hidden'; scr.style.display='flex'; } // 非表示中でも採寸できるようにする
   const vh=window.innerHeight||document.documentElement.clientHeight;
@@ -2733,17 +2922,18 @@ function pachiFit(){
   // オーバーレイの余白（safe-area含む）を差し引いた使える高さ
   const ovStyle=getComputedStyle(scr);
   const ovPad=parseFloat(ovStyle.paddingTop||0)+parseFloat(ovStyle.paddingBottom||0);
-  const avail=Math.min(vh*0.92-ovPad, 900) - others - 6;
+  const panelMax=parseFloat(getComputedStyle(panel).maxHeight)||vh;
+  const avail=Math.min(vh-ovPad-8,panelMax,900)-others-6;
   // 横幅の制約（パネル内幅）
   const pStyle=getComputedStyle(panel);
-  const maxW=panel.clientWidth-parseFloat(pStyle.paddingLeft||0)-parseFloat(pStyle.paddingRight||0)-4;
+  const maxW=panel.clientWidth-parseFloat(pStyle.paddingLeft||0)-parseFloat(pStyle.paddingRight||0)-10;
   const AR=PACHI_W/PACHI_H; // 360/440
   let h=Math.max(140,Math.min(avail,PACHI_H));
   let w=h*AR;
   if(w>maxW){ w=maxW; h=w/AR; }          // 幅が足りなければ幅基準に切り替え
   cv.style.width=Math.round(w)+'px'; cv.style.height=Math.round(h)+'px';
   frame.style.height='';
-  if(wasHidden){ scr.style.display='none'; scr.style.visibility=''; }
+  if(wasHidden){ scr.style.display=previousDisplay; scr.style.visibility=previousVisibility; }
 }
 function openPachiScreen(){
   if(!pachiPegs.length)pachiBuildPegs();
@@ -2850,7 +3040,7 @@ function consumeSortieItem(){
 function weightedSlotPick(){ const tot=SLOT_SYMBOLS.reduce((s,x)=>s+x.w,0); let r=Math.random()*tot;
   for(const s of SLOT_SYMBOLS){ r-=s.w; if(r<=0)return s; } return SLOT_SYMBOLS[0]; }
 function applySlotReward(rw){ if(!rw)return ''; const n=rw.medals||0; medals+=n;commitSave();return '【図:medal】+'+n; }
-function updateSlotUI(){ const sc=$('slotCoins'); if(sc)sc.textContent=medals; const sco=$('slotCost'); if(sco)sco.textContent=SLOT_COST; }
+function updateSlotUI(){ const sc=$('slotCoins'); if(sc)sc.textContent=medals.toLocaleString('ja-JP'); const sco=$('slotCost'); if(sco)sco.textContent=SLOT_COST; }
 const REEL_FILL=16; // 停止前に流すダミー絵柄の数
 // リール1マスの高さはCSS変数から取得する（画面サイズで変わるため毎回読み直す）
 function reelCellH(){
@@ -2863,11 +3053,11 @@ function restReel(reelEl,sym){ // 静止状態(3マス表示)をセット
   strip.innerHTML=`<div class="reel-cell">${pick(SLOT_SYMBOLS).icon}</div><div class="reel-cell">${sym}</div><div class="reel-cell">${pick(SLOT_SYMBOLS).icon}</div>`;
   strip.style.transform='translateY(0px)';
 }
-function openSlot(){ $('slotSpinBtn').disabled=slotSpinning; updateSlotUI(); const rs=$('slotResult'); if(rs)rs.innerHTML=''; autoSlot=false; setAutoBtnUI();
-  for(const id of ['reel0','reel1','reel2']){ const el=$(id); if(el)restReel(el,'【図:medal】'); }
+function openSlot(){arcadeSlotOpen(); $('slotSpinBtn').disabled=slotSpinning; updateSlotUI(); const rs=$('slotResult'); if(rs)rs.innerHTML=''; autoSlot=false; setAutoBtnUI();
+  if(!slotSpinning)for(const id of ['reel0','reel1','reel2']){ const el=$(id); if(el)restReel(el,'【図:medal】'); }
   showOv('slotScreen'); }
 let slotSpinning=false, autoSlot=false;
-function setAutoBtnUI(){ const b=$('slotAutoBtn'); if(!b)return;
+function setAutoBtnUI(){arcadeAutoState('slotAutoBtn',autoSlot); const b=$('slotAutoBtn'); if(!b)return;
   b.textContent='【図:repeat】 オート：'+(autoSlot?'ON':'OFF');
   b.style.background=autoSlot?'linear-gradient(180deg,#4a3a1c,#2a2010)':'';
   b.style.borderColor=autoSlot?'#ffcf6a':''; b.style.color=autoSlot?'#ffe9b0':''; }
@@ -2883,7 +3073,7 @@ function doSlot(){
   if(reelEls.some(e=>!e))return;
   slotSpinning=true; const btn=$('slotSpinBtn'); if(btn)btn.disabled=true;
   $('slotResult').innerHTML='';
-  const durations=[900,1300,1750]; // 左→右の順に長くして止まるタイミングをずらす
+  const durations=[900,1300,1750];arcadeSlotBegin(durations); // 左→右の順に長くして止まるタイミングをずらす
   reelEls.forEach((el,i)=>{
     const strip=el.querySelector('.reel-strip');
     // ダミー絵柄+結果+着地後の余白1マス分を積んだ帯を作る
@@ -2904,6 +3094,7 @@ function doSlot(){
   setTimeout(()=>{ slotSpinning=false; if(btn)btn.disabled=false; evaluateSlot(result); },totalTime);
 }
 function evaluateSlot(r){
+  arcadeSlotResult(r);
   const same3=(r[0].k===r[1].k&&r[1].k===r[2].k);
   let resultText,rewardMsg;
   if(same3){ rewardMsg=applySlotReward(r[0].big); resultText='【図:celebrate】 大当たり！'; }
@@ -2911,7 +3102,7 @@ function evaluateSlot(r){
     const s=(r[0].k===r[1].k)?r[0]:((r[1].k===r[2].k)?r[1]:r[0]);
     rewardMsg=applySlotReward(s.pair); resultText='当たり！'; }
   else { medals+=5; commitSave(); rewardMsg='【図:medal】+5'; resultText='残念…'; }
-  updateSlotUI();
+  updateSlotUI();if(campGroup==='arcade'&&$('campHub').classList.contains('show'))renderCampHub();
   $('slotResult').innerHTML=`<div style="font-weight:900;font-size:15px;margin-bottom:4px">${resultText}</div><div>${rewardMsg}</div>`;
   if(autoSlot){ if(medals>=SLOT_COST){ setTimeout(()=>{ if(autoSlot)doSlot(); },550); } else { stopAutoSlot(); toast('【図:medal】が足りずオート停止しました'); } }
 }
@@ -3655,10 +3846,7 @@ function netUI(){ const on=!!NET.role; const h=$('netHostBtn'),j=$('netJoinBtn')
 function onSortie(){ if(NET.role){ beginReady(); } else { startRun(); } }
 function beginReady(){ for(const c of NET.conns){ if(c.open){ try{c.send({t:'toReady'});}catch(e){} } } showReadyScreen(); }
 function showReadyScreen(){ state='ready'; NET.myReady=false; if(NET.role==='host'){ for(const c of NET.conns)c.__ready=false; } renderRwsel(); const b=$('readyBtn'); if(b)b.textContent='準備完了'; updateReadyStat(); hostBroadcastLobby(); showOv('readyScreen'); }
-function renderRwsel(){ const w=$('rwsel'); if(!w)return; w.innerHTML='';
-  for(const k of ['devour','earth','puppeteer','sword','greatsword','hammer','twin','scythe','iai','chain','gun','spirit','fude','knuckle','spear','bow','mage']){ const W=WEAPONS[k]; const b=document.createElement('div'); b.className='wb'+(weapon===k?' on':''); const rc=(RARITY[W.rarity]||{}).color||'#9aa6c4'; const own=(ownedW[k]||0)>0; const dp=weaponDupes(k); b.innerHTML=`<div class="wrar" style="background:${rc}">${W.rarity||''}</div><div class="i">${own?W.icon:'【図:lock】'}</div><div class="n">${own?W.name:'???'}</div>`+(own&&dp>0?`<div style="font-size:9px;color:#9fe0b0;font-weight:800">+${(dp*(WDUPE_RATE[W.rarity]||0.001)*100).toFixed(1)}%</div>`:''); if(!own){ b.style.opacity=0.45; }
-    b.onclick=()=>{ if(!(ownedW[k]||0)){ toast('未解放'); return; } weapon=k; save.weapon=k; commitSave(); setMyReady(false); renderRwsel(); }; w.appendChild(b); }
-  const dz=$('rwdesc'); if(dz){ const W=WEAPONS[weapon]; dz.innerHTML=W.desc; } }
+
 function setMyReady(v){ NET.myReady=v; const b=$('readyBtn'); if(b)b.textContent=v?'準備解除':'準備完了';
   if(NET.role==='client'){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].send({t:'ready', r:v, weapon, bonuses:totalBonuses(), elem:playerElementInfo()}); }catch(e){} } }
   else if(NET.role==='host'){ hostBroadcastLobby(); maybeStartHost(); }
@@ -6899,10 +7087,27 @@ function clearField(){clearPuppeteer();clearEarthField();
   if(typeof mfx!=='undefined'){for(const f of mfx)if(f.s)removeAndDispose(f.s);mfx.length=0;}
   for(let i=shadows.length-1;i>=0;i--){if(shadows[i].obj!==player){removeAndDispose(shadows[i].m);shadows.splice(i,1);}}
 }
-function renderWsel(){ const w=$('wsel'); w.innerHTML='';
-  for(const k of ['devour','earth','puppeteer','sword','greatsword','hammer','twin','scythe','iai','chain','gun','spirit','fude','knuckle','spear','bow','mage']){ const W=WEAPONS[k]; const b=document.createElement('div'); b.className='wb'+(weapon===k?' on':''); const rc=(RARITY[W.rarity]||{}).color||'#9aa6c4'; const own=(ownedW[k]||0)>0; const dp=weaponDupes(k); b.innerHTML=`<div class="wrar" style="background:${rc}">${W.rarity||''}</div><div class="i">${own?W.icon:'【図:lock】'}</div><div class="n">${own?W.name:'???'}</div>`+(own&&dp>0?`<div style="font-size:9px;color:#9fe0b0;font-weight:800">+${(dp*(WDUPE_RATE[W.rarity]||0.001)*100).toFixed(1)}%</div>`:''); if(!own){ b.style.opacity=0.45; }
-    b.onclick=()=>{ if(!(ownedW[k]||0)){ toast('未解放'); return; } weapon=k; save.weapon=k; commitSave(); renderWsel(); }; w.appendChild(b); }
-  { const W=WEAPONS[weapon]; $('wdesc').innerHTML=W.desc; } }
+const WEAPON_DISPLAY_ORDER=['devour','earth','puppeteer','sword','greatsword','hammer','twin','scythe','iai','chain','gun','spirit','fude','knuckle','spear','bow','mage'];
+function weaponRarityGroups(){return RARITY_KEYS.map(rarity=>({rarity,keys:WEAPON_DISPLAY_ORDER.filter(k=>WEAPONS[k].rarity===rarity)})).filter(g=>g.keys.length);}
+function renderWeaponGroups(w,onpick){
+ w.replaceChildren();w.classList.add('weapon-groups');
+ for(const {rarity,keys} of weaponRarityGroups()){
+  const section=document.createElement('section');section.className='weapon-tier';section.dataset.rarity=rarity;section.style.setProperty('--tier-color',RARITY[rarity].color);
+  const heading=document.createElement('h3');heading.className='weapon-tier-title';heading.innerHTML='<b>'+rarity+'</b><span>'+keys.filter(k=>ownedW[k]>0).length+' / '+keys.length+' 解放</span>';
+  const grid=document.createElement('div');grid.className='weapon-tier-grid';grid.setAttribute('role','group');grid.setAttribute('aria-label',rarity+'の武器');
+  for(const k of keys){
+   const W=WEAPONS[k],own=(ownedW[k]||0)>0,dp=weaponDupes(k),b=document.createElement('div');b.className='wb'+(weapon===k?' on':'')+(own?'':' locked');b.dataset.weapon=k;
+   b.setAttribute('role','button');b.tabIndex=0;b.setAttribute('aria-pressed',String(weapon===k));b.setAttribute('aria-disabled',String(!own));b.setAttribute('aria-label',own?W.name+' '+rarity:rarity+' 未解放');
+   b.innerHTML='<div class="wrar" style="background:'+RARITY[rarity].color+'">'+rarity+'</div><div class="i">'+(own?W.icon:'【図:lock】')+'</div><div class="n">'+(own?W.name:'未解放')+'</div>'+(own&&dp>0?'<div class="weapon-dupes">+'+(dp*(WDUPE_RATE[rarity]||.001)*100).toFixed(1)+'%</div>':'');
+   b.onclick=()=>{if(!own){toast('未解放');return;}onpick(k);};
+   b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click();const current=w.querySelector('[data-weapon="'+k+'"]');if(current)current.focus({preventScroll:true});}};
+   grid.appendChild(b);
+  }section.append(heading,grid);w.appendChild(section);
+ }
+}
+function renderWsel(){const w=$('wsel');renderWeaponGroups(w,k=>{weapon=k;save.weapon=k;commitSave();renderWsel();});$('wdesc').innerHTML=WEAPONS[weapon].desc;}
+function renderRwsel(){const w=$('rwsel');if(!w)return;renderWeaponGroups(w,k=>{weapon=k;save.weapon=k;commitSave();setMyReady(false);renderRwsel();});const dz=$('rwdesc');if(dz)dz.innerHTML=WEAPONS[weapon].desc;}
+
 let titleRevealed=false;
 function revealTitle(){ if(titleRevealed)return;playSfxTap(); titleRevealed=true;
   const ts=$('tapStart'); if(ts)ts.style.display='none';
@@ -7669,7 +7874,7 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
  const fmt=n=>Math.floor(n).toLocaleString('ja-JP');
  const cap=()=>Math.max(0,Math.floor(medals*0.9));
  const face=n=>n===1?'A':n===11?'J':n===12?'Q':n===13?'K':String(n);
- function card(id,n,hidden){el(id).classList.toggle('hidden',hidden);el(id).innerHTML='<small>'+(id==='hellFirst'?'基準の札':hidden?'次の札':'開いた札')+'</small><span>'+(hidden?'?':face(n))+'</span>';}
+ function card(id,n,hidden){el(id).classList.toggle('hidden',hidden);el(id).innerHTML=arcadeCardHTML(id,n,hidden);}
  function refresh(){
   el('hellScreen').dataset.phase=settled?'result':busy?'drawing':'bet';
   el('hellContinue').hidden=!settled;el('hellRoundState').textContent=settled?'勝負結果':busy?'札を開いています':'次のカードは？';
@@ -7679,12 +7884,13 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
   el('hellBetText').textContent=fmt(bet);
   const low=hellQuote(first,false),high=hellQuote(first,true);
   el('hellLow').disabled=busy||settled||max<1||low.wins===0;el('hellHigh').disabled=busy||settled||max<1||high.wins===0;
-  el('hellLow').textContent='▼ LOW · '+low.mult.toFixed(2)+'倍';el('hellHigh').textContent='▲ HIGH · '+high.mult.toFixed(2)+'倍';
+  el('hellLow').innerHTML='<strong>↓ LOW</strong><small>'+low.mult.toFixed(2)+'倍<br>'+ (low.wins/13*100).toFixed(1)+'%</small>';el('hellHigh').innerHTML='<strong>↑ HIGH</strong><small>'+high.mult.toFixed(2)+'倍<br>'+(high.wins/13*100).toFixed(1)+'%</small>';
+  el('hellLowChance').style.width=(low.wins/13*100)+'%';el('hellHighChance').style.width=(high.wins/13*100)+'%';el('hellHome').disabled=busy;el('hellClose').setAttribute('aria-disabled',String(busy));
   const label=(name,q)=>name+' '+(q.wins/13*100).toFixed(1)+'%';
   el('hellOdds').textContent='勝率 · '+label('LOW',low)+' ／ '+label('HIGH',high);
   for(const b of el('hellScreen').querySelectorAll('[data-hpct]'))b.disabled=busy||settled||max<1;
  }
- function open(){opened=true;busy=false;settled=false;first=2+Math.floor(Math.random()*11);card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';bet=Math.max(1,Math.floor(cap()/2));refresh();showOv('hellScreen');}
+ function open(){el('hellScreen').dataset.outcome='';opened=true;busy=false;settled=false;first=2+Math.floor(Math.random()*11);card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';bet=Math.max(1,Math.floor(cap()/2));refresh();showOv('hellScreen');}
  function close(){if(busy)return;opened=false;goHome();}
  function play(high){
   if(!opened||busy||settled)return;
@@ -7696,13 +7902,13 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
   setTimeout(()=>{
    const tie=next===first,win=!tie&&(high?next>first:next<first);
    const payout=tie?stake:win?hellPayout(stake,quote):0;medals+=payout;
-   commitSave();card('hellNext',next,false);
+   commitSave();el('hellScreen').dataset.outcome=win?'win':tie?'tie':'lose';card('hellNext',next,false);
    el('hellResult').className='hell-result '+(win?'win':tie?'':'lose');
    el('hellResult').textContent=tie?'【図:balance】 DRAW　【図:medal】'+fmt(stake)+' 返却':win?'【図:star】 HEAVEN！　【図:medal】+'+fmt(payout-stake):'【図:element_fire】 HELL…　【図:medal】-'+fmt(stake);
    nextFirst=(next===1||next===13)?2+Math.floor(Math.random()*11):next;settled=true;busy=false;refresh();
   },650);
  }
- function nextRound(){if(!opened||busy||!settled)return;first=nextFirst;settled=false;card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';refresh();}
+ function nextRound(){if(!opened||busy||!settled)return;el('hellScreen').dataset.outcome='';first=nextFirst;settled=false;card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';refresh();}
  el('hellContinue').addEventListener('click',nextRound);
  el('hellTile').addEventListener('click',open);
  el('hellClose').addEventListener('click',close);el('hellHome').addEventListener('click',close);
