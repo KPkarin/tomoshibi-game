@@ -1486,7 +1486,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.61</span>
+  <span class="title-version">v1.7.62</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2067,8 +2067,8 @@ const WEAPONS={
     desc:'高速の直進弾。スキル：10秒間攻撃＆連射×3。スキル中の再チャージは1/2。'},
   mage:{name:'灯杖',rarity:'R',icon:'【武器:mage】',dmg:16,interval:1.0,bulletSpeed:18,bulletLife:1.2,residue:true,residueR:2.6,residueDmg:22,residueLife:1.4,chargeHit:0.5,col:0xc79bff,
     desc:'近い敵から個別に狙う低速弾と着弾跡の持続ダメージ。スキル：10秒間範囲＆連射×2。'},
-  earth:{name:'大地の支配者',rarity:'UR',icon:'【武器:earth】',dmg:95,interval:2.2,range:17,zoneR:3.8,chargeHit:1.4,col:0x9a7548,
-    desc:'敵の足元を範囲攻撃。スキル：前方の地割れ・HP50%以下を即死（ボス除く）・岩シールド+3（上限5）。'},
+  earth:{name:'大地の支配者',rarity:'UR',icon:'【武器:earth】',dmg:140,interval:1.8,range:17,zoneR:3.8,chargeHit:1.4,col:0x9a7548,
+    desc:'敵の足元へ防壁の岩を設置。近くの岩は増築し、通常攻撃3回で岩シールド+1（上限5）。スキル：全岩を消費して遠隔地割れ、割れたシールドで威力上昇。目の前に大型岩壁を設置（タップは最寄り敵、エイムは指定方向）。'},
   puppeteer:{name:'人形使い',rarity:'UR',icon:'【武器:puppeteer】',dmg:70,interval:2.0,range:20,bulletSpeed:30,bulletLife:1.2,chargeHit:1.0,col:0xe0335f,
     desc:'命中した敵を操る（HP・攻撃・速度×2、最大5体、HP50%以下で解除）。スキル：周囲に糸攻撃・5秒拘束、人形は5秒無敵・速度×5。'},
 };
@@ -3204,6 +3204,7 @@ function skipRewardHTML(items){ const order=['UR','SSR','SR','R','N']; const cnt
   const chips=order.filter(k=>cnt[k]>0).map(k=>`<span style="color:${RARITY[k].color};font-weight:800;margin:0 5px">${k}×${cnt[k]}</span>`).join('');
   return `<div class="eline2" style="text-align:center;margin-bottom:6px">報酬 <b class="ember">×${items.length}</b>（最高レア）</div>`+rewardCardHTML(best)+`<div style="text-align:center;font-size:12px;margin-top:8px">${chips}</div>`; }
 function stageClear(){
+  clearEarthField();
   clearAllIaiEchoes();
   clearBossPhaseVisuals();
   stopBgm(); playSfxClear(); playBossOutcomeSfx(true,activeBossAudioKey);
@@ -3507,6 +3508,7 @@ function makeAllyAvatar(){
 }
 function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   resetContactDamage(1);
+  if(ally)clearEarthOwner(ally.grp);
   if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho);
   if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);
   if(!ally) ally={grp:makeAllyAvatar()};
@@ -3520,7 +3522,7 @@ function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   ally.grp.position.set(2,0,0); ally.grp.visible=true;
   const r=ally.grp.userData.ring; if(ally.pElem.element){ r.material.color.set(ELEM[ally.pElem.element].color); r.visible=true; } else r.visible=false;
 }
-function removeAlly(){resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
+function removeAlly(){if(ally)clearEarthOwner(ally.grp);resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
 
 /* コンテキスト退避：既存の攻撃関数を2人目に流用 */
 let _sv=null;
@@ -3585,7 +3587,7 @@ function netSendDash(){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].s
 function avatars(){ const a=[{grp:player,isHost:true}]; if(ally&&ally.hp>0)a.push({grp:ally.grp,isHost:false}); return a; }
 function nearestAvatar(x,z){ let best=player,bestHost=true,bd=1e9; for(const a of avatars()){ const dx=a.grp.position.x-x,dz=a.grp.position.z-z,d=dx*dx+dz*dz; if(d<bd){bd=d;best=a.grp;bestHost=a.isHost;} } return {grp:best,isHost:bestHost}; }
 function isInvincible(isHost){ return isHost ? (PLAYER.dashT>0 || buffType==='knuckle') : (ally && (ally.dashT>0 || ally.buffType==='knuckle')); }
-function damageAvatar(isHost,amt,ignoreDef,minimumDamage=0){ if(isInvincible(isHost))return;amt*=iaiGuardMul(isHost); if(isHost){ if(PLAYER.rockShield>0){flashRockShieldVisual(player);PLAYER.rockShield--; spawnSlamShock(player.position.x,player.position.z,2.0,0x9a7548); return; } if(!ignoreDef){ const D=(1+defPct()/100); amt=Math.max(minimumDamage,Math.floor(amt/D)); } PLAYER.hp-=amt; if(NET.role!=='client')playSfxHit(); } else if(ally){ if(ally.rockShield>0){flashRockShieldVisual(ally.grp);ally.rockShield--;spawnSlamShock(ally.grp.position.x,ally.grp.position.z,2.0,0x9a7548);return;} if(!ignoreDef){ const D=1+((ally.defv||0))/100; amt=Math.max(minimumDamage,Math.floor(amt/D)); } ally.hp-=amt; } }
+function damageAvatar(isHost,amt,ignoreDef,minimumDamage=0){ if(isInvincible(isHost))return;amt*=iaiGuardMul(isHost); if(isHost){ if(PLAYER.rockShield>0){flashRockShieldVisual(player);PLAYER.rockShield--;recordEarthShieldBreak(player,weapon); spawnSlamShock(player.position.x,player.position.z,2.0,0x9a7548); return; } if(!ignoreDef){ const D=(1+defPct()/100); amt=Math.max(minimumDamage,Math.floor(amt/D)); } PLAYER.hp-=amt; if(NET.role!=='client')playSfxHit(); } else if(ally){ if(ally.rockShield>0){flashRockShieldVisual(ally.grp);ally.rockShield--;recordEarthShieldBreak(ally.grp,ally.weapon);spawnSlamShock(ally.grp.position.x,ally.grp.position.z,2.0,0x9a7548);return;} if(!ignoreDef){ const D=1+((ally.defv||0))/100; amt=Math.max(minimumDamage,Math.floor(amt/D)); } ally.hp-=amt; } }
 
 /* 接触はフレーム毎の端数を切り捨てず、各プレイヤーに0.5秒ごとにまとめて適用。 */
 function resetContactDamage(owner){if(owner===0||owner===1)avatarContactCd[owner]=0;else avatarContactCd.fill(0);}
@@ -3685,8 +3687,8 @@ function netSendSkill(ang){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[
 
 /* ---- スナップショット ---- */
 function buildSnapshot(){
-  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost,ds:PLAYER.dashStock,dr:PLAYER.dashRe,dm:PLAYER.dashMax}];
-  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ds:ally.dashStock,dr:ally.dashRe,dm:ally.dashMax,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
+  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost,ds:PLAYER.dashStock,dr:PLAYER.dashRe,dm:PLAYER.dashMax,ea:weapon==='earth'?earthHudData(player):null}];
+  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ds:ally.dashStock,dr:ally.dashRe,dm:ally.dashMax,ea:ally.weapon==='earth'?earthHudData(ally.grp):null,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
   const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; const fm=enemyForcePacket(e);if(fm)o.fm=fm;if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
   const pb=pBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.mage?1:0,s:b.pierce?1:0,g:b.gun?1:0}));
   const eb=eBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.maou||0,c:b.col||0,r:b.r||.26}));
@@ -3695,7 +3697,7 @@ function buildSnapshot(){
   const dmEv=dmgEvents; dmgEvents=[];
   const _bz=enemies.find(e=>e.boss); const bh=_bz?clamp(_bz.hp/_bz.maxHp,0,1):null; const bx=_bz?_bz.mesh.position.x:null, bzz=_bz?_bz.mesh.position.z:null;
   let bf=null;if(_bz&&_bz.bossAI){const a=_bz.bossAI,tele=a.tele&&a.tele.userData.bossTele?[a.tele.position.x,a.tele.position.z,a.tele.userData.bossTele.r,a.tele.userData.bossTele.col,a.tele.material.opacity]:null;bf={s:a.state,p:a.pattern,t:tele,z:a.zones.map(q=>[q.x,q.z,q.r,q.col,q.tele?q.tele.material.opacity:.3])};}
-  return {t:'snap',st:state,gt:gameTime,lv:level,ki:kills,ps,en,pb,eb,bi:introActive?1:0,bs:bossSpawned?1:0,bh,bx,bzz,bk:_bz?_bz.key:null,bf,mr:maouRing?[maouRing.x,maouRing.z,maouRing.r]:null,md:mode,mo:(mode==='normal'?motifKey:null),ie,me:meEv,dm:dmEv};
+  return {t:'snap',st:state,gt:gameTime,lv:level,ki:kills,ps,en,pb,eb,bi:introActive?1:0,bs:bossSpawned?1:0,bh,bx,bzz,bk:_bz?_bz.key:null,bf,mr:maouRing?[maouRing.x,maouRing.z,maouRing.r]:null,md:mode,mo:(mode==='normal'?motifKey:null),ie,er:earthFieldSnapshot(),me:meEv,dm:dmEv};
 }
 function netHostTick(now){ if(NET.role!=='host'||!NET.started)return; if(now-NET.lastSnap<70)return; NET.lastSnap=now; const snap=buildSnapshot(); for(const c of NET.conns){ if(c.open){ try{ c.send(snap); }catch(e){} } } }
 
@@ -3706,6 +3708,7 @@ function cBulletMat(col,ei){const k=col+':'+ei;let m=C_BULLET_MATS.get(k);if(!m)
 function cStumpRing(rIn,rOut){return enemyRangeTele(rOut,0);}
 function cSpawnMelee(ev){ const previousOwner=weaponMotionOwner;weaponMotionOwner=C.players[ev.owner===1?1:0]||null;const sx=player.position.x, sz=player.position.z; player.position.x=ev.x; player.position.z=ev.z;
   try{ if(ev.k==='focus')spawnFocusCast(ev.wk,ev.a,ev.col);else if(ev.k==='t') spawnThrust(ev.a,ev.r,ev.col,!!ev.s); else if(ev.k==='r') spawnRodCast(ev.a,ev.col); else if(ev.k==='b') spawnBowDraw(ev.a,ev.col); else if(ev.k==='I'){spawnIaiEchoFinal({x:ev.x,z:ev.z,a:ev.a,l:ev.r});} else if(ev.k==='i'){ spawnIaiLine(ev.a,ev.r||30,ev.pw||1); spawnKatanaSwing(ev.a,(ev.pw||1)>2.2); } else if(ev.k==='c'){ spawnChainSpin(ev.a,ev.r||5,ev.col||0xffe08a,!!ev.s); } else if(ev.k==='h'){spawnHammerSwing(ev.a,ev.r||4,ev.col||0xffcf6a);const cx=ev.x+Math.sin(ev.a)*(ev.r||4)*0.65, cz=ev.z+Math.cos(ev.a)*(ev.r||4)*0.65; spawnSlamShock(cx,cz,3.0,ev.col||0xffcf6a); } else if(ev.k==='f'){ spawnFudeZone(ev.x,ev.z,ev.r||2.6,0,0.1,false); }
+  else if(ev.k==='E'){earthQuakeVisual(ev.x,ev.z,ev.r||4,!!ev.v);}
   else if(ev.k==='e'){ spawnSlamShock(ev.x,ev.z,ev.r||3.8,ev.col||0x9a7548); spawnRockSpikes(ev.x,ev.z,ev.r||3.8,false,0); }
   else if(ev.k==='q'){ const dx=Math.sin(ev.a),dz=Math.cos(ev.a),len=ev.r||18; spawnSlamShock(ev.x+dx*len*0.4,ev.z+dz*len*0.4,3.2,ev.col||0x9a7548); spawnFissure(ev.x,ev.z,ev.a,len); }
   else if(ev.k==='B'){ cSpawnShock(ev.x,ev.z,ev.r||4,ev.col||0xff5f91); }
@@ -3722,8 +3725,8 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){updateClientEnemyForces(dt);for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
-function clearClient(){syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
+function updateClientFx(dt){updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function clearClient(){clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
   const body=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.9,18),pm); body.position.y=0.7; const head=new THREE.Mesh(new THREE.SphereGeometry(0.42,20,16),pm); head.position.y=1.32;
@@ -3731,7 +3734,7 @@ function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Gr
   const vr=new THREE.Mesh(new THREE.RingGeometry(.6,.88,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.88,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;grp.add(vr);grp.userData.visRing=vr;attachBodyHitboxRing(grp,PLAYER.r,i===0?0xffd35a:0x65e7ff);
   const pl=new THREE.PointLight(col,2.5,23,2); pl.position.y=4.0; grp.add(pl); // 本体から離した光源で周囲を照らす
   scene.add(grp); addShadow(grp,0.7); C.players[i]=grp; return grp; }
-function applySnapshot(d){
+function applySnapshot(d){syncEarthField(d.er);
   syncClientIaiEchoes(d.ie||[]);
   if(C.theme!==d.md||C.mo!==(d.mo||null)){ C.theme=d.md; C.mo=d.mo||null; applyFieldTheme(d.md,C.mo); }
   // players
@@ -3755,7 +3758,7 @@ function applySnapshot(d){
     const shw=$('shieldWrap'); if(shw){ const sh=me.sh||0; shw.classList.toggle('on',sh>0); if(sh>0)setOriginalText(shw,'【図:rock】×'+sh); }
     const sb=$('skillBtn'); if(sb){ const cg=me.cg||0; sb.style.setProperty('--skill-charge',clamp(cg,0,100)*3.6+'deg'); sb.classList.toggle('ready',cg>=100); }
     const sic=$('skillIc');setWeaponIcon(sic,me.wp||weapon);updateGunHud(me.wp||weapon,me.ty,me.bt||0,me.ga,me.gr||0,me.gb||0);
-    const sbt=$('skillBt'); if(sbt)sbt.textContent=(me.bt&&me.bt>0)?Math.ceil(me.bt)+'s':'';
+    const sbt=$('skillBt'); if(sbt)sbt.textContent=me.wp==='earth'&&me.ea?'岩'+me.ea[0]+' / 蓄'+me.ea[1]:(me.bt&&me.bt>0)?Math.ceil(me.bt)+'s':'';
     const db=$('dashBtn'); if(db){const dbt=$('dashBt');if(me.wp==='twin'&&Number.isFinite(me.ds)){const max=me.dm||3,st=me.ds,part=st<max?1-clamp((me.dr||0)/DASH_RECHARGE,0,1):0;db.style.background=`conic-gradient(#8affd0 ${(st+part)/max*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',st>0||me.ty==='twin');if(dbt)dbt.textContent='×'+st;}else{const dc=me.dc||0,frac=1-clamp(dc/DASH_CD,0,1);db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',dc<=0);if(dbt)dbt.textContent=dc>0?Math.ceil(dc)+'s':'';} } }
   $('hLv').textContent=d.lv; $('hKills').textContent=d.ki; $('hTime').textContent=fmtTime(d.gt);
   setBossBar((d.bh!=null&&!d.bi)?d.bh:null,d.bk);
@@ -4876,7 +4879,7 @@ function updateOrbs(dt){
 }
 
 let RUN=null, pendingLevels=0;
-function makeRun(){ return {rangeMul:1,arcMul:1,bSpeedMul:1,bLifeMul:1,resRMul:1,resLifeAdd:0,proj:1,pickup:3.8,regen:0,regenPct:0,xpMul:1,build:{},gsWave:0,iaiFocus:0,iaiGuard:0,iaiStep:0,iaiStepT:0,puppetArmy:0,puppetElite:0,puppetFrenzy:0,knucklePush:0,knuckleStun:0,gunPower:1,gunFocus:0,spiritExtra:0,chainPull:0,scytheHeal:0,twinDashPower:1,twinMove:0,devourGrowth:0,devourBurstMul:1,hammerStun:0,fudePower:1}; }
+function makeRun(){ return {rangeMul:1,arcMul:1,bSpeedMul:1,bLifeMul:1,resRMul:1,resLifeAdd:0,proj:1,pickup:3.8,regen:0,regenPct:0,xpMul:1,build:{},gsWave:0,iaiFocus:0,iaiGuard:0,iaiStep:0,iaiStepT:0,earthVein:0,puppetArmy:0,puppetElite:0,puppetFrenzy:0,knucklePush:0,knuckleStun:0,gunPower:1,gunFocus:0,spiritExtra:0,chainPull:0,scytheHeal:0,twinDashPower:1,twinMove:0,devourGrowth:0,devourBurstMul:1,hammerStun:0,fudePower:1}; }
 const UPGRADE_VISUAL={
   rapid:{col:'#ffd45a',hex:0xffd45a,tag:'RAPID',power:4},power:{col:'#ff675f',hex:0xff675f,tag:'POWER',power:4},move:{col:'#5de7ff',hex:0x5de7ff,tag:'SPEED',power:3},
   vitality:{col:'#ff7eaa',hex:0xff7eaa,tag:'VITAL',power:3},xp:{col:'#bd8cff',hex:0xbd8cff,tag:'GROWTH',power:3},regen:{col:'#68ed91',hex:0x68ed91,tag:'REGEN',power:4},
@@ -4955,9 +4958,9 @@ const UPGRADES3=[
   {id:'fudeRadius',w:'fude',max:3,nm:'広域の結界符',ds:'結界の半径 +30%（通常・スキル）',ic:WEAPONS.fude.icon,fx:'range',ap:()=>{RUN.resRMul*=1.3;}},
   {id:'fudeLife',w:'fude',max:4,nm:'長命の呪符',ds:'結界の持続 +0.75秒（通常・スキル）',ic:WEAPONS.fude.icon,fx:'magic',ap:()=>{RUN.resLifeAdd+=.75;}},
   {id:'fudePower',w:'fude',max:3,nm:'灼印の呪符',ds:'結界の毎秒ダメージ +30%',ic:WEAPONS.fude.icon,fx:'power',ap:()=>{RUN.fudePower*=1.3;}},
-  {id:'earthRadius',w:'earth',max:3,nm:'大地の脈動',ds:'範囲攻撃の半径・地割れの長さ +30%',ic:WEAPONS.earth.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
-  {id:'earthWidth',w:'earth',max:3,nm:'断層の広がり',ds:'地割れの幅 +30%',ic:WEAPONS.earth.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
-  {id:'earthShield',w:'earth',max:3,nm:'岩護りの地脈',ds:'岩シールド +1（上限5）',ic:WEAPONS.earth.icon,fx:'vitality',ap:()=>{PLAYER.rockShield=Math.min(5,(PLAYER.rockShield||0)+1);}},
+  {id:'earthRadius',w:'earth',max:3,nm:'大地の脈動',ds:'通常攻撃・遠隔地割れの範囲と大型岩壁の幅 +30%',ic:WEAPONS.earth.icon,fx:'range',ap:()=>{RUN.rangeMul*=1.3;}},
+  {id:'earthWidth',w:'earth',max:3,nm:'断層の広がり',ds:'遠隔地割れの範囲・連結する亀裂の幅 +30%',ic:WEAPONS.earth.icon,fx:'arc',ap:()=>{RUN.arcMul*=1.3;}},
+  {id:'earthShield',w:'earth',max:3,nm:'砕岩の地脈',ds:'壊れた岩に地脈を残す。Lv2で小地割れ強化、Lv3で地脈同士の亀裂を解禁',ic:WEAPONS.earth.icon,fx:'magic',ap:()=>{RUN.earthVein+=1;}},
   {id:'gsWave',w:'greatsword',max:1,nm:'焔の衝撃波',ds:'斬撃後、攻撃力60%の貫通衝撃波',ic:'【図:wave】',fx:'range',ap:()=>{RUN.gsWave=1;}},
   {id:'gsTempo',w:'greatsword',max:3,nm:'振り抜きの極意',ds:'攻撃間隔 −30%',ic:'【図:weapon_greatsword】',fx:'rapid',ap:()=>{pFireMul*=.7;}},
   {id:'gsSweep',w:'greatsword',max:3,nm:'大薙ぎの間合い',ds:'斬撃距離・角度 +30%',ic:'【図:vortex】',fx:'arc',ap:()=>{RUN.rangeMul*=1.3;RUN.arcMul*=1.3;}},
@@ -5053,7 +5056,7 @@ function prepareWeaponMotion(s){
     S.kind=S.hammer?'hammer':S.devour?'devour':S.twinSide?'twin':S.katana?'iai':S.scythe?'scythe':S.big?'greatsword':'sword';
     S.sword.position.x=S.twinSide?S.twinSide*.34:.25;
     if(S.twinSide)S.sword.scale.multiplyScalar(clamp((S.range||3.3)/3.3,1,2.8));
-    S.tip=new THREE.Vector3();S.mid=new THREE.Vector3();
+    S.tip=new THREE.Vector3();S.mid=new THREE.Vector3();S.tGeo.setDrawRange(0,0);
   }
   if(s.focus)s.focusKind=s.focus.userData.motionKind;
   if(s.chainSpin){s.poseYaw=s.m.rotation.y;s.poseMats=[];const seen=new Set();s.m.traverse(o=>{if(o.material&&o.material.transparent&&!seen.has(o.material)){seen.add(o.material);s.poseMats.push({m:o.material,o:o.material.opacity});}});}
@@ -5091,6 +5094,7 @@ function poseSwing(s,p,k){
   }
   sw.rotation.set(pitch,yaw,roll);
   S.tip.set(0,0,sw.userData.tipZ);S.mid.set(0,0,sw.userData.midZ);
+  sw.updateWorldMatrix(true,false);
   sw.localToWorld(S.tip);sw.localToWorld(S.mid);
   // A ribbon records only the cutting stroke, never the return to the guard/sheath.
   const cutEnd=S.kind==='iai'?.3:S.kind==='hammer'?.35:S.kind==='greatsword'?.6:.5;
@@ -5176,6 +5180,7 @@ function followWeaponMotion(entry){
  const dx=a.position.x-entry.followX,dz=a.position.z-entry.followZ;
  entry.m.position.x+=dx;entry.m.position.z+=dz;
  if(entry.sweep){entry.sweep.cx+=dx;entry.sweep.cz+=dz;}
+ if(entry.swing)for(const q of entry.swing.samples){q.tip.x+=dx;q.tip.z+=dz;q.mid.x+=dx;q.mid.z+=dz;}
  entry.followX=a.position.x;entry.followZ=a.position.z;
 }
 function forgedBlade(points,thickness){
@@ -5550,7 +5555,7 @@ function spawnFissure(x,z,ang,length){
   }
   earthFx.push({k:'crack',g:crack,t:0,life:1.7,darks,glows});
   // 亀裂の進行に合わせて岩壁が波のようにそそり立つ
-  const steps=Math.round(length/2.6);
+  const steps=Math.max(1,Math.round(length/2.6));
   for(let s=0;s<=steps;s++){ const d=1.4+s/steps*(length-1.8);
     spawnRockSpikes(x+dx*d,z+dz*d,1.5,true,s*0.05); }
 }
@@ -5576,41 +5581,135 @@ function updateEarthFx(dt){
     }
   }
 }
+/* Authoritative terrain belongs to its casting avatar; only snapshots render it remotely. */
+const EARTH_RULES={shieldEvery:3,shieldMax:5,mergeDistance:2.8,quakePower:3.4,shieldBonus:.2,rockRadius:1.15,wallHalfWidth:3.8,wallHalfDepth:.65};
+let earthNodes=[],earthNodeId=0;
+const earthClientNodes=new Map();let earthGeometry=null;
+function earthState(actor=player){return actor.userData.earthState||(actor.userData.earthState={attacks:0,broken:0});}
+function earthOwnerIndex(actor){return ally&&actor===ally.grp?1:0;}
+function earthLocal(n,x,z){const dx=x-n.x,dz=z-n.z,c=Math.cos(n.a),s=Math.sin(n.a);return {x:dx*c-dz*s,z:dx*s+dz*c};}
+function earthPointInside(n,x,z,pad=0){if(n.kind===2||n.hp<=0)return false;const p=earthLocal(n,x,z);return n.kind===1?Math.abs(p.x)<=n.hw+pad&&Math.abs(p.z)<=n.hd+pad:p.x*p.x+p.z*p.z<=(n.r+pad)**2;}
+function earthSegmentHit(n,x0,z0,x1,z1,pad=0){
+ if(n.kind===2||n.hp<=0)return Infinity;
+ const a=earthLocal(n,x0,z0),b=earthLocal(n,x1,z1),vx=b.x-a.x,vz=b.z-a.z;
+ if(n.kind===1){let lo=0,hi=1;for(const [p,v,r]of [[a.x,vx,n.hw+pad],[a.z,vz,n.hd+pad]]){if(Math.abs(v)<1e-10){if(Math.abs(p)>r)return Infinity;}else{let t0=(-r-p)/v,t1=(r-p)/v;if(t0>t1)[t0,t1]=[t1,t0];lo=Math.max(lo,t0);hi=Math.min(hi,t1);if(lo>hi)return Infinity;}}return lo;}
+ const r=n.r+pad,c=a.x*a.x+a.z*a.z-r*r;if(c<=0)return 0;const qa=vx*vx+vz*vz;if(qa<1e-12)return Infinity;
+ const qb=2*(a.x*vx+a.z*vz),d=qb*qb-4*qa*c;if(d<0)return Infinity;const t=(-qb-Math.sqrt(d))/(2*qa);return t>=0&&t<=1?t:Infinity;
+}
+function earthFirstHit(x0,z0,x1,z1,pad=0){let best=null,t=Infinity;for(const n of earthNodes){const k=earthSegmentHit(n,x0,z0,x1,z1,pad);if(k<t){t=k;best=n;}}return best?{node:best,t}:null;}
+function earthVisual(n){
+ if(!earthGeometry){earthGeometry={rock:pinGpuResource(new THREE.DodecahedronGeometry(1,0)),box:pinGpuResource(new THREE.BoxGeometry(1,1,1)),ring:pinGpuResource(new THREE.RingGeometry(.88,1,32)),bar:pinGpuResource(new THREE.PlaneGeometry(1,1))};}
+ const g=new THREE.Group(),mat=new THREE.MeshStandardMaterial({color:n.kind===2?0x926839:0x756852,emissive:0x402918,emissiveIntensity:.18,roughness:.94,flatShading:true,transparent:true});
+ const body=new THREE.Group();g.add(body);
+ if(n.kind!==2){for(let i=0;i<(n.kind===1?5:3);i++){const m=new THREE.Mesh(earthGeometry.rock,mat);body.add(m);}}
+ const rim=new THREE.Mesh(earthGeometry.ring,new THREE.MeshBasicMaterial({color:n.kind===2?0xefb66c:0xe8cd95,transparent:true,opacity:n.kind===2?.65:.35,side:THREE.DoubleSide,depthWrite:false}));rim.rotation.x=-Math.PI/2;rim.position.y=.035;body.add(rim);
+ const bar=new THREE.Mesh(earthGeometry.bar,new THREE.MeshBasicMaterial({color:0x9ce2b7,transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false}));bar.rotation.x=-Math.PI/2;bar.position.set(0,.065,0);g.add(bar);bar.visible=n.kind!==2;
+ g.userData={body,mat,rim,bar};scene.add(g);n.mesh=g;earthRefreshVisual(n);return g;
+}
+function earthRefreshVisual(n){
+ const g=n.mesh;if(!g)return;g.position.set(n.x,0,n.z);g.rotation.y=n.a;
+ const u=g.userData,b=u.body,stage=Math.min(5,Math.sqrt(Math.max(1,n.stacks))-1),height=n.kind===1?2.35+stage*.1:1.5+stage*.2;
+ let i=0;for(const m of b.children){if(m===u.rim)continue;if(n.kind===1){const w=n.hw*2/5;m.scale.set(w*.67,height*(i%2?.5:.57),n.hd*1.03);m.position.set((i-2)*w,height*.5,0);m.rotation.set((i%2?.08:-.06),(i-2)*.13,(i-2)*.045);}else{m.scale.set(n.r*.66,height*(i===0?.7:.5),n.r*.65);m.position.set((i-1)*n.r*.48,height*(i===0?.5:.4),i===1?-.15:.1);m.rotation.set(i*.13,i*.9,.15-i*.12);}i++;}
+ u.rim.scale.set(n.kind===1?n.hw:n.r,n.kind===1?n.hd:n.r,1);
+ const ratio=Math.max(0,Math.min(1,n.hp/n.maxHp));u.bar.scale.set(Math.max(.02,(n.kind===1?n.hw*1.6:n.r*1.5)*ratio),.12,1);u.bar.position.z=-(n.kind===1?n.hd+.18:n.r+.18);
+ if(n.kind===2){u.rim.material.opacity=.45+.1*n.level;u.rim.scale.set(n.r,n.r,1);}
+}
+function earthMakeNode(x,z,kind=0,stacks=1,a=0){
+ const hp=(180+PLAYER.maxHp*1.2+baseDmg()*.4)*(kind===1?6:1),rm=RUN.rangeMul||1;
+ const n={id:++earthNodeId,owner:player,run:RUN,kind,x,z,a,stacks,hp,maxHp:hp,r:EARTH_RULES.rockRadius,hw:EARTH_RULES.wallHalfWidth*rm,hd:EARTH_RULES.wallHalfDepth,level:RUN.earthVein||0};
+ earthNodes.push(n);earthVisual(n);return n;
+}
+function earthRemoveNode(n){const i=earthNodes.indexOf(n);if(i>=0)earthNodes.splice(i,1);if(n.mesh){removeAndDispose(n.mesh);n.mesh=null;}}
+function earthDamageNode(n,amount){
+ if(!n||n.kind===2||n.hp<=0||!Number.isFinite(amount)||amount<=0)return;
+ n.hp=Math.max(0,n.hp-amount);
+ if(n.hp<=0){const lv=n.run.earthVein||0;if(lv>0){n.kind=2;n.level=lv;n.hp=n.maxHp=1;n.r=1.2+Math.min(1.2,Math.sqrt(n.stacks)*.16);if(n.mesh)removeAndDispose(n.mesh);n.mesh=null;earthVisual(n);}else earthRemoveNode(n);}
+ else earthRefreshVisual(n);
+}
+function earthGrowNode(n){const add=180+PLAYER.maxHp*1.2+baseDmg()*.4;n.stacks++;n.maxHp+=add;n.hp=Math.min(n.maxHp,n.hp+add);if(n.kind===0)n.r=Math.min(2.45,EARTH_RULES.rockRadius+.17*Math.sqrt(n.stacks-1));earthRefreshVisual(n);}
+function recordEarthShieldBreak(actor,wp){if(actor&&wp==='earth')earthState(actor).broken++;}
+function clearEarthOwner(actor,reset=true){if(!actor)return;for(const n of earthNodes.slice())if(n.owner===actor)earthRemoveNode(n);if(reset)actor.userData.earthState={attacks:0,broken:0};}
+function clearEarthClient(){for(const n of earthClientNodes.values())if(n.mesh)removeAndDispose(n.mesh);earthClientNodes.clear();}
+function clearEarthField(){for(const n of earthNodes.slice())earthRemoveNode(n);if(player)earthState(player).attacks=earthState(player).broken=0;if(ally)earthState(ally.grp).attacks=earthState(ally.grp).broken=0;clearEarthClient();}
 function earthAttack(tgt){
- spawnFocusCast('earth',Math.atan2(tgt.mesh.position.x-player.position.x,tgt.mesh.position.z-player.position.z),WEAPONS.earth.col);
-  const W=WEAPONS.earth; const R=W.zoneR*(RUN.rangeMul||1); const tx=tgt.mesh.position.x, tz=tgt.mesh.position.z;
-  let hits=0;
-  for(const e of enemies.slice()){
-    const dx=e.mesh.position.x-tx, dz=e.mesh.position.z-tz; if(dx*dx+dz*dz>(R+e.r)*(R+e.r))continue;
-    const cr=Math.random()<pCritChance; const dd=baseDmg()*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
-    const dealt=damageEnemy(e,dd); e.flash=0.12; hits++; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid});
-    if(e.hp<=0)killEnemy(e);
-  }
-  spawnSlamShock(tx,tz,R,W.col);
-  spawnRockSpikes(tx,tz,R,false,0);
-  if(hits>0)addCharge(W.chargeHit);
-  if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:tx,z:tz,a:0,k:'e',r:R,col:W.col}); if(meleeEvents.length>24)meleeEvents.shift(); }
+ const W=WEAPONS.earth,R=W.zoneR*(RUN.rangeMul||1),x=tgt.mesh.position.x,z=tgt.mesh.position.z;spawnFocusCast('earth',Math.atan2(x-player.position.x,z-player.position.z),W.col);
+ let hits=0;for(const e of enemies.slice()){if(e.puppet||e.hp<=0)continue;const dx=e.mesh.position.x-x,dz=e.mesh.position.z-z;if(dx*dx+dz*dz>(R+e.r)**2)continue;const cr=Math.random()<pCritChance,dd=baseDmg()*eMul(e)*(cr?pCritDmg:1);const dealt=damageEnemy(e,dd);hits++;dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid:e.boss&&bossDamageWindow(e)===0});if(e.hp<=0)killEnemy(e);}
+ if(state!=='play')return;
+ let near=null,bd=EARTH_RULES.mergeDistance**2;for(const n of earthNodes){if(n.owner!==player||n.kind===2)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<bd){near=n;bd=d;}}
+ const n=near?(earthGrowNode(near),near):earthMakeNode(x,z);
+ for(const e of enemies){if(e.boss||e.puppet||e.hp<=0||!earthPointInside(n,e.mesh.position.x,e.mesh.position.z,e.r))continue;let dx=e.mesh.position.x-n.x,dz=e.mesh.position.z-n.z,len=Math.hypot(dx,dz);if(len<.001){dx=n.x-player.position.x;dz=n.z-player.position.z;len=Math.hypot(dx,dz)||1;}const dist=n.r+e.r+.1;pullEnemy(e,n.x+dx/len*dist,n.z+dz/len*dist);}
+ const s=earthState();s.attacks++;if(s.attacks%EARTH_RULES.shieldEvery===0)PLAYER.rockShield=Math.min(EARTH_RULES.shieldMax,(PLAYER.rockShield||0)+1);if(hits)addCharge(W.chargeHit);
+ spawnSlamShock(x,z,R,W.col);
+ if(NET.role==='host'&&NET.started){meleeEvents.push({owner:earthOwnerIndex(player),x,z,a:0,k:'e',r:R,col:W.col});if(meleeEvents.length>24)meleeEvents.shift();}
 }
+function earthQuakeVisual(x,z,r,vein=false){spawnSlamShock(x,z,r,vein?0xe5a557:WEAPONS.earth.col);for(let i=0;i<4;i++)spawnFissure(x,z,i*Math.PI/2,r);}
+function earthQuakeHit(n,power,r){
+ for(const e of enemies.slice()){if(e.puppet||e.hp<=0)continue;const dx=e.mesh.position.x-n.x,dz=e.mesh.position.z-n.z;if(dx*dx+dz*dz>(r+e.r)**2)continue;const low=!e.boss&&e.hp<=e.maxHp*.5,cr=Math.random()<pCritChance,dealt=damageEnemy(e,power*eMul(e)*(cr?pCritDmg:1));dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid:e.boss&&bossDamageWindow(e)===0});if(low&&e.hp>0)e.hp=0;if(e.hp<=0)killEnemy(e);if(state!=='play')break;}
+}
+function earthLinkHit(a,b,power,width){const dx=b.x-a.x,dz=b.z-a.z,den=dx*dx+dz*dz;for(const e of enemies.slice()){if(e.puppet||e.hp<=0)continue;const rx=e.mesh.position.x-a.x,rz=e.mesh.position.z-a.z,t=Math.max(0,Math.min(1,(rx*dx+rz*dz)/(den||1)));if((rx-dx*t)**2+(rz-dz*t)**2>(width+e.r)**2)continue;const d=damageEnemy(e,power*eMul(e));dmgPop(e.mesh.position,d,{boss:e.boss});if(e.hp<=0)killEnemy(e);if(state!=='play')break;}}
 function earthquakeSkill(aimAng){
-  let ang; if(typeof aimAng==='number'){ang=aimAng;} else { const t=nearestEnemy(40); ang=t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y; }
-  player.rotation.y=ang;
-  const length=18*RUN.rangeMul, halfW=1.7*(RUN.arcMul||1), dx=Math.sin(ang), dz=Math.cos(ang); let hits=0;
-  for(const e of enemies.slice()){
-    const rx=e.mesh.position.x-player.position.x, rz=e.mesh.position.z-player.position.z;
-    const proj=rx*dx+rz*dz; if(proj<-1||proj>length)continue;
-    const perp=Math.abs(rx*dz-rz*dx); if(perp>halfW+e.r)continue;
-    const wasLow=!e.boss && e.hp<=e.maxHp*0.5;
-    const cr=Math.random()<pCritChance; const dd=baseDmg()*9*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
-    const dealt=damageEnemy(e,dd); e.flash=0.12; hits++; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid});
-    if(wasLow&&e.hp>0){ e.hp=0; dmgPop(e.mesh.position,0,{exec:true}); }
-    if(e.hp<=0)killEnemy(e);
-  }
-  if(hits>0)addCharge(0);
-  PLAYER.rockShield=Math.min(5,(PLAYER.rockShield||0)+3);
-  spawnSlamShock(player.position.x+dx*length*0.4,player.position.z+dz*length*0.4,3.2,WEAPONS.earth.col);
-  spawnFissure(player.position.x,player.position.z,ang,length);
-  if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:player.position.x,z:player.position.z,a:ang,k:'q',r:length,col:WEAPONS.earth.col}); if(meleeEvents.length>24)meleeEvents.shift(); }
+ const t=Number.isFinite(aimAng)?null:nearestEnemy(1e6),a=Number.isFinite(aimAng)?aimAng:t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y;
+ player.rotation.y=a;const s=earthState(),bonus=1+s.broken*EARTH_RULES.shieldBonus,base=baseDmg(),rm=RUN.rangeMul||1,am=RUN.arcMul||1,lv=RUN.earthVein||0;
+ const nodes=earthNodes.filter(n=>n.owner===player),links=new Set();s.broken=0;
+ for(const n of nodes){const vein=n.kind===2,weight=vein?(.45+.3*(lv-1)):EARTH_RULES.quakePower,r=(vein?2.6+lv*.45:4.2+Math.min(1.5,Math.sqrt(n.stacks-1)*.2))*rm*am;
+  earthQuakeHit(n,base*n.stacks*weight*bonus,r);earthQuakeVisual(n.x,n.z,r,vein);
+  if(NET.role==='host'&&NET.started){meleeEvents.push({owner:earthOwnerIndex(player),x:n.x,z:n.z,k:'E',r,v:vein?1:0});}
+  if(state!=='play')break;
+ }
+ if(state==='play')for(const n of nodes){let close=null,bd=(10*rm)**2;for(const o of nodes){if(o===n||(lv<3&&(n.kind===2||o.kind===2)))continue;const d=(n.x-o.x)**2+(n.z-o.z)**2;if(d>1e-8&&d<bd){close=o;bd=d;}}if(!close)continue;const key=[n.id,close.id].sort((a,b)=>a-b).join(':');if(links.has(key))continue;links.add(key);earthLinkHit(n,close,base*Math.min(n.stacks,close.stacks)*bonus,.7*am);spawnFissure(n.x,n.z,Math.atan2(close.x-n.x,close.z-n.z),Math.sqrt(bd));if(NET.role==='host'&&NET.started)meleeEvents.push({owner:earthOwnerIndex(player),x:n.x,z:n.z,a:Math.atan2(close.x-n.x,close.z-n.z),k:'q',r:Math.sqrt(bd)});if(state!=='play')break;}
+ for(const n of nodes)earthRemoveNode(n);
+ if(state==='play')earthMakeNode(player.position.x+Math.sin(a)*2.9,player.position.z+Math.cos(a)*2.9,1,2,a);
+ if(meleeEvents.length>64)meleeEvents.splice(0,meleeEvents.length-64);
 }
+function updateEarthField(dt){
+ for(const n of earthNodes.slice()){const alive=n.owner===player?PLAYER.hp>0:ally&&n.owner===ally.grp&&ally.hp>0;if(!alive){earthRemoveNode(n);continue;}if(n.kind===2&&n.level!==(n.run.earthVein||0)){n.level=n.run.earthVein||0;earthRefreshVisual(n);}if(!n.mesh)continue;const near=avatars().some(a=>earthPointInside(n,a.grp.position.x,a.grp.position.z,1));n.mesh.userData.mat.opacity=near?.4:1;n.mesh.userData.mat.depthWrite=!near;n.mesh.visible=(n.x-player.position.x)**2+(n.z-player.position.z)**2<3600;}
+}
+function earthFieldSnapshot(){return earthNodes.map(n=>[n.id,earthOwnerIndex(n.owner),n.kind,n.x,n.z,n.a,n.stacks,n.hp,n.maxHp,n.r,n.hw,n.hd,n.kind===2?(n.run.earthVein||0):0]);}
+function syncEarthField(rows){
+ const want=new Set();for(const v of Array.isArray(rows)?rows:[]){if(!Array.isArray(v)||v.length!==13||!v.every(Number.isFinite)||v[2]<0||v[2]>2||v[6]<1||v[8]<=0)continue;const id=v[0];want.add(id);let n=earthClientNodes.get(id);if(n&&n.kind!==v[2]){removeAndDispose(n.mesh);earthClientNodes.delete(id);n=null;}if(!n){n={id,owner:null,kind:v[2],x:v[3],z:v[4],a:v[5],stacks:v[6],hp:v[7],maxHp:v[8],r:v[9],hw:v[10],hd:v[11],level:v[12]};earthClientNodes.set(id,n);earthVisual(n);}else{Object.assign(n,{x:v[3],z:v[4],a:v[5],stacks:v[6],hp:v[7],maxHp:v[8],r:v[9],hw:v[10],hd:v[11],level:v[12]});earthRefreshVisual(n);}}
+ for(const[id,n]of earthClientNodes)if(!want.has(id)){removeAndDispose(n.mesh);earthClientNodes.delete(id);}
+}
+function earthHudData(actor=player){const s=earthState(actor);return [earthNodes.filter(n=>n.owner===actor&&n.kind!==2).length,s.broken,s.attacks%EARTH_RULES.shieldEvery];}
+function updateEarthClientVisuals(){for(const n of earthClientNodes.values()){if(!n.mesh)continue;const near=C.players.some(g=>earthPointInside(n,g.position.x,g.position.z,1));n.mesh.userData.mat.opacity=near?.4:1;n.mesh.userData.mat.depthWrite=!near;n.mesh.visible=(n.x-C.meX)**2+(n.z-C.meZ)**2<3600;}}
+
+function earthWallAttack(e,n,dt){
+ if(e.hp<=0||e.puppet||e.stun>0||e.forcedThisStep||(e.bossAI&&['recovery','rage','intro'].includes(e.bossAI.state)))return;
+ const interval=e.boss||e.key==='brute'?1:.75;
+ if(!e.earthAttack||e.earthAttack.id!==n.id){e.earthAttack={id:n.id,t:interval};return;}
+ e.earthAttack.t-=dt;
+ if(e.earthAttack.t<=1e-8){e.earthAttack.t+=interval;earthDamageNode(n,contactDamageRate(e)*(e.boss?1.6:e.key==='brute'?2:1));spawnSlamShock(n.x,n.z,Math.max(.7,n.r),0xd69a64);}
+}
+function earthResolveEnemy(e,x0,z0,dt){
+ if(!earthNodes.length||e.puppet)return;
+ const p=e.mesh.position,hit=earthFirstHit(x0,z0,p.x,p.z,e.r)||earthFirstHit(p.x,p.z,p.x,p.z,e.r+.04);
+ if(!hit){e.earthAttack=null;return;}
+ const n=hit.node;
+ if(!e.boss&&!e.forcedThisStep&&(e.stun||0)<=0&&(e.key==='bat'||e.shoot)){
+  const dx=p.x-x0,dz=p.z-z0,len=Math.hypot(dx,dz)||1,side=e.id%2?1:-1,step=Math.max(e.speed*dt,Math.hypot(dx,dz));
+  for(const sign of [side,-side]){const x=x0-dz/len*step*sign,z=z0+dx/len*step*sign;if(!earthFirstHit(x0,z0,x,z,e.r)){p.x=x;p.z=z;e.earthAttack=null;return;}}
+ }
+ const vx=p.x-x0,vz=p.z-z0;
+ if(hit.t>0){p.x=x0+vx*Math.max(0,hit.t-.001);p.z=z0+vz*Math.max(0,hit.t-.001);}
+ else if(earthPointInside(n,x0,z0,e.r)){
+  const q=earthLocal(n,x0,z0),c=Math.cos(n.a),s=Math.sin(n.a);let dx,dz,dist;
+  if(n.kind===1){const px=n.hw+e.r-Math.abs(q.x),pz=n.hd+e.r-Math.abs(q.z);if(px<pz){dx=q.x>=0?1:-1;dz=0;dist=px+.02;}else{dx=0;dz=q.z>=0?1:-1;dist=pz+.02;}}
+  else{const l=Math.hypot(q.x,q.z)||1;dx=l===1&&q.x===0&&q.z===0?0:q.x/l;dz=q.x===0&&q.z===0?1:q.z/l;dist=n.r+e.r-Math.hypot(q.x,q.z)+.02;}
+  const step=Math.min(Math.max(0,dist),dt*12);p.x=x0+(dx*c+dz*s)*step;p.z=z0+(-dx*s+dz*c)*step;
+ }else{p.x=x0;p.z=z0;}
+ earthWallAttack(e,n,dt);
+}
+function earthCasterPosition(e,tgt,dt){
+ if(!earthNodes.length||e.boss||!e.shoot||e.stun>0||e.forcedThisStep)return;
+ const p=e.mesh.position,q=tgt.grp.position,hit=earthFirstHit(p.x,p.z,q.x,q.z,0);if(!hit)return;
+ const dx=q.x-p.x,dz=q.z-p.z,l=Math.hypot(dx,dz)||1,step=e.speed*dt,side=e.id%2?1:-1;
+ for(const sign of [side,-side]){const x=p.x-dz/l*step*sign,z=p.z+dx/l*step*sign;if(!earthFirstHit(p.x,p.z,x,z,e.r)){p.x=x;p.z=z;break;}}
+}
+function earthBlockBullet(b,x0,z0){
+ if(!earthNodes.length)return false;const p=b.mesh.position,hit=earthFirstHit(x0,z0,p.x,p.z,b.r||.26);if(!hit)return false;
+ for(const a of avatars()){if(isInvincible(a.isHost))continue;const q=a.grp.position,n={kind:0,hp:1,x:q.x,z:q.z,a:0,r:PLAYER.r};if(earthSegmentHit(n,x0,z0,p.x,p.z,b.r||.26)<hit.t)return false;}
+ const n=hit.node;earthDamageNode(n,Math.max(1,b.dmg||1));spawnSlamShock(x0+(p.x-x0)*hit.t,z0+(p.z-z0)*hit.t,.35,0xe7c996);return true;
+}
+
 function spawnThreadShot(dx,dz){
  spawnFocusCast('puppeteer',Math.atan2(dx,dz),WEAPONS.puppeteer.col);
   const W=WEAPONS.puppeteer, len=Math.hypot(dx,dz)||1, ang=Math.atan2(dx,dz);
@@ -6498,7 +6597,7 @@ function ensureAim(){ if(aimGuide)return; const g=new THREE.Group();
   const line=new THREE.Mesh(new THREE.PlaneGeometry(0.5,5),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false})); line.rotation.x=-Math.PI/2; line.position.z=2.6; g.add(line);
   const head=new THREE.Mesh(new THREE.ConeGeometry(0.5,0.9,3),new THREE.MeshBasicMaterial({color:0xffe0a0,transparent:true,opacity:0.75,blending:THREE.AdditiveBlending,depthWrite:false})); head.rotation.x=Math.PI/2; head.position.z=5.25; g.add(head);
   g.visible=false; scene.add(g); aimGuide=g; }
-function aimable(){ return weapon==='sword'||weapon==='spear'; }
+function aimable(){ return weapon==='sword'||weapon==='spear'||weapon==='earth'; }
 function showAim(v){ ensureAim(); aimGuide.visible = v && charge>=100 && aimable(); if(aimGuide.visible){ aimGuide.position.set(player.position.x,0.05,player.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); } }
 function updateAimGuide(){ if(!aimGuide||!aimGuide.visible)return; aimGuide.position.set(player.position.x,0.05,player.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); }
 function readInput(){ let x=0,z=0; if(joy.active){x=joy.dx;z=joy.dz;} else{ if(keys['w']||keys['arrowup'])z-=1; if(keys['s']||keys['arrowdown'])z+=1; if(keys['a']||keys['arrowleft'])x-=1; if(keys['d']||keys['arrowright'])x+=1; } const len=Math.hypot(x,z); if(len>1){x/=len;z/=len;} move.x=x;move.z=z; }
@@ -6575,7 +6674,7 @@ function dexStop(){
 function clearArr(arr){ for(const x of arr){
   if(x.mesh){removeShadowFor(x.mesh);removeAndDispose(x.mesh);} if(x.m)removeAndDispose(x.m); if(x.tele)removeAndDispose(x.tele); if(x.extra)removeAndDispose(x.extra);
 } arr.length=0; }
-function clearField(){
+function clearField(){clearEarthField();
   if(player)player.userData.gsAttackT=0;if(ally){ally.grp.userData.gsAttackT=0;if(ally.gsSpin){removeAndDispose(ally.gsSpin);ally.gsSpin=null;}}
   resetContactDamage();
   clearAllIaiEchoes();
@@ -6877,7 +6976,7 @@ function pauseGame(){ if(state!=='play')return; state='pause'; pauseBgm();
   $('pauseStat').textContent=`${WEAPONS[weapon].name} ・ Lv ${level} ・ HP ${Math.ceil(PLAYER.hp)}/${PLAYER.maxHp} ・ 撃破 ${kills}`;
   showRunBuild('pauseBuild');showOv('pauseScreen'); }
 function resumeGame(){ if(state!=='pause')return; state='play'; resumeBgm(); showOv(null); }
-function gameOver(){
+function gameOver(){clearEarthField();
   clearAllIaiEchoes();
   clearBossPhaseVisuals();
   skipChallenge=null;
@@ -6919,10 +7018,12 @@ function update(dt){
   bossT=Math.max(0,bossT-dt); if(bossT<=1e-8&&!bossAlive&&!bossSpawned){ const bk=bossKeyForStage(); spawnEnemy(bk); const b=enemies[enemies.length-1]; beginBossEncounter(b); bossSpawned=true; startBossIntro(b); }
 
   for(const e of enemies){
+    const earthX=e.mesh.position.x,earthZ=e.mesh.position.z;
     if(e.pop<1){ e.pop=Math.min(1,e.pop+dt*4); e.mesh.scale.setScalar(e.pop); }
     e.forcedThisStep=updateEnemyForce(e,dt);
     if(e.puppet){updatePuppetEnemy(e,dt);applyEnemyForcePose(e);continue;}
     const tgt=nearestAvatar(e.mesh.position.x,e.mesh.position.z); const dx=tgt.grp.position.x-e.mesh.position.x,dz=tgt.grp.position.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
+    earthCasterPosition(e,tgt,dt);
     const bossHandled=e.boss?updateBossCombat(e,dt,tgt,dx,dz,d):false;
     if(e.forcedThisStep){e.stun=Math.max(0,(e.stun||0)-dt);}
     else if(!bossHandled&&e.stun>0){ e.stun-=dt; }
@@ -6931,6 +7032,7 @@ function update(dt){
       if(e.shoot){ if(d>e.rng+1){ e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; } else if(d<e.rng-2){ e.mesh.position.x-=dx/d*e.speed*dt; e.mesh.position.z-=dz/d*e.speed*dt; } e.fireCd-=dt; if(e.fireCd<=0){ enemyShoot(e); e.fireCd=e.boss?(e.fast?0.45:0.9):1.8*(e.mobFireMul||1); } }
       else { e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; }
     }
+    earthResolveEnemy(e,earthX,earthZ,dt);
     e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);applyEnemyForcePose(e);
   }
 
@@ -6963,13 +7065,14 @@ function update(dt){
     }
   }
   // 敵弾
-  for(let i=eBullets.length-1;i>=0;i--){ const b=eBullets[i]; b.mesh.position.x+=b.vx*dt; b.mesh.position.z+=b.vz*dt; b.life-=dt;
+  for(let i=eBullets.length-1;i>=0;i--){ const b=eBullets[i],earthX=b.mesh.position.x,earthZ=b.mesh.position.z; b.mesh.position.x+=b.vx*dt; b.mesh.position.z+=b.vz*dt; b.life-=dt;
+    if(earthBlockBullet(b,earthX,earthZ)){removeAndDispose(b.mesh);eBullets.splice(i,1);continue;}
     if(b.spin)b.mesh.rotation.y+=b.spin*dt;
     if(b.hue!==undefined){ b.hue=(b.hue+dt*0.9)%1; b.mesh.material.emissive.setHSL(b.hue,1,0.55); if(b.trail==='hue')b.tc=b.mesh.material.emissive.getHex(); }
     if(b.trail){ b.tT=(b.tT||0)-dt; if(b.tT<=0){ b.tT=(b.boss||b.maou)?0.05:0.09; mfxPuff(b.mesh.position,(b.trail==='hue'?(b.tc||0xffffff):b.trail),b.maou?1.8:(b.boss?1.3:0.8),0.2); } }
     let hitA=null; for(const a of avatars()){ if(isInvincible(a.isHost))continue; const dx=a.grp.position.x-b.mesh.position.x,dz=a.grp.position.z-b.mesh.position.z; if(dx*dx+dz*dz<(PLAYER.r+b.r)*(PLAYER.r+b.r)){ hitA=a; break; } } if(hitA){ damageAvatar(hitA.isHost,b.dmg); if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); continue; } if(b.life<=0){ if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); } }
 
-  updateMelees(dt); updateResidues(dt); updateDebris(dt); updateOrbs(dt); updateShadows(); updateEarthFx(dt);
+  updateEarthField(dt);updateMelees(dt); updateResidues(dt); updateDebris(dt); updateOrbs(dt); updateShadows(); updateEarthFx(dt);
 
   while(xp>=xpNeed){ xp-=xpNeed; level++; xpNeed=Math.round(xpNeed*1.35+4); pendingLevels++; }
   if(pendingLevels>0 && state==='play') startLevelUp();
@@ -7117,7 +7220,7 @@ function updateHud(){
   $('hLv').textContent=level; $('hKills').textContent=kills; $('hTime').textContent=fmtTime(gameTime);
   const sb=$('skillBtn'); sb.style.setProperty('--skill-charge',clamp(charge,0,100)*3.6+'deg');
   setWeaponIcon($('skillIc'),weapon); sb.classList.toggle('ready',charge>=100);
-  $('skillBt').textContent=buffT>0?Math.ceil(buffT)+'s':'';
+  $('skillBt').textContent=weapon==='earth'?'岩'+earthHudData()[0]+' / 蓄'+earthState().broken:buffT>0?Math.ceil(buffT)+'s':'';
   const db=$('dashBtn'); if(db){ if(weapon==='twin'){ const st=PLAYER.dashStock, part=(st<PLAYER.dashMax)?1-clamp(PLAYER.dashRe/DASH_RECHARGE,0,1):0; const deg=((st+part)/PLAYER.dashMax)*360; db.style.background=`conic-gradient(#8affd0 ${deg}deg, rgba(255,255,255,.12) 0deg)`; db.classList.toggle('ready',st>0||buffType==='twin'); const dbt=$('dashBt'); if(dbt)dbt.textContent='×'+st; } else { const frac=1-clamp(PLAYER.dashCd/DASH_CD,0,1); db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`; db.classList.toggle('ready',PLAYER.dashCd<=0); $('dashBt').textContent=PLAYER.dashCd>0?Math.ceil(PLAYER.dashCd)+'s':''; } }
   updateGunHud(weapon,buffType,buffT,gunAmmo,gunReloadT,gunBoost);
   { const dh=$('devourHud'); if(dh){ if(weapon==='devour'){ dh.classList.add('show'); setOriginalHTML(dh,'【図:weapon_devour】 喰らい <b>×'+devourStacks+'</b><br>攻撃力 +'+Math.round(devourStacks*2)+'%'); } else dh.classList.remove('show'); } }
