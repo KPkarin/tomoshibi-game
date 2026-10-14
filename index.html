@@ -1196,6 +1196,10 @@ body.playing #musicCreditToast{top:max(164px,calc(env(safe-area-inset-top) + 156
 </style><style>
 .original-icon--weapon{width:1.45em;height:1.45em;vertical-align:-.3em;filter:drop-shadow(0 2px 2px #0006);}
 .wb .i .original-icon--weapon{width:32px;height:32px;vertical-align:middle;}
+#skillBtn.puppet-skill{--skill-color:var(--puppet-color);}
+#skillBtn.puppet-skill #skillIc{display:flex;align-items:center;justify-content:center;gap:4px;color:var(--puppet-color);font-size:23px;}
+#skillBtn.puppet-skill #skillIc svg{width:24px;height:24px;}
+#skillBtn.puppet-skill #skillBt{font-size:10px;white-space:nowrap;}
 #skillIc .original-icon--weapon{width:1.25em;height:1.25em;vertical-align:middle;}
 
 [hidden]{display:none!important;}
@@ -1486,7 +1490,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.62</span>
+  <span class="title-version">v1.7.63</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2070,7 +2074,7 @@ const WEAPONS={
   earth:{name:'大地の支配者',rarity:'UR',icon:'【武器:earth】',dmg:140,interval:1.8,range:17,zoneR:3.8,chargeHit:1.4,col:0x9a7548,
     desc:'敵の足元へ防壁の岩を設置。近くの岩は増築し、通常攻撃3回で岩シールド+1（上限5）。スキル：全岩を消費して遠隔地割れ、割れたシールドで威力上昇。目の前に大型岩壁を設置（タップは最寄り敵、エイムは指定方向）。'},
   puppeteer:{name:'人形使い',rarity:'UR',icon:'【武器:puppeteer】',dmg:70,interval:2.0,range:20,bulletSpeed:30,bulletLife:1.2,chargeHit:1.0,col:0xe0335f,
-    desc:'命中した敵を操る（HP・攻撃・速度×2、最大5体、HP50%以下で解除）。スキル：周囲に糸攻撃・5秒拘束、人形は5秒無敵・速度×5。'},
+    desc:'自身が撃破した雑魚を人形化（最大5体、最大HP・火力×2、速度×1.5）。ダッシュで集→狂→蜜を切替。集：通常10倍の強化針を上限体数分撃ち、撃破で強化人形（HP・火力さらに×3）。狂：全人形から糸爆散と永続の減速・加速フィールド。蜜：直近の人形を復活し、狙い先と足元へ糸を敷く。'},
 };
 const CHARGE_RATE=7;
 /* ===== 戦闘アイテム（出撃前に1本消費して効果を発動する消費アイテム） ===== */
@@ -3204,7 +3208,7 @@ function skipRewardHTML(items){ const order=['UR','SSR','SR','R','N']; const cnt
   const chips=order.filter(k=>cnt[k]>0).map(k=>`<span style="color:${RARITY[k].color};font-weight:800;margin:0 5px">${k}×${cnt[k]}</span>`).join('');
   return `<div class="eline2" style="text-align:center;margin-bottom:6px">報酬 <b class="ember">×${items.length}</b>（最高レア）</div>`+rewardCardHTML(best)+`<div style="text-align:center;font-size:12px;margin-top:8px">${chips}</div>`; }
 function stageClear(){
-  clearEarthField();
+  clearPuppeteer();clearEarthField();
   clearAllIaiEchoes();
   clearBossPhaseVisuals();
   stopBgm(); playSfxClear(); playBossOutcomeSfx(true,activeBossAudioKey);
@@ -3316,6 +3320,7 @@ function enemyRangeTele(r,op=.65){
 function bossTeleCircle(x,z,r,col,op){ const m=enemyRangeTele(r,Math.max(.6,op||.65));m.position.set(x,.075,z);m.userData.bossTele={r,col:0xff2525};scene.add(m);return m; }
 function bossGroundBlast(e,x,z,r,dmg,col){
   col=col||bossAccent(e);
+  damagePuppetsInCircle(x,z,r,dmg*Math.sqrt(stageMul()));
   for(const a of avatars()){const dx=a.grp.position.x-x,dz=a.grp.position.z-z;if(dx*dx+dz*dz<=r*r)damageAvatar(a.isHost,dmg*Math.sqrt(stageMul()));}
   const ring=stumpGroundRing(Math.max(.2,r*.16),Math.max(.35,r*.28),col,.9); ring.position.set(x,.07,z); scene.add(ring); melees.push({m:ring,life:.5,max:.5,o0:.9,grow:r/Math.max(.3,r*.22)});
   spawnDebris({x:x,y:.1,z:z},col,10,Math.min(2.2,r*.35));
@@ -3456,6 +3461,7 @@ function updateStump(e,dt){
   }
   if(e.aoeT<=0){ // スラム：範囲ダメージ＋衝撃波
     for(const a of avatars()){ const ax=a.grp.position.x-px, az=a.grp.position.z-pz; if(ax*ax+az*az<=range*range){ damageAvatar(a.isHost,STUMP_DMG); } }
+    damagePuppetsInCircle(px,pz,range,STUMP_DMG);
     const ring=stumpGroundRing(e.r*1.1,e.r*1.55,0x5ed17a,0.85); ring.position.set(px,0.06,pz); scene.add(ring);
     melees.push({m:ring,life:0.5,max:0.5,o0:0.85,grow:range/(e.r*1.3)});
     if(e.mesh.userData.voids)for(const v of e.mesh.userData.voids){ /* 顔は黒のまま */ }
@@ -3508,7 +3514,7 @@ function makeAllyAvatar(){
 }
 function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   resetContactDamage(1);
-  if(ally)clearEarthOwner(ally.grp);
+  if(ally){clearPuppetOwner(ally.grp);clearEarthOwner(ally.grp);}
   if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho);
   if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);
   if(!ally) ally={grp:makeAllyAvatar()};
@@ -3522,7 +3528,7 @@ function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   ally.grp.position.set(2,0,0); ally.grp.visible=true;
   const r=ally.grp.userData.ring; if(ally.pElem.element){ r.material.color.set(ELEM[ally.pElem.element].color); r.visible=true; } else r.visible=false;
 }
-function removeAlly(){if(ally)clearEarthOwner(ally.grp);resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
+function removeAlly(){if(ally){clearPuppetOwner(ally.grp);clearEarthOwner(ally.grp);}resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
 
 /* コンテキスト退避：既存の攻撃関数を2人目に流用 */
 let _sv=null;
@@ -3567,7 +3573,7 @@ function doDash(){ if(state!=='play'||introActive)return; if(PLAYER.dashT>0||gre
   else { if(PLAYER.dashCd>0)return; }
   let dx=move.x,dz=move.z; if(!dx&&!dz){ dx=Math.sin(player.rotation.y); dz=Math.cos(player.rotation.y); }
   const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
-  PLAYER.dashVX=dx*DASH_SPEED; PLAYER.dashVZ=dz*DASH_SPEED; PLAYER.dashT=DASH_TIME; if(weapon!=='twin')PLAYER.dashCd=DASH_CD; const dang=Math.atan2(dx,dz); player.rotation.y=dang; spawnDashFx(player.position); if(weapon==='twin')twinDashSlash(dang); }
+  PLAYER.dashVX=dx*DASH_SPEED; PLAYER.dashVZ=dz*DASH_SPEED; PLAYER.dashT=DASH_TIME; if(weapon!=='twin')PLAYER.dashCd=DASH_CD; const dang=Math.atan2(dx,dz); player.rotation.y=dang; spawnDashFx(player.position); if(weapon==='twin')twinDashSlash(dang);if(weapon==='puppeteer')cyclePuppetMode(); }
 function twinDashSlash(ang){ const W=WEAPONS.twin; const dmg=baseDmg()*2.5*((RUN&&RUN.twinDashPower)||1); const rng=meleeRange('twin')*1.25;
   meleeAttack(ang,rng,2.6,dmg,0,0x8affd0,true);
   spawnSwordSwing(ang,rng*1.15,0x8affd0,true,true);
@@ -3580,7 +3586,7 @@ function allyDash(){ if(!ally||ally.hp<=0||ally.dashT>0||greatswordRooted(ally.g
   let dx=ally.move.x,dz=ally.move.z; if(!dx&&!dz){ dx=Math.sin(ally.grp.rotation.y); dz=Math.cos(ally.grp.rotation.y); }
   const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
   ally.dashVX=dx*DASH_SPEED; ally.dashVZ=dz*DASH_SPEED; ally.dashT=DASH_TIME; if(!twin)ally.dashCd=DASH_CD; const ang=Math.atan2(dx,dz);ally.grp.rotation.y=ang;spawnDashFx(ally.grp.position);
-  if(twin){loadAlly();try{twinDashSlash(ang);}finally{storeAlly();}} }
+  if(twin){loadAlly();try{twinDashSlash(ang);}finally{storeAlly();}}if(ally.weapon==='puppeteer')cyclePuppetMode(ally.grp); }
 function dashPress(){ if(NET.role==='client'){ netSendDash(); } else { doDash(); } }
 function netSendDash(){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].send({t:'dash'}); }catch(e){} } }
 // 敵から最も近い味方（host=player or ally）の位置とhp参照
@@ -3687,17 +3693,17 @@ function netSendSkill(ang){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[
 
 /* ---- スナップショット ---- */
 function buildSnapshot(){
-  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost,ds:PLAYER.dashStock,dr:PLAYER.dashRe,dm:PLAYER.dashMax,ea:weapon==='earth'?earthHudData(player):null}];
-  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ds:ally.dashStock,dr:ally.dashRe,dm:ally.dashMax,ea:ally.weapon==='earth'?earthHudData(ally.grp):null,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
-  const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; const fm=enemyForcePacket(e);if(fm)o.fm=fm;if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
-  const pb=pBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.mage?1:0,s:b.pierce?1:0,g:b.gun?1:0}));
+  const ps=[{x:player.position.x,z:player.position.z,hp:PLAYER.hp,mhp:PLAYER.maxHp,el:pElem.element||'',cg:charge,bt:buffT,dc:PLAYER.dashCd,sh:PLAYER.rockShield||0,wp:weapon,ty:buffType,ry:player.rotation.y,ga:gunAmmo,gr:gunReloadT,gb:gunBoost,ds:PLAYER.dashStock,dr:PLAYER.dashRe,dm:PLAYER.dashMax,ea:weapon==='earth'?earthHudData(player):null,pa:weapon==='puppeteer'?puppetHudData(player,RUN):null}];
+  if(ally)ps.push({x:ally.grp.position.x,z:ally.grp.position.z,hp:ally.hp,mhp:ally.maxHp,el:(ally.pElem&&ally.pElem.element)||'',cg:ally.charge,bt:ally.buffT,dc:ally.dashCd,sh:ally.rockShield||0,wp:ally.weapon,ty:ally.buffType,ry:ally.grp.rotation.y,ga:ally.gunAmmo,gr:ally.gunReloadT,gb:ally.gunBoost,ds:ally.dashStock,dr:ally.dashRe,dm:ally.dashMax,ea:ally.weapon==='earth'?earthHudData(ally.grp):null,pa:ally.weapon==='puppeteer'?puppetHudData(ally.grp,ally.run):null,ag:attackGuideSpec(ally.weapon,ally.run,ally.grp,ally.buffType,ally.iaiCharge)});
+  const en=enemies.map(e=>{ const o={i:e.id,k:e.key,e:e.element||'',x:e.mesh.position.x,z:e.mesh.position.z}; if(e.puppet)o.pp=[e.puppetOwner===player.uuid?0:1,e.puppetStrong?1:0,clamp(e.hp/e.maxHp,0,1),e.puppetPose||0,e.mesh.rotation.y];const fm=enemyForcePacket(e);if(fm)o.fm=fm;if(e.stump){ o.w=e.aw||0; o.sl=e.slam||0; } if(e.boss&&bossDamageWindow(e)===0){ o.iv=Math.ceil((e.inv>0?e.inv:e.bossAI.t)*10)/10; } return o; });
+  const pb=pBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.mage?1:0,s:b.pierce?1:0,g:b.gun?1:0,p:b.puppet||b.puppetAttack?1:0,q:b.puppetStrong?1:0}));
   const eb=eBullets.map(b=>({x:b.mesh.position.x,z:b.mesh.position.z,m:b.maou||0,c:b.col||0,r:b.r||.26}));
   const ie=[];if(iaiEcho)ie.push(iaiEchoSnapshot(iaiEcho,0));if(ally&&ally.hp>0&&ally.iaiEcho)ie.push(iaiEchoSnapshot(ally.iaiEcho,1));
   const meEv=meleeEvents; meleeEvents=[];
   const dmEv=dmgEvents; dmgEvents=[];
   const _bz=enemies.find(e=>e.boss); const bh=_bz?clamp(_bz.hp/_bz.maxHp,0,1):null; const bx=_bz?_bz.mesh.position.x:null, bzz=_bz?_bz.mesh.position.z:null;
   let bf=null;if(_bz&&_bz.bossAI){const a=_bz.bossAI,tele=a.tele&&a.tele.userData.bossTele?[a.tele.position.x,a.tele.position.z,a.tele.userData.bossTele.r,a.tele.userData.bossTele.col,a.tele.material.opacity]:null;bf={s:a.state,p:a.pattern,t:tele,z:a.zones.map(q=>[q.x,q.z,q.r,q.col,q.tele?q.tele.material.opacity:.3])};}
-  return {t:'snap',st:state,gt:gameTime,lv:level,ki:kills,ps,en,pb,eb,bi:introActive?1:0,bs:bossSpawned?1:0,bh,bx,bzz,bk:_bz?_bz.key:null,bf,mr:maouRing?[maouRing.x,maouRing.z,maouRing.r]:null,md:mode,mo:(mode==='normal'?motifKey:null),ie,er:earthFieldSnapshot(),me:meEv,dm:dmEv};
+  return {t:'snap',st:state,gt:gameTime,lv:level,ki:kills,ps,en,pb,eb,bi:introActive?1:0,bs:bossSpawned?1:0,bh,bx,bzz,bk:_bz?_bz.key:null,bf,mr:maouRing?[maouRing.x,maouRing.z,maouRing.r]:null,md:mode,mo:(mode==='normal'?motifKey:null),ie,er:earthFieldSnapshot(),pf:puppetFieldSnapshot(),me:meEv,dm:dmEv};
 }
 function netHostTick(now){ if(NET.role!=='host'||!NET.started)return; if(now-NET.lastSnap<70)return; NET.lastSnap=now; const snap=buildSnapshot(); for(const c of NET.conns){ if(c.open){ try{ c.send(snap); }catch(e){} } } }
 
@@ -3707,7 +3713,7 @@ const C_BULLET_GEO=pinGpuResource(new THREE.SphereGeometry(1,10,8)),C_BULLET_MAT
 function cBulletMat(col,ei){const k=col+':'+ei;let m=C_BULLET_MATS.get(k);if(!m){m=pinGpuResource(new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:ei||1.2}));C_BULLET_MATS.set(k,m);}return m;}
 function cStumpRing(rIn,rOut){return enemyRangeTele(rOut,0);}
 function cSpawnMelee(ev){ const previousOwner=weaponMotionOwner;weaponMotionOwner=C.players[ev.owner===1?1:0]||null;const sx=player.position.x, sz=player.position.z; player.position.x=ev.x; player.position.z=ev.z;
-  try{ if(ev.k==='focus')spawnFocusCast(ev.wk,ev.a,ev.col);else if(ev.k==='t') spawnThrust(ev.a,ev.r,ev.col,!!ev.s); else if(ev.k==='r') spawnRodCast(ev.a,ev.col); else if(ev.k==='b') spawnBowDraw(ev.a,ev.col); else if(ev.k==='I'){spawnIaiEchoFinal({x:ev.x,z:ev.z,a:ev.a,l:ev.r});} else if(ev.k==='i'){ spawnIaiLine(ev.a,ev.r||30,ev.pw||1); spawnKatanaSwing(ev.a,(ev.pw||1)>2.2); } else if(ev.k==='c'){ spawnChainSpin(ev.a,ev.r||5,ev.col||0xffe08a,!!ev.s); } else if(ev.k==='h'){spawnHammerSwing(ev.a,ev.r||4,ev.col||0xffcf6a);const cx=ev.x+Math.sin(ev.a)*(ev.r||4)*0.65, cz=ev.z+Math.cos(ev.a)*(ev.r||4)*0.65; spawnSlamShock(cx,cz,3.0,ev.col||0xffcf6a); } else if(ev.k==='f'){ spawnFudeZone(ev.x,ev.z,ev.r||2.6,0,0.1,false); }
+  try{ if(ev.k==='P')puppetCommandVisual(ev.x,ev.z,ev.pm||0,ev.a,false,weaponMotionOwner);else if(ev.k==='Q')puppetBurstVisual(ev.x,ev.z,ev.r);else if(ev.k==='focus')spawnFocusCast(ev.wk,ev.a,ev.col);else if(ev.k==='t') spawnThrust(ev.a,ev.r,ev.col,!!ev.s); else if(ev.k==='r') spawnRodCast(ev.a,ev.col); else if(ev.k==='b') spawnBowDraw(ev.a,ev.col); else if(ev.k==='I'){spawnIaiEchoFinal({x:ev.x,z:ev.z,a:ev.a,l:ev.r});} else if(ev.k==='i'){ spawnIaiLine(ev.a,ev.r||30,ev.pw||1); spawnKatanaSwing(ev.a,(ev.pw||1)>2.2); } else if(ev.k==='c'){ spawnChainSpin(ev.a,ev.r||5,ev.col||0xffe08a,!!ev.s); } else if(ev.k==='h'){spawnHammerSwing(ev.a,ev.r||4,ev.col||0xffcf6a);const cx=ev.x+Math.sin(ev.a)*(ev.r||4)*0.65, cz=ev.z+Math.cos(ev.a)*(ev.r||4)*0.65; spawnSlamShock(cx,cz,3.0,ev.col||0xffcf6a); } else if(ev.k==='f'){ spawnFudeZone(ev.x,ev.z,ev.r||2.6,0,0.1,false); }
   else if(ev.k==='E'){earthQuakeVisual(ev.x,ev.z,ev.r||4,!!ev.v);}
   else if(ev.k==='e'){ spawnSlamShock(ev.x,ev.z,ev.r||3.8,ev.col||0x9a7548); spawnRockSpikes(ev.x,ev.z,ev.r||3.8,false,0); }
   else if(ev.k==='q'){ const dx=Math.sin(ev.a),dz=Math.cos(ev.a),len=ev.r||18; spawnSlamShock(ev.x+dx*len*0.4,ev.z+dz*len*0.4,3.2,ev.col||0x9a7548); spawnFissure(ev.x,ev.z,ev.a,len); }
@@ -3725,8 +3731,8 @@ function syncClientBossFx(bf){
   else if(bf.s==='rage'){document.body.classList.add('boss-pressure');setBossPhaseText('RAGE  ·  ダメージ無効','#ffd36a');if(changed){showBossPhase('RAGE','ダメージ無効','rage');playBossRageSfx(activeBossAudioKey);}}
   else{document.body.classList.add('boss-pressure');setBossPhaseText('DANGER  ·  攻勢20秒・防御×3','#ff6868');if(changed&&bf.s==='windup'){showBossPhase('DANGER',(BOSS_ATTACK_NAMES[bf.p]||'必殺攻撃')+' · 防御×3','danger');playBossAttackSfx(activeBossAudioKey,bf.p);}}
 }
-function updateClientFx(dt){updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
-function clearClient(){clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
+function updateClientFx(dt){updatePuppetClient(dt);updateClientEnemyForces(dt);updateEarthClientVisuals();for(const g of C.players){updateRockShieldVisual(g,g.userData.shieldCount||0,dt);if(g.userData.gunMesh){const u=g.userData;u.clientGunReload=Math.max(0,(u.clientGunReload||0)-dt);u.clientGunKick=Math.max(0,(u.clientGunKick||0)-dt*8);updateGunModel(u.gunMesh,u.gunSkill,dt);poseGun(u.gunMesh,u.clientGunKick,u.clientGunReload,u.gunSkill);}}for(let i=C.shocks.length-1;i>=0;i--){ const s=C.shocks[i]; s.t+=dt; const u=s.t/s.dur; s.m.scale.setScalar(1+u*14); s.m.material.opacity=0.85*(1-u); if(u>=1){ removeAndDispose(s.m); C.shocks.splice(i,1); } } }
+function clearClient(){clearPuppetClient();clearEarthClient();syncClientIaiEchoes([]);clearUpgradeVisuals();for(const g of C.players){removeShadowFor(g);removeAndDispose(g);} C.players=[]; for(const[,m]of C.enemies)removeAndDispose(m); C.enemies.clear(); for(const m of C.bullets)removeAndDispose(m); C.bullets=[]; for(const[,fx]of C.stumpFx){ if(fx.tele)removeAndDispose(fx.tele); } C.stumpFx.clear(); for(const[,m]of C.bossFx)removeAndDispose(m);C.bossFx.clear();C.bossState='';clearBossPhaseVisuals();for(const s of C.shocks)removeAndDispose(s.m); C.shocks=[]; clearArr(melees); }
 function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Group(); const col=i===0?0xffb24a:0x6fd0ff;
   const pm=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.38,roughness:.48});
   const body=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.9,18),pm); body.position.y=0.7; const head=new THREE.Mesh(new THREE.SphereGeometry(0.42,20,16),pm); head.position.y=1.32;
@@ -3734,22 +3740,22 @@ function cPlayer(i){ if(C.players[i])return C.players[i]; const grp=new THREE.Gr
   const vr=new THREE.Mesh(new THREE.RingGeometry(.6,.88,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.88,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;grp.add(vr);grp.userData.visRing=vr;attachBodyHitboxRing(grp,PLAYER.r,i===0?0xffd35a:0x65e7ff);
   const pl=new THREE.PointLight(col,2.5,23,2); pl.position.y=4.0; grp.add(pl); // 本体から離した光源で周囲を照らす
   scene.add(grp); addShadow(grp,0.7); C.players[i]=grp; return grp; }
-function applySnapshot(d){syncEarthField(d.er);
+function applySnapshot(d){syncEarthField(d.er);syncPuppetFields(d.pf);
   syncClientIaiEchoes(d.ie||[]);
   if(C.theme!==d.md||C.mo!==(d.mo||null)){ C.theme=d.md; C.mo=d.mo||null; applyFieldTheme(d.md,C.mo); }
   // players
-  d.ps.forEach((p,i)=>{const g=cPlayer(i);g.position.x=p.x;g.position.z=p.z;g.userData.shieldCount=p.sh||0;if(typeof p.ry==='number')g.rotation.y=p.ry;if(p.wp==='gun'){if(!g.userData.gunMesh){g.userData.gunMesh=buildGameGun();g.add(g.userData.gunMesh);}g.userData.gunMesh.visible=true;g.userData.gunMesh.position.set(.3,1.05,.25);g.userData.gunSkill=p.ty==='gun';if(p.ga!==undefined&&g.userData.lastGunAmmo!==undefined&&p.ga<g.userData.lastGunAmmo)g.userData.clientGunKick=1;g.userData.lastGunAmmo=p.ga;g.userData.clientGunReload=Math.max(0,p.gr||0);updateGunModel(g.userData.gunMesh,g.userData.gunSkill,0);poseGun(g.userData.gunMesh,g.userData.clientGunKick||0,g.userData.clientGunReload,g.userData.gunSkill);}else if(g.userData.gunMesh)g.userData.gunMesh.visible=false;const vr=g.userData.visRing;if(vr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');vr.visible=vis;if(vis)vr.material.color.setHex(d.mo==='jungle'?0xffd35a:0x245cff);}});
+  d.ps.forEach((p,i)=>{const g=cPlayer(i);g.userData.puppetEnabled=p.wp==='puppeteer';g.userData.puppetCharge=p.cg||0;if(g.userData.puppetEnabled){const s=puppetState(g),q=Array.isArray(p.pa)?p.pa:[];s.mode=[0,1,2].includes(q[0])?q[0]:0;s.ammo=Math.max(0,q[1]||0);}g.position.x=p.x;g.position.z=p.z;g.userData.shieldCount=p.sh||0;if(typeof p.ry==='number')g.rotation.y=p.ry;if(p.wp==='gun'){if(!g.userData.gunMesh){g.userData.gunMesh=buildGameGun();g.add(g.userData.gunMesh);}g.userData.gunMesh.visible=true;g.userData.gunMesh.position.set(.3,1.05,.25);g.userData.gunSkill=p.ty==='gun';if(p.ga!==undefined&&g.userData.lastGunAmmo!==undefined&&p.ga<g.userData.lastGunAmmo)g.userData.clientGunKick=1;g.userData.lastGunAmmo=p.ga;g.userData.clientGunReload=Math.max(0,p.gr||0);updateGunModel(g.userData.gunMesh,g.userData.gunSkill,0);poseGun(g.userData.gunMesh,g.userData.clientGunKick||0,g.userData.clientGunReload,g.userData.gunSkill);}else if(g.userData.gunMesh)g.userData.gunMesh.visible=false;const vr=g.userData.visRing;if(vr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');vr.visible=vis;if(vis)vr.material.color.setHex(d.mo==='jungle'?0xffd35a:0x245cff);}});
   while(C.players.length>d.ps.length){ const old=C.players.pop();removeShadowFor(old);removeAndDispose(old); }
   // enemies (id差分)
   const seen=new Set(); let bossInvNow=false;
-  for(const e of d.en){ seen.add(e.i); if(e.iv!==undefined)bossInvNow=true; let m=C.enemies.get(e.i); if(!m){const def=ETYPES[e.k]||ETYPES.imp;m=buildEnemyModel(e.k,def);const vr=new THREE.Mesh(new THREE.RingGeometry(def.r*1.05,def.r*1.45,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;m.add(vr);m.userData.clientVisRing=vr;attachBodyHitboxRing(m,def.r,0xff6474);scene.add(m);C.enemies.set(e.i,m);}setClientEnemyPosition(m,e.x,e.z,e.fm);m.rotation.y=Math.atan2((C.meX||0)-e.x,(C.meZ||0)-e.z);const evr=m.userData.clientVisRing;if(evr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');evr.visible=vis;if(vis)evr.material.color.setHex(d.mo==='jungle'?0x65e7ff:0xff4f7b);}
+  for(const e of d.en){ seen.add(e.i); if(e.iv!==undefined)bossInvNow=true; let m=C.enemies.get(e.i); if(!m){const def=ETYPES[e.k]||ETYPES.imp;m=buildEnemyModel(e.k,def);const vr=new THREE.Mesh(new THREE.RingGeometry(def.r*1.05,def.r*1.45,30),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false}));vr.rotation.x=-Math.PI/2;vr.position.y=.03;vr.visible=false;m.add(vr);m.userData.clientVisRing=vr;attachBodyHitboxRing(m,def.r,0xff6474);scene.add(m);C.enemies.set(e.i,m);}setClientEnemyPosition(m,e.x,e.z,e.fm);m.rotation.y=Math.atan2((C.meX||0)-e.x,(C.meZ||0)-e.z);syncPuppetEnemy(m,e.pp,e.i);const evr=m.userData.clientVisRing;if(evr){const vis=d.md==='normal'&&(d.mo==='jungle'||d.mo==='cloud');evr.visible=vis;if(vis)evr.material.color.setHex(d.mo==='jungle'?0x65e7ff:0xff4f7b);}
     if(e.w!==undefined){ const range=ETYPES.stump.r*4.4; let fx=C.stumpFx.get(e.i); if(!fx){ fx={tele:cStumpRing(range*0.95,range),lastSl:e.sl||0,range}; scene.add(fx.tele); C.stumpFx.set(e.i,fx); }
       fx.tele.position.set(e.x,0.05,e.z); fx.tele.material.opacity=e.w>0?(0.65+0.25*e.w):0; fx.tele.scale.setScalar(1);
       if((e.sl||0)!==fx.lastSl){ fx.lastSl=e.sl||0; cSpawnShock(e.x,e.z,fx.range); } } }
   for(const[id,m]of C.enemies){ if(!seen.has(id)){ removeAndDispose(m); C.enemies.delete(id); const fx=C.stumpFx.get(id); if(fx){ if(fx.tele)removeAndDispose(fx.tele); C.stumpFx.delete(id); } } }
   // bullets（毎回作り直し・少数）
   for(const m of C.bullets)removeAndDispose(m); C.bullets=[];
-  for(const b of d.pb){ const col=b.m?0xc79bff:(b.s?0x9fd6ff:0xffe08a),r=b.m?.3:.22; const mm=new THREE.Mesh(C_BULLET_GEO,cBulletMat(col,1.2));mm.scale.setScalar(r);mm.position.set(b.x,.95,b.z);scene.add(mm);C.bullets.push(mm); }
+  for(const b of d.pb){ const col=b.q?0xffd26b:b.p?0xf06b9d:b.m?0xc79bff:(b.s?0x9fd6ff:0xffe08a),r=b.m?.3:.22; const mm=new THREE.Mesh(C_BULLET_GEO,cBulletMat(col,1.2));mm.scale.setScalar(r);mm.position.set(b.x,.95,b.z);scene.add(mm);C.bullets.push(mm); }
   for(const b of d.eb){ let mm; if(b.c){const r=b.r||.3;mm=new THREE.Mesh(C_BULLET_GEO,cBulletMat(b.c,1.65));mm.scale.setScalar(r);mm.add(glow(b.c,r*12));}else if(b.m){mm=new THREE.Mesh(C_BULLET_GEO,cBulletMat(0x9fd8ff,1.9));mm.scale.setScalar(.5);mm.add(glow(0x9fd8ff,3.6));}else{const _mc=(motifKey&&MOTIFS[motifKey])?MOTIFS[motifKey].acc:null,col=_mc||0xff3d7f;mm=new THREE.Mesh(C_BULLET_GEO,cBulletMat(col,1.2));mm.scale.setScalar(.26);}mm.position.set(b.x,1,b.z);scene.add(mm);C.bullets.push(mm); }
   // 自分(=ps[1])のカメラ・HUD
   if(player.visible)player.visible=false; // クライアントではローカル自機を隠す（描画はC.playersが担当）
@@ -3757,8 +3763,9 @@ function applySnapshot(d){syncEarthField(d.er);
     $('hpFill').style.width=clamp(me.hp/me.mhp*100,0,100)+'%';
     const shw=$('shieldWrap'); if(shw){ const sh=me.sh||0; shw.classList.toggle('on',sh>0); if(sh>0)setOriginalText(shw,'【図:rock】×'+sh); }
     const sb=$('skillBtn'); if(sb){ const cg=me.cg||0; sb.style.setProperty('--skill-charge',clamp(cg,0,100)*3.6+'deg'); sb.classList.toggle('ready',cg>=100); }
-    const sic=$('skillIc');setWeaponIcon(sic,me.wp||weapon);updateGunHud(me.wp||weapon,me.ty,me.bt||0,me.ga,me.gr||0,me.gb||0);
+    const sic=$('skillIc');if(me.wp!=='puppeteer')setWeaponIcon(sic,me.wp||weapon);updateGunHud(me.wp||weapon,me.ty,me.bt||0,me.ga,me.gr||0,me.gb||0);
     const sbt=$('skillBt'); if(sbt)sbt.textContent=me.wp==='earth'&&me.ea?'岩'+me.ea[0]+' / 蓄'+me.ea[1]:(me.bt&&me.bt>0)?Math.ceil(me.bt)+'s':'';
+    updatePuppetHud(me.wp,me.pa,me.cg||0);
     const db=$('dashBtn'); if(db){const dbt=$('dashBt');if(me.wp==='twin'&&Number.isFinite(me.ds)){const max=me.dm||3,st=me.ds,part=st<max?1-clamp((me.dr||0)/DASH_RECHARGE,0,1):0;db.style.background=`conic-gradient(#8affd0 ${(st+part)/max*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',st>0||me.ty==='twin');if(dbt)dbt.textContent='×'+st;}else{const dc=me.dc||0,frac=1-clamp(dc/DASH_CD,0,1);db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`;db.classList.toggle('ready',dc<=0);if(dbt)dbt.textContent=dc>0?Math.ceil(dc)+'s':'';} } }
   $('hLv').textContent=d.lv; $('hKills').textContent=d.ki; $('hTime').textContent=fmtTime(d.gt);
   setBossBar((d.bh!=null&&!d.bi)?d.bh:null,d.bk);
@@ -4806,6 +4813,7 @@ function spawnEnemy(key){
 /* ===== 攻撃ロジック ===== */
 function baseDmg(){ const stk=(weapon==='devour')?(1+devourStacks*0.02):1; const base=(WEAPONS[weapon].dmg*weaponDupeMul(weapon)); return base*pDmgMul*stk*(buffType==='bow'?3:buffType==='twin'?3:buffType==='knuckle'?2:1); }
 function rechargeMul(){
+  if(weapon==='puppeteer'&&puppetState().ammo>0)return 0;
   if((weapon==='iai'&&buffType==='iai')||(weapon==='spirit'&&buffType==='spirit'))return 0;
   if(weapon==='gun')return .4;
   if(weapon==='twin')return buffType==='twin'?.0625:1;
@@ -4843,21 +4851,26 @@ function updateTwinDashRecharge(dt){
 function fireRange(){ const W=WEAPONS[weapon]; let effR=meleeRange(); if(weapon==='knuckle'&&buffType==='knuckle')effR=5.0*RUN.rangeMul; return W.melee?(effR+1.5):(weapon==='gun'?gunRange(RUN,buffType==='gun'):weapon==='iai'?50:PLAYER.range); }
 function addCharge(n){ if(buffType==='knuckle')return; charge=Math.min(100,charge+n*tomoChargeMul()*rechargeMul()); }
 function nearestEnemy(range){ let best=null,bd=range*range; for(const e of enemies){if(e.puppet)continue; const dx=e.mesh.position.x-player.position.x,dz=e.mesh.position.z-player.position.z,d=dx*dx+dz*dz; if(d<bd){bd=d;best=e;} } return best; }
-function killEnemy(e){
-  if(e.inv>0||(e.boss&&bossDamageWindow(e)===0))return; if(e.frenzyT>0){e.hp=Math.max(e.hp,1);return;}
-  if(e.puppet){puppetCount=Math.max(0,(puppetCount||0)-1);unmarkPuppet(e);}
-  const j=enemies.indexOf(e); if(j<0)return;
+function killEnemy(e,source){
+  if(e.puppet){dismissPuppet(e,true);return;}
+  if(e.inv>0||(e.boss&&bossDamageWindow(e)===0))return;
+  const j=enemies.indexOf(e);if(j<0)return;
+  awardEnemyKill(e);
+  const recruit=source?source.recruit:weapon==='puppeteer';
+  if(recruit&&weapon==='puppeteer'&&tryPuppetize(e,!!(source&&source.strong)))return;
+  spawnDebris(e.mesh.position,ETYPES[e.key].color,e.boss?22:7,e.boss?2.4:1);
+  if(e.bossAI)cleanupBossBrain(e);
+  removeShadowFor(e.mesh);if(e.ring)removeAndDispose(e.ring);if(e.tele){removeAndDispose(e.tele);e.tele=null;}
+  removeAndDispose(e.mesh);enemies.splice(enemies.indexOf(e),1);
+  if(e.boss){bossAlive=false;if(e.key==='maou')destroyMaouRing();stageClear();}
+}
+function awardEnemyKill(e){
+  kills++;
   if(weapon==='devour'&&NET.role!=='client')devourStacks+=e.boss?25:1+((RUN&&RUN.devourGrowth)||0);
   if(weapon==='scythe'&&NET.role!=='client'&&state==='play'){const heal=PLAYER.maxHp*((buffType==='scythe'?.04:.025)+((RUN&&RUN.scytheHeal)||0));PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+heal);}
-  spawnDebris(e.mesh.position,ETYPES[e.key].color,e.boss?22:7,e.boss?2.4:1);
-  const opos={x:e.mesh.position.x,y:e.mesh.position.y,z:e.mesh.position.z};
-  if(e.bossAI)cleanupBossBrain(e);
-  removeShadowFor(e.mesh); if(e.ring)removeAndDispose(e.ring); if(e.tele){removeAndDispose(e.tele);e.tele=null;}
-  removeAndDispose(e.mesh); enemies.splice(j,1); kills++;
   markDex(e.key); coins+=coinGain(Math.round((e.boss?40:2)*tierRewardMul()));
   if(e.key==='maou'){if(mode==='normal'&&stageNum===100)cycleCleared=true;const first=!save.maouCleared,mult=first?30:5;coins+=coinGain(40*(mult-1));save.maouCleared=true;let _mmsg=first?('魔王 初回討伐！ 報酬30倍 【図:coin】'+(coinGain(40*mult))):('魔王討伐 報酬5倍 【図:coin】'+(coinGain(40*mult)));if(mode==='normal'&&stageNum%100===0&&stageNum>(save.maouBonusMax|0)){save.maouBonusMax=stageNum;coins+=coinGain(5000);_mmsg+=' ＋討伐ボーナス【図:coin】'+coinGain(5000)+'！';}if(first)pendingFirstRewards.push({title:'魔王 初回討伐',text:_mmsg});else if(typeof toast==='function')toast(_mmsg);}
   xp+=e.xp*(1+xpPct()/100)*((RUN&&RUN.xpMul)||1);addCharge(e.boss?12:2);
-  if(e.boss){bossAlive=false;if(e.key==='maou')destroyMaouRing();stageClear();}
 }
 
 let orbs=[];
@@ -4967,9 +4980,9 @@ const UPGRADES3=[
   {id:'iaiFocus',w:'iai',max:3,nm:'静心の構え',ds:'静止中の気蓄積 +50%',ic:'【図:weapon_iai】',fx:'magic',ap:()=>{RUN.iaiFocus+=.5;}},
   {id:'iaiGuard',w:'iai',max:1,nm:'不動の守り',ds:'静止・気50%以上：被ダメージ −40%',ic:'【図:shield】',fx:'vitality',ap:()=>{RUN.iaiGuard=1;}},
   {id:'iaiStep',w:'iai',max:1,nm:'残心の足運び',ds:'気80%以上で抜刀：3秒間 移動速度 +40%',ic:'【図:dash】',fx:'move',ap:()=>{RUN.iaiStep=1;}},
-  {id:'puppetArmy',w:'puppeteer',max:2,excludes:'puppetElite',nm:'百鬼の行列',ds:'人形上限 +2 · 精鋭の糸と併用不可',ic:'【図:weapon_puppeteer】',fx:'projectile',ap:()=>{RUN.puppetArmy+=2;}},
-  {id:'puppetElite',w:'puppeteer',max:1,excludes:'puppetArmy',nm:'精鋭の糸',ds:'人形HP・攻撃 +90% · 上限3体（超過分解除）· 百鬼の行列と併用不可',ic:'【図:thread】',fx:'power',ap:()=>{RUN.puppetElite=1;const own=enemies.filter(e=>e.puppet&&e.puppetOwner===player.uuid);for(const e of own.slice(3))releasePuppet(e);for(const e of own.slice(0,3)){e.hp*=1.9;e.maxHp*=1.9;e.dmg*=1.9;}}},
-  {id:'puppetFrenzy',w:'puppeteer',max:2,nm:'狂宴の幕引き',ds:'人形の無敵・暴走 +3秒',ic:'【図:element_fire】',fx:'flame',ap:()=>{RUN.puppetFrenzy+=3;}},
+  {id:'puppetArmy',w:'puppeteer',max:2,nm:'百鬼の行列',ds:'人形上限・満充填時の集の弾数 +2（最大9体）',ic:'【図:weapon_puppeteer】',fx:'projectile',ap:()=>{RUN.puppetArmy+=2;}},
+  {id:'puppetElite',w:'puppeteer',max:1,nm:'精鋭の糸',ds:'強化人形の最大HP・火力 +50%（通常人形を圧迫しない）',ic:'【図:thread】',fx:'power',ap:()=>{RUN.puppetElite=1;strengthenExistingPuppets();}},
+  {id:'puppetFrenzy',w:'puppeteer',max:2,nm:'狂宴の糸結界',ds:'糸の半径 +20%、敵の減速・人形の加速を強化（次の展開から）',ic:'【図:thread】',fx:'arc',ap:()=>{RUN.puppetFrenzy+=1;}},
 
   {w:'all',nm:'攻撃速度 +20%',ds:'',ic:'【図:charge】',fx:'rapid',ap:()=>{pFireMul*=0.8;}},
   {w:'all',nm:'攻撃力 +20%',ds:'',ic:'【図:weapon_sword】',fx:'power',ap:()=>{pDmgMul*=1.2;}},
@@ -5111,7 +5124,8 @@ function poseWeaponMotion(s,p,k,dt){
     if(s.focusKind==='earth'){g.position.y=.1-.5*q+.28*r;g.rotation.set(-.4*q,.55*q,.12*Math.sin(p*Math.PI));g.scale.setScalar(1+.14*Math.sin(p*Math.PI));}
     else{g.position.y=.1+.25*q-.12*r;g.position.z=.6+.22*q-.18*r;g.rotation.set(-.28*q,.22*Math.sin(p*Math.PI),-.22*q+.14*r);}
     for(const m of g.userData.mats)m.opacity=motionFade(p);
-  }else if(s.swing){poseSwing(s,p,k);}
+  }else if(s.puppetFx){posePuppetFx(s,p,k);}
+  else if(s.swing){poseSwing(s,p,k);}
   else if(s.bow){
     const B=s.bow.bow,U=B.userData,release=motionEase(p/.25);
     // The real arrow is already launched by doFire: begin drawn and release immediately.
@@ -5284,7 +5298,7 @@ function gunHitTime(b,e,x0,z0){
   if(disc<0)return Infinity;const t=(-dot-Math.sqrt(disc))/a;return t>=0&&t<=1?t:Infinity;
 }
 function finishGunHit(b,e){
-  const guest=b.gun&&ally&&b.owner===ally.grp.uuid&&player!==ally.grp;
+  const guest=ally&&b.owner===ally.grp.uuid&&player!==ally.grp;
   if(guest)loadAlly();try{addCharge(.5);if(e.hp<=0)killEnemy(e);}finally{if(guest)storeAlly();}
 }
 function buildGameHammer(col){
@@ -5707,100 +5721,299 @@ function earthCasterPosition(e,tgt,dt){
 function earthBlockBullet(b,x0,z0){
  if(!earthNodes.length)return false;const p=b.mesh.position,hit=earthFirstHit(x0,z0,p.x,p.z,b.r||.26);if(!hit)return false;
  for(const a of avatars()){if(isInvincible(a.isHost))continue;const q=a.grp.position,n={kind:0,hp:1,x:q.x,z:q.z,a:0,r:PLAYER.r};if(earthSegmentHit(n,x0,z0,p.x,p.z,b.r||.26)<hit.t)return false;}
+ for(const e of enemies){if(e.puppet&&e.hp>0&&gunHitTime(b,e,x0,z0)<hit.t)return false;}
  const n=hit.node;earthDamageNode(n,Math.max(1,b.dmg||1));spawnSlamShock(x0+(p.x-x0)*hit.t,z0+(p.z-z0)*hit.t,.35,0xe7c996);return true;
 }
 
-function spawnThreadShot(dx,dz){
- spawnFocusCast('puppeteer',Math.atan2(dx,dz),WEAPONS.puppeteer.col);
-  const W=WEAPONS.puppeteer, len=Math.hypot(dx,dz)||1, ang=Math.atan2(dx,dz);
-  const spd=W.bulletSpeed*(RUN?RUN.bSpeedMul:1), blife=W.bulletLife*(RUN?RUN.bLifeMul:1);
-  const mesh=new THREE.Group(); mesh.rotation.y=ang;
-  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,0.9,6),new THREE.MeshStandardMaterial({color:0xffe4ec,emissive:W.col,emissiveIntensity:1.7,roughness:0.3})); shaft.rotation.x=Math.PI/2; mesh.add(shaft);
-  const tip=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.22,8),new THREE.MeshStandardMaterial({color:0xffffff,emissive:W.col,emissiveIntensity:1.8,roughness:0.2})); tip.rotation.x=Math.PI/2; tip.position.z=0.56; mesh.add(tip);
-  mesh.add(glow(W.col,1.1));
-  mesh.position.set(player.position.x,0.95,player.position.z); scene.add(mesh);
-  pBullets.push({mesh,vx:dx/len*spd,vz:dz/len*spd,life:blife,dmg:baseDmg(),r:0.22,puppet:true,owner:player.uuid,ownerRun:RUN,oel:pElem});
+/* The host owns the army. State belongs to the avatar, never a shared mode. */
+const PUPPET_RULES={hp:2,attack:2,speed:1.5,strong:3,collect:10,burst:2.4,fieldR:6,slow:.65,haste:2.2,history:32};
+const PUPPET_MODES=['集','狂','蜜'];
+let puppetFields=[],puppetFieldId=0,puppetSerial=0;
+function puppetState(actor=player){return actor.userData.puppetState||(actor.userData.puppetState={mode:0,ammo:0,history:[]});}
+function puppetCapacity(run=RUN){return Math.min(9,5+Math.max(0,(run&&run.puppetArmy)||0));}
+function ownPuppets(actor=player){return enemies.filter(e=>e.puppet&&e.puppetOwner===actor.uuid&&e.hp>0);}
+function puppetActor(uuid){return player.uuid===uuid?player:ally&&ally.grp.uuid===uuid?ally.grp:null;}
+function withPuppetOwner(actor,fn){
+ if(!actor)return false;
+ const guest=ally&&actor===ally.grp&&player!==ally.grp;
+ if(guest)loadAlly();try{return fn();}finally{if(guest)storeAlly();}
 }
-function markPuppet(e,col){
-  if(e.puppetMark)return;
-  const grp=new THREE.Group();
-  // 足元のリング（従来通り・視認性維持）
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(e.r*1.15,0.055,6,20),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false}));
-  ring.rotation.x=Math.PI/2; ring.position.y=e.r*0.1; grp.add(ring);
-  // ―― マリオネットの十字操作具（頭上に浮遊） ――
-  const rig=new THREE.Group();
-  const barMat=new THREE.MeshStandardMaterial({color:0xe8c890,emissive:0xa06a2a,emissiveIntensity:0.55,roughness:0.6,flatShading:true});
-  const b1=new THREE.Mesh(new THREE.BoxGeometry(1.15,0.08,0.14),barMat); rig.add(b1);
-  const b2=new THREE.Mesh(new THREE.BoxGeometry(1.15,0.08,0.14),barMat); b2.rotation.y=Math.PI/2; rig.add(b2);
-  // 先端の飾り玉
-  const knobMat=new THREE.MeshStandardMaterial({color:0xffe4ec,emissive:col,emissiveIntensity:1.2,roughness:0.3});
-  for(const[kx,kz]of[[0.58,0],[-0.58,0],[0,0.58],[0,-0.58]]){
-    const kb=new THREE.Mesh(new THREE.SphereGeometry(0.075,8,6),knobMat); kb.position.set(kx,0,kz); rig.add(kb); }
-  rig.add(glow(col,1.15));
-  // 操りの糸（十字の先端4本から人形の肩へ）
-  const drop=e.r*1.1+0.95;
-  const sp=new Float32Array(4*2*3); let si=0;
-  for(const[ex,ez]of[[0.58,0],[-0.58,0],[0,0.58],[0,-0.58]]){
-    sp[si++]=ex; sp[si++]=0; sp[si++]=ez;
-    sp[si++]=ex*0.28; sp[si++]=-drop; sp[si++]=ez*0.28; }
-  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
-  const strings=new THREE.LineSegments(sg,new THREE.LineBasicMaterial({color:0xffd8e8,transparent:true,opacity:0.7,depthWrite:false}));
-  rig.add(strings);
-  const baseY=e.r*1.6+1.35; rig.position.y=baseY; rig.userData.baseY=baseY;
-  grp.add(rig); grp.userData.rig=rig;
-  e.mesh.add(grp); e.puppetMark=grp;
+function puppetOwnerAlive(actor){return actor===player?PLAYER.hp>0:!!(ally&&actor===ally.grp&&ally.hp>0);}
+function puppetHudData(actor=player,run=RUN){const s=puppetState(actor);return [s.mode,s.ammo,ownPuppets(actor).length,puppetCapacity(run)];}
+function cyclePuppetMode(actor=player){
+ const s=puppetState(actor);s.mode=(s.mode+1)%3;
+ puppetCommandVisual(actor.position.x,actor.position.z,s.mode,actor.rotation.y,true,actor);
+ if(NET.role==='host'&&NET.started)puppetVisualEvent('P',actor,s.mode,actor.rotation.y);
 }
-function unmarkPuppet(e){ if(e.puppetMark){removeAndDispose(e.puppetMark);e.puppetMark=null;} }
-function tryPuppetizeForBullet(e,b){const actor=b.owner===player.uuid?player:ally&&b.owner===ally.grp.uuid?ally.grp:null;if(!actor)return false;const oldPlayer=player,oldRun=RUN;player=actor;RUN=b.ownerRun||RUN;try{return tryPuppetize(e);}finally{player=oldPlayer;RUN=oldRun;}}
-function tryPuppetize(e){
-  if(!e||e.boss||e.puppet)return false; const cap=RUN.puppetElite?3:5+RUN.puppetArmy;if(enemies.filter(o=>o.puppet&&o.puppetOwner===player.uuid).length>=cap)return false;
-  e.puppetOwner=player.uuid;e.puppetRun=RUN;e.puppet=true; e.puppetOrigMaxHp=e.maxHp; e.puppetOrigDmg=e.dmg;
-  const mult=RUN.puppetElite?3.8:2;e.maxHp*=mult;e.hp*=mult;e.dmg*=mult; e.puppetTgt=null; e.frenzyT=0;
-  puppetCount=(puppetCount||0)+1; markPuppet(e,WEAPONS.puppeteer.col); return true;
+function puppetSkillReady(actor=player,cg=charge){return cg>=100||puppetState(actor).ammo>0;}
+function puppetInputActor(){return NET.role==='client'?(C.players[1]||C.players[0]||player):player;}
+function puppetInputReady(){const actor=puppetInputActor();return puppetSkillReady(actor,NET.role==='client'?(actor.userData.puppetCharge||0):charge);}
+function puppetTemplate(e){return {key:e.key,r:e.r,maxHp:e.maxHp,speed:e.speed,dmg:e.dmg,projectileDmg:e.projectileDmg||e.baseProjectileDmg||14*Math.sqrt(stageMul()),rng:e.rng,shoot:e.shoot,element:e.element,mobFireMul:e.mobFireMul||1};}
+function applyPuppetStats(e,run){
+ const t=e.puppetTemplate,m=e.puppetStrong?PUPPET_RULES.strong*(run.puppetElite?1.5:1):1;
+ e.maxHp=t.maxHp*PUPPET_RULES.hp*m;e.hp=e.maxHp;
+ e.dmg=t.dmg*PUPPET_RULES.attack*m;e.projectileDmg=t.projectileDmg*PUPPET_RULES.attack*m;e.speed=t.speed*PUPPET_RULES.speed;
 }
-function releasePuppet(e){
-  if(!e.puppet)return;
-  e.puppet=false;delete e.puppetRun;delete e.puppetOwner; e.maxHp=e.puppetOrigMaxHp||Math.max(1,e.maxHp/2); e.dmg=e.puppetOrigDmg||e.dmg/2; e.hp=Math.min(e.hp,e.maxHp);
-  e.puppetTgt=null; e.frenzyT=0; puppetCount=Math.max(0,(puppetCount||0)-1); unmarkPuppet(e);
+function tryPuppetize(e,strong=false){
+ if(!e||e.boss||e.puppet||e.hp>0||!enemies.includes(e)||!puppetOwnerAlive(player))return false;
+ const own=ownPuppets(),cap=puppetCapacity();
+ if(own.length>=cap){
+  if(!strong)return false;
+  const oldest=own.filter(p=>!p.puppetStrong).sort((a,b)=>a.puppetSerial-b.puppetSerial)[0]||own.sort((a,b)=>a.puppetSerial-b.puppetSerial)[0];
+  dismissPuppet(oldest,true);
+ }
+ e.puppetTemplate=puppetTemplate(e);e.puppet=true;e.puppetOwner=player.uuid;e.puppetRun=RUN;e.puppetStrong=!!strong;e.puppetSerial=++puppetSerial;
+ e.puppetTgt=null;e.puppetCd=0;e.puppetContactCd=0;e.puppetPose=0;e.frenzyT=0;e.forceMove=e.forcePose=null;e.stun=0;e.inv=0;e.pop=1;e.mesh.scale.setScalar(1);
+ applyPuppetStats(e,RUN);puppetCount++;markPuppet(e,strong?0xffd26b:0xf06b9d);puppetBirthVisual(e);
+ return true;
 }
-function nearestEnemyForPuppet(e,preferStunned){
-  let best=null,bd=Infinity,bestS=null,bdS=Infinity;
-  for(const o of enemies){ if(o===e||o.puppet)continue;
-    const dx=o.mesh.position.x-e.mesh.position.x,dz=o.mesh.position.z-e.mesh.position.z,d=dx*dx+dz*dz;
-    if(preferStunned&&o.stun>0){ if(d<bdS){bdS=d;bestS=o;} }
-    if(d<bd){bd=d;best=o;} }
-  return (preferStunned&&bestS)?bestS:best;
+function tryPuppetizeForBullet(e,b){const actor=puppetActor(b.owner);return withPuppetOwner(actor,()=>tryPuppetize(e,!!b.puppetStrong));}
+function dismissPuppet(e,remember=true){
+ if(!e||!e.puppet||!enemies.includes(e))return;
+ const actor=puppetActor(e.puppetOwner);
+ if(remember&&actor){const h=puppetState(actor).history;h.push({template:{...e.puppetTemplate},strong:!!e.puppetStrong});if(h.length>PUPPET_RULES.history)h.shift();}
+ unmarkPuppet(e);removeShadowFor(e.mesh);if(e.ring)removeAndDispose(e.ring);if(e.tele)removeAndDispose(e.tele);removeAndDispose(e.mesh);
+ enemies.splice(enemies.indexOf(e),1);puppetCount=Math.max(0,puppetCount-1);
+}
+/* Kept as a compatibility entry point: a defeated puppet never becomes hostile. */
+function releasePuppet(e){dismissPuppet(e,true);}
+function clearPuppetOwner(actor){
+ if(!actor)return;for(const e of enemies.slice())if(e.puppet&&e.puppetOwner===actor.uuid)dismissPuppet(e,false);
+ for(const f of puppetFields.slice())if(f.owner===actor.uuid)removePuppetField(f);
+ delete actor.userData.puppetState;clearPuppetController(actor);
+}
+function clearPuppeteer(){const owners=new Set([player,ally&&ally.grp,_sv&&_sv.player].filter(Boolean));for(const actor of owners)clearPuppetOwner(actor);for(const f of puppetFields.slice())removePuppetField(f);puppetCount=0;}
+function revivePuppets(){
+ const s=puppetState(),free=Math.max(0,puppetCapacity()-ownPuppets().length);let count=0;
+ for(let i=0;i<free&&s.history.length;i++){
+  const h=s.history.pop(),t=h.template,mesh=buildEnemyModel(t.key,ETYPES[t.key]||ETYPES.imp),a=i*2.39996,r=1.6+Math.sqrt(i)*.7;
+  mesh.position.set(player.position.x+Math.sin(a)*r,0,player.position.z+Math.cos(a)*r);attachBodyHitboxRing(mesh,t.r,0xff6474);scene.add(mesh);addShadow(mesh,t.r*1.05);
+  const e={...t,mesh,key:t.key,id:++enemyId,hp:0,boss:false,pop:1,flash:0,inv:0,stun:0,baseMaxHp:t.maxHp,baseSpeed:t.speed,baseDmg:t.dmg};enemies.push(e);
+  if(tryPuppetize(e,h.strong))count++;else{removeShadowFor(mesh);removeAndDispose(mesh);enemies.splice(enemies.indexOf(e),1);}
+ }
+ return count;
+}
+function strengthenExistingPuppets(){
+ for(const e of ownPuppets())if(e.puppetStrong){const ratio=e.hp/e.maxHp;applyPuppetStats(e,RUN);e.hp=e.maxHp*ratio;}
+}
+function nearestEnemyForPuppet(e){
+ let best=null,bd=Infinity;for(const o of enemies){if(o===e||o.puppet||o.hp<=0)continue;const d=(o.mesh.position.x-e.mesh.position.x)**2+(o.mesh.position.z-e.mesh.position.z)**2;if(d<bd){bd=d;best=o;}}return best;
+}
+function enemyCombatTarget(e){
+ const best=nearestAvatar(e.mesh.position.x,e.mesh.position.z);if(e.boss||!puppetCount)return best;
+ let bd=(best.grp.position.x-e.mesh.position.x)**2+(best.grp.position.z-e.mesh.position.z)**2;
+ for(const p of enemies){if(!p.puppet||p.hp<=0)continue;const d=(p.mesh.position.x-e.mesh.position.x)**2+(p.mesh.position.z-e.mesh.position.z)**2;if(d<bd){bd=d;best.grp=p.mesh;best.puppet=p;}}
+ return best;
+}
+function puppetFieldSpeed(e){
+ let mul=1;for(const f of puppetFields){const d=(e.mesh.position.x-f.x)**2+(e.mesh.position.z-f.z)**2;if(d>f.r*f.r)continue;
+  if(e.puppet)mul=Math.max(mul,PUPPET_RULES.haste+.35*(f.level||0));else mul=Math.min(mul,PUPPET_RULES.slow-.08*(f.level||0));
+ }return mul;
+}
+function puppetDamage(e,damage){if(!e||!e.puppet||e.hp<=0)return;e.hp-=Math.max(0,damage);e.flash=.12;if(e.hp<=0){puppetDeathVisual(e);dismissPuppet(e,true);}}
+function damagePuppetsInCircle(x,z,r,damage){for(const e of enemies.slice()){if(e.puppet&&(e.mesh.position.x-x)**2+(e.mesh.position.z-z)**2<=r*r)puppetDamage(e,damage);}}
+function updatePuppetContact(e,dt){
+ e.puppetContactCd=Math.max(0,(e.puppetContactCd||0)-dt);if(e.puppetContactCd>1e-8)return;
+ let strongest=0;for(const o of enemies){if(o.puppet||o.hp<=0||o.stun>0||o.forcedThisStep||(o.bossAI&&['intro','rage','recovery'].includes(o.bossAI.state)))continue;
+  const r=e.r+o.r;if((e.mesh.position.x-o.mesh.position.x)**2+(e.mesh.position.z-o.mesh.position.z)**2<r*r)strongest=Math.max(strongest,contactDamageRate(o));
+ }if(strongest>0){puppetDamage(e,Math.max(1,strongest*CONTACT_INTERVAL));e.puppetContactCd=CONTACT_INTERVAL;}
+}
+function damageByPuppet(p,e,amount){
+ const actor=puppetActor(p.puppetOwner);if(!actor||!puppetOwnerAlive(actor)||!enemies.includes(e)||e.puppet)return;
+ const dealt=damageEnemy(e,amount);e.flash=.12;dmgPop(e.mesh.position,dealt,{boss:e.boss,invalid:e.boss&&bossDamageWindow(e)===0});
+ if(e.hp<=0)withPuppetOwner(actor,()=>killEnemy(e,{recruit:false}));
+}
+function puppetShoot(p,t){
+ const dx=t.mesh.position.x-p.mesh.position.x,dz=t.mesh.position.z-p.mesh.position.z,l=Math.hypot(dx,dz)||1,mesh=puppetBulletVisual(p.mesh.position.x,p.mesh.position.z,Math.atan2(dx,dz),p.puppetStrong,false);
+ pBullets.push({mesh,vx:dx/l*14,vz:dz/l*14,life:1.8,dmg:p.projectileDmg,r:.24,puppetAttack:true,owner:p.puppetOwner,ownerRun:p.puppetRun,oel:{element:p.element}});
 }
 function updatePuppetEnemy(e,dt){
-  if(e.frenzyT>0){ e.frenzyT-=dt; e.hp=Math.max(e.hp,1); if(e.frenzyT<0)e.frenzyT=0; }
-  if(e.puppetMark){ const rig=e.puppetMark.userData.rig;
-    if(rig){ rig.rotation.y+=dt*(e.frenzyT>0?5.2:1.8); rig.position.y=rig.userData.baseY+Math.sin(gameTime*2.6)*0.09; }
-    else e.puppetMark.rotation.z+=dt*2.4; }
-  if(e.frenzyT<=0 && e.hp<=e.maxHp*0.5){ releasePuppet(e); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt); return; }
-  let target=e.puppetTgt;
-  if(!target||target.hp<=0||enemies.indexOf(target)<0){ target=nearestEnemyForPuppet(e,e.frenzyT>0); e.puppetTgt=target; }
-  if(!target){ if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt); return; }
-  const spdMul=e.frenzyT>0?5:2, dx=target.mesh.position.x-e.mesh.position.x, dz=target.mesh.position.z-e.mesh.position.z, d=Math.hypot(dx,dz)||1;
-  if(!e.forcedThisStep){if(d>e.r+target.r){e.mesh.position.x+=dx/d*e.speed*spdMul*dt;e.mesh.position.z+=dz/d*e.speed*spdMul*dt;}else{target.hp-=e.dmg*dt;if(target.hp<=0)killEnemy(target);}}
-  e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);
-}
-function puppeteerSkill(){
-  const puppets=enemies.filter(e=>e.puppet&&e.puppetOwner===player.uuid); if(!puppets.length){ if(typeof toast==='function')toast('操り人形がいない！'); return; }
-  const R=6.5*(RUN.rangeMul||1);
-  for(const p of puppets){
-    for(const e of enemies.slice()){
-      if(e.puppet||e.boss)continue;
-      const dx=e.mesh.position.x-p.mesh.position.x, dz=e.mesh.position.z-p.mesh.position.z; if(dx*dx+dz*dz>(R+e.r)*(R+e.r))continue;
-      const cr=Math.random()<pCritChance; const dd=baseDmg()*3.5*eMul(e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0;
-      const dealt=damageEnemy(e,dd); e.flash=0.12; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); e.stun=Math.max(e.stun||0,5.0);
-      if(e.hp<=0)killEnemy(e);
-    }
-    p.frenzyT=5.0+RUN.puppetFrenzy; p.puppetTgt=null;
-    spawnSlamShock(p.mesh.position.x,p.mesh.position.z,R,WEAPONS.puppeteer.col);
-    if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:p.mesh.position.x,z:p.mesh.position.z,a:0,k:'w',r:R,col:WEAPONS.puppeteer.col}); if(meleeEvents.length>24)meleeEvents.shift(); }
+ if(e.hp<=0){dismissPuppet(e,true);return;}const actor=puppetActor(e.puppetOwner);if(!actor||!puppetOwnerAlive(actor)){dismissPuppet(e,false);return;}
+ updatePuppetContact(e,dt);if(!enemies.includes(e))return;
+ let t=e.puppetTgt;if(!t||t.puppet||t.hp<=0||!enemies.includes(t)){t=nearestEnemyForPuppet(e);e.puppetTgt=t;}
+ e.puppetCd=Math.max(0,(e.puppetCd||0)-dt);e.puppetPose=Math.max(0,(e.puppetPose||0)-dt);
+ const goal=t?t.mesh.position:actor.position,dx=goal.x-e.mesh.position.x,dz=goal.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
+ const reach=t?(e.shoot?Math.min(11,e.rng||11):e.r+t.r+.25):2.5,step=Math.min(Math.max(0,d-reach),e.speed*puppetFieldSpeed(e)*dt);
+ if(!e.forcedThisStep){
+  e.mesh.position.x+=dx/d*step;e.mesh.position.z+=dz/d*step;
+  if(t&&d<=reach+.15&&e.puppetCd<=1e-8){
+   const it=e.shoot?1.2:e.key==='brute'?1.15:e.key==='bat'?.6:.8;e.puppetCd=it;e.puppetPose=.3;
+   if(e.shoot)puppetShoot(e,t);else damageByPuppet(e,t,e.dmg*it);
+   puppetAttackVisual(e,t);
   }
- 
+ }
+ e.mesh.rotation.y=Math.atan2(dx,dz);if(e.ring)e.ring.position.set(e.mesh.position.x,.03,e.mesh.position.z);animateEnemy(e,dt);animatePuppetMark(e,dt);
 }
+function removePuppetField(f){if(f.mesh)removeAndDispose(f.mesh);const i=puppetFields.indexOf(f);if(i>=0)puppetFields.splice(i,1);}
+function replacePuppetFields(kind,points){
+ for(const f of puppetFields.slice())if(f.owner===player.uuid&&f.kind===kind)removePuppetField(f);
+ const lv=Math.min(2,(RUN.puppetFrenzy||0));for(const p of points){const f={id:++puppetFieldId,owner:player.uuid,kind,x:p.x,z:p.z,r:PUPPET_RULES.fieldR*(RUN.rangeMul||1)*(1+.2*lv),level:lv};f.mesh=puppetFieldVisual(f);puppetFields.push(f);}
+}
+function puppetAim(aimAng){
+ const t=nearestEnemy(36),manual=Number.isFinite(aimAng),a=manual?aimAng:t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y;
+ const d=t?Math.min(24,Math.hypot(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z)):12;
+ return {a,x:manual||!t?player.position.x+Math.sin(a)*d:t.mesh.position.x,z:manual||!t?player.position.z+Math.cos(a)*d:t.mesh.position.z};
+}
+function puppeteerSkill(aimAng){
+ if(!puppetSkillReady()||state!=='play'||introActive)return false;
+ const s=puppetState(),aim=puppetAim(aimAng),own=ownPuppets();
+ if(s.mode===1&&!own.length){if(typeof toast==='function')toast('狂：人形が必要です。ダッシュで集・蜜へ切替');return false;}
+ if(s.mode===0){if(!s.ammo){s.ammo=puppetCapacity();charge=0;}s.ammo--;player.rotation.y=aim.a;spawnThreadShot(Math.sin(aim.a),Math.cos(aim.a),true);}
+ else {
+  s.ammo=0;charge=0;
+  if(s.mode===1){
+   const points=own.map(p=>({x:p.mesh.position.x,z:p.mesh.position.z}));replacePuppetFields(1,points);
+   for(const f of puppetFields.filter(f=>f.owner===player.uuid&&f.kind===1)){
+    puppetBurstVisual(f.x,f.z,f.r);if(NET.role==='host'&&NET.started)puppetVisualEvent('Q',player,1,0,f.x,f.z,f.r);
+    for(const e of enemies.slice()){if(e.puppet||e.hp<=0)continue;if((e.mesh.position.x-f.x)**2+(e.mesh.position.z-f.z)**2>(f.r+e.r)**2)continue;
+     const cr=Math.random()<pCritChance,dealt=damageEnemy(e,baseDmg()*PUPPET_RULES.burst*eMul(e)*(cr?pCritDmg:1));e.flash=.12;dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid:e.boss&&bossDamageWindow(e)===0});if(e.hp<=0)killEnemy(e);
+    }
+   }
+  }else {revivePuppets();replacePuppetFields(2,[{x:player.position.x,z:player.position.z},{x:aim.x,z:aim.z}]);}
+ }
+ puppetCommandVisual(player.position.x,player.position.z,s.mode,aim.a,false,player);if(NET.role==='host'&&NET.started)puppetVisualEvent('P',player,s.mode,aim.a);
+ return true;
+}
+function spawnThreadShot(dx,dz,strong=false){
+ const W=WEAPONS.puppeteer,l=Math.hypot(dx,dz)||1,a=Math.atan2(dx,dz),spd=W.bulletSpeed*(RUN.bSpeedMul||1)*(strong?1.4:1),life=W.bulletLife*(RUN.bLifeMul||1);
+ player.rotation.y=a;const mesh=puppetBulletVisual(player.position.x,player.position.z,a,strong,true);
+ pBullets.push({mesh,vx:dx/l*spd,vz:dz/l*spd,life,dmg:baseDmg()*(strong?PUPPET_RULES.collect:1),r:strong?.45:.22,puppet:true,puppetStrong:strong,owner:player.uuid,ownerRun:RUN,oel:pElem});
+ if(!strong){spawnFocusCast('puppeteer',a,W.col);}
+}
+function finishPuppetHit(b,e){
+ const actor=puppetActor(b.owner);withPuppetOwner(actor,()=>{addCharge(b.puppetAttack?.25:.5);if(e.hp<=0)killEnemy(e,{recruit:!b.puppetAttack,strong:!!b.puppetStrong});});
+}
+function puppetBulletHit(b,x0,z0){
+ if(!puppetCount)return false;
+ let hit=null,time=Infinity;
+ for(const e of enemies){if(!e.puppet||e.hp<=0)continue;const t=gunHitTime(b,e,x0,z0);if(t<time){time=t;hit=e;}}
+ if(!hit)return false;
+ for(const a of avatars()){if(isInvincible(a.isHost))continue;const t=gunHitTime(b,{mesh:a.grp,r:PLAYER.r},x0,z0);if(t<time)return false;}
+ puppetDamage(hit,b.dmg);spawnSlamShock(x0+(b.mesh.position.x-x0)*time,z0+(b.mesh.position.z-z0)*time,.55,0xf06b9d);return true;
+}
+function updatePuppeteer(dt){
+ for(const actor of [player,ally&&ally.grp].filter(Boolean)){
+  const wp=actor===player?weapon:ally.weapon;if(!puppetOwnerAlive(actor)||wp!=='puppeteer'){if(actor.userData.puppetState||actor.userData.puppetController)clearPuppetOwner(actor);continue;}
+  updatePuppetController(actor,dt);
+ }
+ for(const f of puppetFields)animatePuppetField(f,dt);
+}
+function puppetFieldSnapshot(){return puppetFields.map(f=>[f.id,f.owner===player.uuid?0:1,f.kind,f.x,f.z,f.r,f.level]);}
+
+const PUPPET_COLORS=[0xffd26b,0xf06b9d,0x69dfd0];
+const PUPPET_RING_GEO=pinGpuResource(new THREE.TorusGeometry(1,.028,5,40));
+const PUPPET_BAR_GEO=pinGpuResource(new THREE.BoxGeometry(1,.08,.12));
+const PUPPET_GEM_GEO=pinGpuResource(new THREE.OctahedronGeometry(.12,0));
+const PUPPET_NEEDLE_GEO=pinGpuResource(new THREE.CylinderGeometry(.035,.035,1.1,6));
+let puppetClientFields=new Map();
+function puppetMat(col,opacity=.8){return new THREE.MeshBasicMaterial({color:col,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});}
+function puppetLines(points,col,opacity=.7){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));return new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity,depthWrite:false}));}
+function puppetCross(col){
+ const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0xbca16b,emissive:col,emissiveIntensity:.3,roughness:.45,metalness:.6});
+ for(let i=0;i<2;i++){const b=new THREE.Mesh(PUPPET_BAR_GEO,m);b.rotation.y=i*Math.PI/2;g.add(b);}
+ for(const [x,z] of [[.5,0],[-.5,0],[0,.5],[0,-.5]]){const k=new THREE.Mesh(PUPPET_GEM_GEO,puppetMat(col));k.position.set(x,0,z);g.add(k);}
+ return g;
+}
+function markPuppet(e,col){
+ if(e.puppetMark)return;
+ if(e.mesh.userData.bodyHitboxRing)removeAndDispose(e.mesh.userData.bodyHitboxRing);attachBodyHitboxRing(e.mesh,e.r,0x69dfd0);
+ const g=new THREE.Group(),ring=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(col,.8));ring.rotation.x=Math.PI/2;ring.position.y=.06;ring.scale.setScalar(e.r*1.3);g.add(ring);
+ const rig=puppetCross(col),y=e.r*1.6+1.4;rig.position.y=y;rig.userData.baseY=y;
+ const points=[];for(const [x,z] of [[.5,0],[-.5,0],[0,.5],[0,-.5]])points.push(x,0,z,x*.3,-y+e.r,z*.3);rig.add(puppetLines(points,col,.75));g.add(rig);g.userData.rig=rig;g.userData.ring=ring;
+ const back=new THREE.Mesh(PUPPET_BAR_GEO,puppetMat(0x192128,.8)),hp=new THREE.Mesh(PUPPET_BAR_GEO,puppetMat(col,.95));back.scale.set(1.3,.8,.6);hp.scale.set(1.3,.8,.7);back.position.set(0,y+.35,0);hp.position.copy(back.position);g.add(back,hp);g.userData.hp=hp;
+ if(e.puppetStrong){const crown=new THREE.Mesh(new THREE.TorusGeometry(.32,.07,5,6),puppetMat(0xffd26b));crown.rotation.x=Math.PI/2;crown.position.y=y+.12;g.add(crown);g.userData.crown=crown;}
+ e.mesh.add(g);e.puppetMark=g;
+}
+function unmarkPuppet(e){if(e.puppetMark){removeAndDispose(e.puppetMark);e.puppetMark=null;if(e.mesh.userData.bodyHitboxRing)removeAndDispose(e.mesh.userData.bodyHitboxRing);attachBodyHitboxRing(e.mesh,e.r,0xff6474);}}
+function animatePuppetMark(e,dt){
+ const g=e.puppetMark;if(!g)return;const u=g.userData,attack=Math.sin(Math.min(1,(e.puppetPose||0)/.3)*Math.PI);
+ u.rig.rotation.y+=dt*(e.puppetStrong?1.1:.6);u.rig.rotation.z=attack*.3;u.rig.position.y=u.rig.userData.baseY+Math.sin(gameTime*2.6+e.id)*.06+attack*.16;
+ u.ring.position.y=.06-e.mesh.position.y;const hp=clamp(e.hp/e.maxHp,0,1);u.hp.scale.x=1.3*hp;u.hp.position.x=-.65*(1-hp);
+ if(u.crown)u.crown.rotation.z+=dt*.6;
+ const ud=e.mesh.userData;
+ if(ud.weapon){if(ud.puppetWeaponBase===undefined)ud.puppetWeaponBase=ud.weapon.rotation.x;ud.weapon.rotation.x=ud.puppetWeaponBase-attack*.65;}
+ if(ud.staff){if(ud.puppetStaffBase===undefined)ud.puppetStaffBase=ud.staff.rotation.z;ud.staff.rotation.z=ud.puppetStaffBase+attack*.4;}
+}
+function ensurePuppetController(actor){
+ if(actor.userData.puppetController)return actor.userData.puppetController;
+ const g=puppetCross(PUPPET_COLORS[0]);g.position.set(.55,1.75,.35);g.scale.setScalar(.7);actor.add(g);actor.userData.puppetController=g;return g;
+}
+function clearPuppetController(actor){if(actor&&actor.userData.puppetController){removeAndDispose(actor.userData.puppetController);delete actor.userData.puppetController;}}
+function updatePuppetController(actor,dt){
+ const g=ensurePuppetController(actor),mode=puppetState(actor).mode,col=PUPPET_COLORS[mode];g.userData.phase=(g.userData.phase||0)+dt;
+ const pulse=Math.max(0,(g.userData.pulse||0)-dt);g.userData.pulse=pulse;g.rotation.set(mode===2?-.18:0,Math.sin(g.userData.phase*2)*.12,mode===1?.25:0);g.position.y=1.75+Math.sin(g.userData.phase*2.6)*.04+pulse*.35;
+ if(g.userData.mode!==mode){g.userData.mode=mode;g.traverse(o=>{if(o.material){if(o.material.emissive)o.material.emissive.setHex(col);else o.material.color.setHex(col);}});}
+}
+function puppetBulletVisual(x,z,a,strong,needle){
+ const g=new THREE.Group(),col=strong?PUPPET_COLORS[0]:0xf06b9d;
+ const body=new THREE.Mesh(needle?PUPPET_NEEDLE_GEO:PUPPET_GEM_GEO,puppetMat(col,.95));if(needle)body.rotation.x=Math.PI/2;else body.scale.setScalar(2);g.add(body);
+ const points=[];for(let i=0;i<(strong?3:1);i++){const off=(i-(strong?1:0))*.13;points.push(off,0,-1.1,off,0,.6);}g.add(puppetLines(points,col,.7));
+ if(strong){const ring=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(col,.8));ring.scale.setScalar(.27);ring.position.z=-.4;g.add(ring);}
+ g.position.set(x,.95,z);g.rotation.y=a;scene.add(g);return g;
+}
+function puppetFx(g,life,kind,actor=null){
+ scene.add(g);const mats=[];g.traverse(o=>{if(o.material&&!mats.some(q=>q.m===o.material))mats.push({m:o.material,o:o.material.opacity});});
+ const s={m:g,life,max:life,o0:1,puppetFx:{kind,mats,y:g.position.y}};if(actor){s.followActor=actor;s.followX=actor.position.x;s.followZ=actor.position.z;}melees.push(s);return g;
+}
+function posePuppetFx(s,p,k){
+ const f=s.puppetFx;for(const q of f.mats)q.m.opacity=q.o*k;
+ if(f.kind==='birth'){s.m.position.y=f.y+p*.6;s.m.scale.setScalar(.6+p*.8);}
+ else if(f.kind==='burst'){s.m.scale.setScalar(.6+p*.6);s.m.rotation.y=p*.3;}
+ else{s.m.rotation.z=Math.sin(p*Math.PI)*(f.kind===1?.45:-.2);s.m.position.y=f.y+Math.sin(p*Math.PI)*.3;}
+}
+function puppetBirthVisual(e){const g=puppetCross(e.puppetStrong?PUPPET_COLORS[0]:0xf06b9d);g.position.set(e.mesh.position.x,1,e.mesh.position.z);puppetFx(g,.55,'birth');}
+function puppetDeathVisual(e){const g=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(0xf06b9d));g.rotation.x=Math.PI/2;g.scale.setScalar(e.r*1.5);g.position.copy(e.mesh.position);g.position.y=.06;puppetFx(g,.4,'burst');}
+function puppetAttackVisual(e,t){
+ if(e.shoot)return;const g=new THREE.Group(),r=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(e.puppetStrong?PUPPET_COLORS[0]:0xf06b9d));r.scale.setScalar(e.key==='brute'?1.2:.65);r.rotation.x=Math.PI/2;g.add(r);g.position.set(t.mesh.position.x,.1,t.mesh.position.z);puppetFx(g,.25,'burst');
+}
+function puppetCommandVisual(x,z,mode,a,change=false,actor=null){
+ const col=PUPPET_COLORS[mode],g=puppetCross(col);g.position.set(x,1.9,z);g.rotation.y=a;g.scale.setScalar(change?.65:1.1);
+ const points=[];for(let i=0;i<6;i++){const ang=i*Math.PI/3,rad=mode===0?.35:mode===1?2:1.3;points.push(0,0,0,Math.sin(ang)*rad,-1.1,Math.cos(ang)*rad);}g.add(puppetLines(points,col,.8));puppetFx(g,change?.35:.6,mode,actor);
+ if(actor){const c=ensurePuppetController(actor);c.userData.pulse=.5;}
+}
+function puppetBurstVisual(x,z,r){
+ const g=new THREE.Group(),ring=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(PUPPET_COLORS[1]));ring.scale.setScalar(r);ring.rotation.x=Math.PI/2;g.add(ring);
+ const pts=[];for(let i=0;i<14;i++){const a=i*Math.PI*2/14;pts.push(0,.4,0,Math.sin(a)*r,.05,Math.cos(a)*r);}g.add(puppetLines(pts,PUPPET_COLORS[1],.85));g.position.set(x,.06,z);puppetFx(g,.5,'burst');
+}
+function puppetFieldVisual(f){
+ const col=PUPPET_COLORS[f.kind],g=new THREE.Group(),ring=new THREE.Mesh(PUPPET_RING_GEO,puppetMat(col,.32));ring.scale.setScalar(f.r);ring.rotation.x=Math.PI/2;g.add(ring);
+ const pts=[],n=12;for(let i=0;i<n;i++){const a=i*Math.PI*2/n,b=(i+5)*Math.PI*2/n;pts.push(Math.sin(a)*f.r,0,Math.cos(a)*f.r,Math.sin(b)*f.r,0,Math.cos(b)*f.r);}g.add(puppetLines(pts,col,.17));g.position.set(f.x,.04+(f.kind===2?.01:0),f.z);g.userData.ring=ring;scene.add(g);return g;
+}
+function animatePuppetField(f,dt){if(!f.mesh)return;f.mesh.userData.t=(f.mesh.userData.t||0)+dt;f.mesh.userData.ring.material.opacity=.27+Math.sin(f.mesh.userData.t*2)*.06;}
+function puppetVisualEvent(k,actor,mode,a,x=actor.position.x,z=actor.position.z,r=0){meleeEvents.push({owner:ally&&actor===ally.grp?1:0,x,z,k,pm:mode,a,r});if(meleeEvents.length>48)meleeEvents.shift();}
+function syncPuppetFields(rows){
+ const seen=new Set();for(const q of Array.isArray(rows)?rows:[]){if(!Array.isArray(q)||q.length!==7||!q.every(Number.isFinite)||![1,2].includes(q[2])||q[5]<=0||q[5]>100)continue;
+  seen.add(q[0]);let f=puppetClientFields.get(q[0]);if(f&&(f.r!==q[5]||f.kind!==q[2])){removeAndDispose(f.mesh);puppetClientFields.delete(q[0]);f=null;}
+  if(!f){f={id:q[0],kind:q[2],x:q[3],z:q[4],r:q[5]};f.mesh=puppetFieldVisual(f);puppetClientFields.set(q[0],f);}f.x=q[3];f.z=q[4];f.mesh.position.x=f.x;f.mesh.position.z=f.z;
+ }for(const [id,f] of puppetClientFields)if(!seen.has(id)){removeAndDispose(f.mesh);puppetClientFields.delete(id);}
+}
+function syncPuppetEnemy(m,q,id){
+ let e=m.userData.puppetShell;
+ if(!Array.isArray(q)||q.length!==5||!q.every(Number.isFinite)){if(e)unmarkPuppet(e);delete m.userData.puppetShell;return;}
+ if(e&&e.puppetStrong!==!!q[1]){unmarkPuppet(e);e=null;}
+ if(!e){e={mesh:m,id,r:(ETYPES[m.userData.key]||ETYPES.imp).r,puppetStrong:!!q[1]};markPuppet(e,e.puppetStrong?PUPPET_COLORS[0]:0xf06b9d);m.userData.puppetShell=e;}
+ e.hp=clamp(q[2],0,1);e.maxHp=1;e.puppetPose=Math.max(0,q[3]);m.rotation.y=q[4];
+}
+function updatePuppetClient(dt){
+ for(const f of puppetClientFields.values())animatePuppetField(f,dt);
+ for(const m of C.enemies.values()){const e=m.userData.puppetShell;if(e){e.puppetPose=Math.max(0,e.puppetPose-dt);animatePuppetMark(e,dt);}}
+ for(const g of C.players){if(g.userData.puppetEnabled)updatePuppetController(g,dt);else clearPuppetController(g);}
+}
+function clearPuppetClient(){syncPuppetFields([]);for(const g of C.players)clearPuppetController(g);}
+const PUPPET_ICON_PATHS=[
+ '<path d="M3 4l9 8L21 4M3 20l9-8 9 8M12 2v20"/><circle cx="12" cy="12" r="3"/>',
+ '<path d="M12 2v5M12 17v5M2 12h5M17 12h5M4 4l4 4M16 16l4 4M20 4l-4 4M8 16l-4 4"/><path d="M12 7l5 5-5 5-5-5z"/>',
+ '<path d="M4 6h16M12 3v6M7 6v5c-7 1-5 10 0 10s7-9 0-10M17 6v5c-7 1-5 10 0 10s7-9 0-10"/>'
+];
+function updatePuppetHud(wp,data,cg){
+ const b=$('skillBtn');if(!b)return;b.classList.toggle('puppet-skill',wp==='puppeteer');if(wp!=='puppeteer'){delete b.dataset.puppetMode;b.removeAttribute('aria-label');return;}
+ const q=Array.isArray(data)?data:[0,0,0,5],mode=Number.isInteger(q[0])&&q[0]>=0&&q[0]<3?q[0]:0,ammo=Math.max(0,q[1]||0),label=PUPPET_MODES[mode];
+ const key=''+mode,ic=$('skillIc');if(b.dataset.puppetMode!==key){b.dataset.puppetMode=key;ic.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">'+PUPPET_ICON_PATHS[mode]+'</svg><strong>'+label+'</strong>';}
+ b.style.setProperty('--puppet-color','#'+PUPPET_COLORS[mode].toString(16));b.style.setProperty('--skill-charge',(ammo>0?360:clamp(cg,0,100)*3.6)+'deg');b.classList.toggle('ready',cg>=100||ammo>0);
+ b.setAttribute('aria-label',label+'モード、'+(ammo>0?'集の残弾'+ammo+'発':'チャージ'+Math.floor(cg)+'%')+'、ダッシュで切替');
+ $('skillBt').textContent=(ammo>0?'残'+ammo+' · ':'')+'人形'+q[2]+'/'+q[3];
+}
+
 function mageShotTargets(range){
   const limit=range*range;
   return enemies.filter(e=>!e.puppet&&e.hp>0).map(e=>({e,d:(e.mesh.position.x-player.position.x)**2+(e.mesh.position.z-player.position.z)**2})).filter(q=>q.d<limit).sort((a,b)=>a.d-b.d).map(q=>q.e);
@@ -6228,7 +6441,9 @@ function devourBurst(){
   if(NET.role==='host'&&NET.started){ meleeEvents.push({owner:ally&&player===ally.grp?1:0,x:cx,z:cz,a:ang,k:'d',r:R,col:0x9b30ff}); if(meleeEvents.length>24)meleeEvents.shift(); }
 }
 function activateSkill(aimAng){
-  if(charge<100||state!=='play'||introActive||((weapon==='gun'||weapon==='iai')&&buffType===weapon))return; charge=0;
+  if(state!=='play'||introActive)return;
+  if(weapon==='puppeteer'){puppeteerSkill(aimAng);return;}
+  if(charge<100||((weapon==='gun'||weapon==='iai')&&buffType===weapon))return; charge=0;
   const W=WEAPONS[weapon], hasAim=(typeof aimAng==='number');
   if(weapon==='sword'){ let ang; if(hasAim){ang=aimAng;} else { const t=nearestEnemy(PLAYER.range); ang=t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y; } player.rotation.y=ang; meleeAttack(ang,W.range*2.6*RUN.rangeMul,W.arc*1.4*RUN.arcMul,baseDmg()*8,0,0xfff2c0,true); }
   else if(weapon==='spear'){ throwSuperSpear(hasAim?aimAng:undefined); }
@@ -6246,7 +6461,6 @@ function activateSkill(aimAng){
   else if(weapon==='devour'){ devourBurst(); }
   else if(weapon==='fude'){ const t=nearestEnemy(40); const x=t?t.mesh.position.x:player.position.x+Math.sin(player.rotation.y)*6, z=t?t.mesh.position.z:player.position.z+Math.cos(player.rotation.y)*6; spawnFudeZone(x,z,10*(RUN.resRMul||1),baseDmg()*3.0*((RUN&&RUN.fudePower)||1),5.0+(RUN.resLifeAdd||0),true); }
   else if(weapon==='earth'){ earthquakeSkill(hasAim?aimAng:undefined); }
-  else if(weapon==='puppeteer'){ puppeteerSkill(); }
 }
 function throwSuperSpear(aimAng){
   let ang; if(typeof aimAng==='number'){ang=aimAng;} else { const t=nearestEnemy(60); ang=t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y; }
@@ -6597,9 +6811,9 @@ function ensureAim(){ if(aimGuide)return; const g=new THREE.Group();
   const line=new THREE.Mesh(new THREE.PlaneGeometry(0.5,5),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false})); line.rotation.x=-Math.PI/2; line.position.z=2.6; g.add(line);
   const head=new THREE.Mesh(new THREE.ConeGeometry(0.5,0.9,3),new THREE.MeshBasicMaterial({color:0xffe0a0,transparent:true,opacity:0.75,blending:THREE.AdditiveBlending,depthWrite:false})); head.rotation.x=Math.PI/2; head.position.z=5.25; g.add(head);
   g.visible=false; scene.add(g); aimGuide=g; }
-function aimable(){ return weapon==='sword'||weapon==='spear'||weapon==='earth'; }
-function showAim(v){ ensureAim(); aimGuide.visible = v && charge>=100 && aimable(); if(aimGuide.visible){ aimGuide.position.set(player.position.x,0.05,player.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); } }
-function updateAimGuide(){ if(!aimGuide||!aimGuide.visible)return; aimGuide.position.set(player.position.x,0.05,player.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); }
+function aimable(){ return weapon==='sword'||weapon==='spear'||weapon==='earth'||weapon==='puppeteer'&&puppetState(puppetInputActor()).mode!==1; }
+function showAim(v){ ensureAim(); aimGuide.visible = v && (weapon==='puppeteer'?puppetInputReady():charge>=100) && aimable(); if(aimGuide.visible){ const origin=weapon==='puppeteer'?puppetInputActor():player;aimGuide.position.set(origin.position.x,0.05,origin.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); } }
+function updateAimGuide(){ if(!aimGuide||!aimGuide.visible)return; const origin=weapon==='puppeteer'?puppetInputActor():player;aimGuide.position.set(origin.position.x,0.05,origin.position.z); aimGuide.rotation.y=Math.atan2(sk.dx,sk.dy); }
 function readInput(){ let x=0,z=0; if(joy.active){x=joy.dx;z=joy.dz;} else{ if(keys['w']||keys['arrowup'])z-=1; if(keys['s']||keys['arrowdown'])z+=1; if(keys['a']||keys['arrowleft'])x-=1; if(keys['d']||keys['arrowright'])x+=1; } const len=Math.hypot(x,z); if(len>1){x/=len;z/=len;} move.x=x;move.z=z; }
 
 /* ===== 画面遷移 ===== */
@@ -6674,7 +6888,7 @@ function dexStop(){
 function clearArr(arr){ for(const x of arr){
   if(x.mesh){removeShadowFor(x.mesh);removeAndDispose(x.mesh);} if(x.m)removeAndDispose(x.m); if(x.tele)removeAndDispose(x.tele); if(x.extra)removeAndDispose(x.extra);
 } arr.length=0; }
-function clearField(){clearEarthField();
+function clearField(){clearPuppeteer();clearEarthField();
   if(player)player.userData.gsAttackT=0;if(ally){ally.grp.userData.gsAttackT=0;if(ally.gsSpin){removeAndDispose(ally.gsSpin);ally.gsSpin=null;}}
   resetContactDamage();
   clearAllIaiEchoes();
@@ -6976,7 +7190,7 @@ function pauseGame(){ if(state!=='play')return; state='pause'; pauseBgm();
   $('pauseStat').textContent=`${WEAPONS[weapon].name} ・ Lv ${level} ・ HP ${Math.ceil(PLAYER.hp)}/${PLAYER.maxHp} ・ 撃破 ${kills}`;
   showRunBuild('pauseBuild');showOv('pauseScreen'); }
 function resumeGame(){ if(state!=='pause')return; state='play'; resumeBgm(); showOv(null); }
-function gameOver(){clearEarthField();
+function gameOver(){clearPuppeteer();clearEarthField();
   clearAllIaiEchoes();
   clearBossPhaseVisuals();
   skipChallenge=null;
@@ -7017,12 +7231,14 @@ function update(dt){
   }
   bossT=Math.max(0,bossT-dt); if(bossT<=1e-8&&!bossAlive&&!bossSpawned){ const bk=bossKeyForStage(); spawnEnemy(bk); const b=enemies[enemies.length-1]; beginBossEncounter(b); bossSpawned=true; startBossIntro(b); }
 
-  for(const e of enemies){
+  for(const e of enemies.slice()){
+    if(!enemies.includes(e))continue;
     const earthX=e.mesh.position.x,earthZ=e.mesh.position.z;
     if(e.pop<1){ e.pop=Math.min(1,e.pop+dt*4); e.mesh.scale.setScalar(e.pop); }
     e.forcedThisStep=updateEnemyForce(e,dt);
     if(e.puppet){updatePuppetEnemy(e,dt);applyEnemyForcePose(e);continue;}
-    const tgt=nearestAvatar(e.mesh.position.x,e.mesh.position.z); const dx=tgt.grp.position.x-e.mesh.position.x,dz=tgt.grp.position.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
+    const tgt=enemyCombatTarget(e); const dx=tgt.grp.position.x-e.mesh.position.x,dz=tgt.grp.position.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
+    const originalSpeed=e.speed;e.speed*=puppetFieldSpeed(e);
     earthCasterPosition(e,tgt,dt);
     const bossHandled=e.boss?updateBossCombat(e,dt,tgt,dx,dz,d):false;
     if(e.forcedThisStep){e.stun=Math.max(0,(e.stun||0)-dt);}
@@ -7032,7 +7248,7 @@ function update(dt){
       if(e.shoot){ if(d>e.rng+1){ e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; } else if(d<e.rng-2){ e.mesh.position.x-=dx/d*e.speed*dt; e.mesh.position.z-=dz/d*e.speed*dt; } e.fireCd-=dt; if(e.fireCd<=0){ enemyShoot(e); e.fireCd=e.boss?(e.fast?0.45:0.9):1.8*(e.mobFireMul||1); } }
       else { e.mesh.position.x+=dx/d*e.speed*dt; e.mesh.position.z+=dz/d*e.speed*dt; }
     }
-    earthResolveEnemy(e,earthX,earthZ,dt);
+    earthResolveEnemy(e,earthX,earthZ,dt);e.speed=originalSpeed;
     e.mesh.rotation.y=Math.atan2(dx,dz); if(e.ring)e.ring.position.set(e.mesh.position.x,0.03,e.mesh.position.z); animateEnemy(e,dt);applyEnemyForcePose(e);
   }
 
@@ -7058,8 +7274,8 @@ function update(dt){
       for(const e of enemies.slice()){if(e.puppet)continue; if(b.hitSet.has(e))continue; const dx=e.mesh.position.x-b.mesh.position.x,dz=e.mesh.position.z-b.mesh.position.z; if(dx*dx+dz*dz<(e.r+b.r)*(e.r+b.r)){ b.hitSet.add(e); const cr=Math.random()<pCritChance; const dd=b.dmg*elemMul(b.oel||pElem,e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0; const dealt=damageEnemy(e,dd); e.flash=0.12; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); if(e.hp<=0)killEnemy(e); } }
       if(b.life<=0){ removeAndDispose(b.mesh); pBullets.splice(i,1); }
     }else{
-      let hit=false;const targets=b.gun?enemies.filter(e=>!e.puppet).map(e=>({e,t:gunHitTime(b,e,x0,z0)})).filter(q=>Number.isFinite(q.t)).sort((a,c)=>a.t-c.t).map(q=>q.e):enemies.slice();
-      for(const e of targets){if(e.puppet)continue; const dx=e.mesh.position.x-b.mesh.position.x,dz=e.mesh.position.z-b.mesh.position.z; if(b.gun||dx*dx+dz*dz<(e.r+b.r)*(e.r+b.r)){ const cr=Math.random()<pCritChance; const dd=b.dmg*elemMul(b.oel||pElem,e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0; const dealt=damageEnemy(e,dd); e.flash=0.12; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); hit=true; if(b.mage)spawnResidue(b.mesh.position.x,b.mesh.position.z); if(b.puppet&&e.hp>0)tryPuppetizeForBullet(e,b); finishGunHit(b,e); break; } }
+      let hit=false;const targets=(b.gun||b.puppet||b.puppetAttack)?enemies.filter(e=>!e.puppet).map(e=>({e,t:gunHitTime(b,e,x0,z0)})).filter(q=>Number.isFinite(q.t)).sort((a,c)=>a.t-c.t).map(q=>q.e):enemies.slice();
+      for(const e of targets){if(e.puppet)continue; const dx=e.mesh.position.x-b.mesh.position.x,dz=e.mesh.position.z-b.mesh.position.z; if(b.gun||b.puppet||b.puppetAttack||dx*dx+dz*dz<(e.r+b.r)*(e.r+b.r)){ const cr=Math.random()<pCritChance; const dd=b.dmg*elemMul(b.oel||pElem,e)*(cr?pCritDmg:1); const invalid=e.boss&&bossDamageWindow(e)===0; const dealt=damageEnemy(e,dd); e.flash=0.12; dmgPop(e.mesh.position,dealt,{boss:e.boss,crit:cr,invalid}); hit=true; if(b.mage)spawnResidue(b.mesh.position.x,b.mesh.position.z); if(b.puppet||b.puppetAttack)finishPuppetHit(b,e);else finishGunHit(b,e); break; } }
       if(hit){ removeAndDispose(b.mesh); pBullets.splice(i,1); }
       else if(b.life<=0){ if(b.mage)spawnResidue(b.mesh.position.x,b.mesh.position.z); removeAndDispose(b.mesh); pBullets.splice(i,1); }
     }
@@ -7067,12 +7283,13 @@ function update(dt){
   // 敵弾
   for(let i=eBullets.length-1;i>=0;i--){ const b=eBullets[i],earthX=b.mesh.position.x,earthZ=b.mesh.position.z; b.mesh.position.x+=b.vx*dt; b.mesh.position.z+=b.vz*dt; b.life-=dt;
     if(earthBlockBullet(b,earthX,earthZ)){removeAndDispose(b.mesh);eBullets.splice(i,1);continue;}
+    if(puppetBulletHit(b,earthX,earthZ)){removeAndDispose(b.mesh);eBullets.splice(i,1);continue;}
     if(b.spin)b.mesh.rotation.y+=b.spin*dt;
     if(b.hue!==undefined){ b.hue=(b.hue+dt*0.9)%1; b.mesh.material.emissive.setHSL(b.hue,1,0.55); if(b.trail==='hue')b.tc=b.mesh.material.emissive.getHex(); }
     if(b.trail){ b.tT=(b.tT||0)-dt; if(b.tT<=0){ b.tT=(b.boss||b.maou)?0.05:0.09; mfxPuff(b.mesh.position,(b.trail==='hue'?(b.tc||0xffffff):b.trail),b.maou?1.8:(b.boss?1.3:0.8),0.2); } }
     let hitA=null; for(const a of avatars()){ if(isInvincible(a.isHost))continue; const dx=a.grp.position.x-b.mesh.position.x,dz=a.grp.position.z-b.mesh.position.z; if(dx*dx+dz*dz<(PLAYER.r+b.r)*(PLAYER.r+b.r)){ hitA=a; break; } } if(hitA){ damageAvatar(hitA.isHost,b.dmg); if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); continue; } if(b.life<=0){ if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); } }
 
-  updateEarthField(dt);updateMelees(dt); updateResidues(dt); updateDebris(dt); updateOrbs(dt); updateShadows(); updateEarthFx(dt);
+  updatePuppeteer(dt);updateEarthField(dt);updateMelees(dt); updateResidues(dt); updateDebris(dt); updateOrbs(dt); updateShadows(); updateEarthFx(dt);
 
   while(xp>=xpNeed){ xp-=xpNeed; level++; xpNeed=Math.round(xpNeed*1.35+4); pendingLevels++; }
   if(pendingLevels>0 && state==='play') startLevelUp();
@@ -7082,7 +7299,7 @@ function update(dt){
   updateHud();
 }
 function enemyShoot(e){
-  const ta=nearestAvatar(e.mesh.position.x,e.mesh.position.z).grp; const dx=ta.position.x-e.mesh.position.x,dz=ta.position.z-e.mesh.position.z,len=Math.hypot(dx,dz)||1;
+  const ta=enemyCombatTarget(e).grp; const dx=ta.position.x-e.mesh.position.x,dz=ta.position.z-e.mesh.position.z,len=Math.hypot(dx,dz)||1;
   const isMaou=e.key==='maou';
   const M=(!isMaou&&motifKey&&MOTIFS[motifKey])?MOTIFS[motifKey]:null;
   const col=isMaou?0x9fd8ff:(M?M.acc:(e.boss?0xff5c7a:0xc79bff)); const rad=isMaou?0.5:0.26;
@@ -7219,9 +7436,10 @@ function updateHud(){
   $('xpFill').style.width=clamp(xp/xpNeed*100,0,100)+'%';
   $('hLv').textContent=level; $('hKills').textContent=kills; $('hTime').textContent=fmtTime(gameTime);
   const sb=$('skillBtn'); sb.style.setProperty('--skill-charge',clamp(charge,0,100)*3.6+'deg');
-  setWeaponIcon($('skillIc'),weapon); sb.classList.toggle('ready',charge>=100);
+  if(weapon!=='puppeteer')setWeaponIcon($('skillIc'),weapon); sb.classList.toggle('ready',charge>=100);
   $('skillBt').textContent=weapon==='earth'?'岩'+earthHudData()[0]+' / 蓄'+earthState().broken:buffT>0?Math.ceil(buffT)+'s':'';
   const db=$('dashBtn'); if(db){ if(weapon==='twin'){ const st=PLAYER.dashStock, part=(st<PLAYER.dashMax)?1-clamp(PLAYER.dashRe/DASH_RECHARGE,0,1):0; const deg=((st+part)/PLAYER.dashMax)*360; db.style.background=`conic-gradient(#8affd0 ${deg}deg, rgba(255,255,255,.12) 0deg)`; db.classList.toggle('ready',st>0||buffType==='twin'); const dbt=$('dashBt'); if(dbt)dbt.textContent='×'+st; } else { const frac=1-clamp(PLAYER.dashCd/DASH_CD,0,1); db.style.background=`conic-gradient(#6fd0ff ${frac*360}deg, rgba(255,255,255,.12) 0deg)`; db.classList.toggle('ready',PLAYER.dashCd<=0); $('dashBt').textContent=PLAYER.dashCd>0?Math.ceil(PLAYER.dashCd)+'s':''; } }
+  updatePuppetHud(weapon,weapon==='puppeteer'?puppetHudData():null,charge);
   updateGunHud(weapon,buffType,buffT,gunAmmo,gunReloadT,gunBoost);
   { const dh=$('devourHud'); if(dh){ if(weapon==='devour'){ dh.classList.add('show'); setOriginalHTML(dh,'【図:weapon_devour】 喰らい <b>×'+devourStacks+'</b><br>攻撃力 +'+Math.round(devourStacks*2)+'%'); } else dh.classList.remove('show'); } }
   const bz=enemies.find(e=>e.boss); setBossBar((bz&&!introActive)?bz.hp/bz.maxHp:null,bz&&bz.key);
