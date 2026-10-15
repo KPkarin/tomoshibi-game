@@ -1631,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.67</span>
+  <span class="title-version">v1.7.68</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -4111,7 +4111,10 @@ function makeGroundTextures(key){
 function applyFieldSurface(key){
   const entry=makeGroundTextures(key);groundMat.map=entry.base;groundMat.color.setHex(0xffffff);groundMat.roughness=FIELD_SURFACES[entry.key].roughness;
   groundMat.userData.fieldKey=entry.key;
-  if(overlayMat){overlayMat.map=entry.overlay;overlayMat.color.setHex(0xffffff);overlayMat.opacity=.7;}
+  // Re-upload cached canvas pixels and refresh USE_MAP after scene/context changes.
+  // Avoid relying on an implicit texture-cache refresh on mobile renderers.
+  entry.base.needsUpdate=true;groundMat.needsUpdate=true;
+  if(overlayMat){overlayMat.map=entry.overlay;overlayMat.color.setHex(0xffffff);overlayMat.opacity=.7;entry.overlay.needsUpdate=true;overlayMat.needsUpdate=true;}
 }
 function paintFieldEffect(entry){
   const canvas=entry.effect.image,g=canvas.getContext('2d'),s=canvas.width,source=entry.base.image.getContext('2d').getImageData(0,0,s,s),image=g.createImageData(s,s);
