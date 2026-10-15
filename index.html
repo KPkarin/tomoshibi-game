@@ -1631,7 +1631,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.68</span>
+  <span class="title-version">v1.7.69</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -1696,7 +1696,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
       <div><div class="b" id="recLv">1</div><div class="l">最高Lv</div></div>
     </div>
 <div id="campTitleBadge" style="color:#ffce8b;font-size:12px"></div>
-    <div class="camp-goal"><div class="homestage" id="homeStage"></div><h2 id="campGoal"></h2><p id="campBoss"></p><div class="camp-track"><div id="campProgress"></div></div><p class="camp-note" id="campProgressText"></p></div>
+    <div class="camp-goal"><div class="homestage" id="homeStage"></div><h2 id="campGoal"></h2><p id="campBoss"></p><p class="camp-note" id="campFieldNote"></p><div class="camp-track"><div id="campProgress"></div></div><p class="camp-note" id="campProgressText"></p></div>
     <div class="homeinfo"><span class="hpills"><span class="hpill">【図:coin】 <b id="homeCoins">0</b></span><span class="hpill">【図:shard】 <b id="homeShards">0</b></span></span><span id="homeElem"></span></div>
     <div class="homeinfo"><span id="homeMeta"></span></div><div class="metabar"><div id="homeMetaFill"></div></div>
     <div class="homeinfo" style="justify-content:center"><span id="homeWeap" style="font-weight:900;font-size:13px"></span></div>
@@ -3290,7 +3290,7 @@ const STAGE_SEGS=[[100,0.025]]; // 100ステージ構成：最終面で敵倍率
 const ELEM_SEG_MUL=1.5; // 属性モードは加算量1.5倍
 function stageBonus(s,m){ let total=0,prev=1; for(const [cap,rate] of STAGE_SEGS){ const x=Math.min(s,cap); if(x>prev)total+=(x-prev)*rate; prev=cap; if(s<=cap)break; } return total*(((m||mode)==='normal')?1:ELEM_SEG_MUL); }
 function stageMul(){ return (1+stageBonus(stageNum,mode))*tierEnemyMul(); }
-function modeLabel(m){ return m==='normal'?'通常':ELEM[m].icon+ELEM[m].jp; }
+function modeLabel(m){ return m==='normal'?'通常':ELEM[m].icon+ELEM[m].jp+'属性'; }
 function metaXpNeed(L){ return Math.round(60+(L-1)*45); }
 function metaBonuses(){ const n=Math.max(0,playerLevel-1+tomoStartLv()); return {damage:META.dmg*n,maxHp:META.hp*n,speed:META.spd*n,fireRate:Math.min(30,META.fr*n)}; }
 // 装備＋探索者レベルの合計（mod3のtotalBonusesを上書き）
@@ -3365,6 +3365,13 @@ const CHAPTERS=[
 let chapterClaims=[],stageCleared={normal:0,fire:0,water:0,grass:0};
 function chapterIndex(n=stageNum){return Math.floor((clamp(Math.floor(n)||1,1,100)-1)/10);}
 function chapterFor(n=stageNum){return CHAPTERS[chapterIndex(n)];}
+// Presentation only: the chapter's gameplay data remains in CHAPTERS.
+function chapterDisplay(n=stageNum,m=mode){
+  const c=chapterFor(n),e=ELEM[m];return m==='normal'||!e?{name:c.name,icon:c.icon}:{name:e.jp+'の試練',icon:e.icon};
+}
+function routeFieldNote(m=mode){
+  const e=ELEM[m];return m==='normal'||!e?'通常ルート：章ごとにフィールドが変わります':e.jp+'属性ルート：全10章共通の'+e.jp+'フィールド';
+}
 function chapterGate(n=stageNum){return (chapterIndex(n)+1)*10;}
 function routeCleared(m=mode){return Math.max(stageCleared[m]||0,Math.max(0,(modeMax[m]||1)-1),(m==='normal'&&cycleCleared)?100:0);}
 function chapterBossKey(n=stageNum,m=mode){const c=chapterFor(n);return c.boss==='maou'&&m!=='normal'?(m==='fire'?'wolf':m==='grass'?'stump':'boss'):c.boss;}
@@ -3379,17 +3386,17 @@ function pendingChapterRewards(m=mode){return CHAPTERS.map((_,i)=>i).filter(i=>r
 function chooseChapterMob(){const weights=chapterFor().weights;let r=Math.random()*100;for(let i=0;i<weights.length;i++){r-=weights[i];if(r<0)return ['imp','bat','caster','brute'][i];}return 'imp';}
 
 /* ステージ選択UI */
-const MODE_DEFS=[{k:'normal',label:'通常'},{k:'fire',label:'【属性:fire】火'},{k:'water',label:'【属性:water】水'},{k:'grass',label:'【属性:grass】草'}];
+const MODE_DEFS=[{k:'normal',label:'通常'},{k:'fire',label:'【属性:fire】火属性'},{k:'water',label:'【属性:water】水属性'},{k:'grass',label:'【属性:grass】草属性'}];
 function openStageSelect(){ stageView=mode; renderStageSelect(); showOv('stageScreen'); }
 function renderStageSelect(){
- const tabs=$('stageTabs');tabs.replaceChildren();for(const m of MODE_DEFS){const b=document.createElement('button');b.className='stab'+(stageView===m.k?' on':'');b.textContent=m.label;b.onclick=()=>{stageView=m.k;renderStageSelect();};tabs.append(b);}
- $('stageNote').textContent=stageView==='normal'?'':'敵・装備報酬：'+ELEM[stageView].icon+ELEM[stageView].jp;$('stageNote').hidden=stageView==='normal';
+ const tabs=$('stageTabs');tabs.replaceChildren();for(const m of MODE_DEFS){const b=document.createElement('button');b.className='stab'+(stageView===m.k?' on':'');b.textContent=m.label;b.setAttribute('aria-pressed',String(stageView===m.k));b.onclick=()=>{stageView=m.k;renderStageSelect();};tabs.append(b);}
+ $('stageNote').textContent=routeFieldNote(stageView)+(stageView==='normal'?'':' ／ 敵・装備報酬：'+modeLabel(stageView));$('stageNote').hidden=false;
  const vmax=clamp(modeMax[stageView]||1,1,100),reached=routeCleared(stageView),frontier=Math.min(100,reached+1),focus=chapterIndex(frontier),wrap=$('stageList');wrap.replaceChildren();
  const chal=$('stageChal');chal.replaceChildren();chal.style.display='block';
  const pending=pendingChapterRewards(stageView);if(pending.length){const b=arcadeButton('章報酬 '+pending.length+'件 · 受取',()=>{claimReachedChapters(stageView);renderStageSelect();},false);chal.append(b);}
  if(!NET.role&&reached<100){const to=chapterGate(frontier),b=arcadeButton('章末へ挑戦：第'+(chapterIndex(frontier)+1)+'章末 STAGE '+to+'へ',()=>beginChapterChallenge(stageView),false);chal.append(b);const p=campLine('途中ステージの経験値・装備報酬なし');chal.append(p);}
  for(let i=0;i<10;i++){
-  const c=CHAPTERS[i],start=i*10+1,end=(i+1)*10,unlocked=start<=vmax,done=reached>=end,claimed=chapterClaims.includes(stageView+':'+i),box=document.createElement('details');box.className='chapter-card';box.open=i===focus;
+  const c=chapterDisplay(i*10+1,stageView),start=i*10+1,end=(i+1)*10,unlocked=start<=vmax,done=reached>=end,claimed=chapterClaims.includes(stageView+':'+i),box=document.createElement('details');box.className='chapter-card';box.open=i===focus;
   const sum=document.createElement('summary');sum.textContent=c.icon+' 第'+(i+1)+'章 '+c.name+' · '+(done?'章クリア':unlocked?'探索中':'未解放')+' · '+start+'〜'+end;box.append(sum);
   const info=document.createElement('div');info.className='chapter-detail';info.append(campLine('章末：'+bossName(chapterBossKey(end,stageView))),campLine((claimed?'初回報酬：受取済み':'初回報酬：')+chapterRewardText(i,stageView)));
   const grid=document.createElement('div');grid.className='chapter-stages';for(let n=start;n<=end;n++){const b=document.createElement('button');b.className='chapter-stage'+(n===stageNum&&stageView===mode?' current':'');b.disabled=n>vmax;b.textContent=String(n)+(n===end?' 【図:star】':'');b.title=(n===end?'章末ボス · ':'')+(n<vmax?'到達済み':n===vmax?'解放済み':'未解放');b.onclick=()=>{mode=stageView;stageNum=n;commitSave();goHome();};grid.append(b);}info.append(grid);box.append(info);wrap.append(box);
@@ -7788,7 +7795,7 @@ function startRun(nextStageNum){
   if(nextStageNum!==undefined && nextStageNum>0){ stageNum=Math.min(nextStageNum,capFor(mode)); }
   clearField(); player.position.set(0,0,0);
   applyFieldTheme(mode,chapterFor().motif);
-  if(typeof toast==='function')toast(chapterFor().icon+' 第'+(chapterIndex()+1)+'章 '+chapterFor().name+' · STAGE '+stageNum);
+  if(typeof toast==='function'){const c=chapterDisplay();toast(c.icon+' 第'+(chapterIndex()+1)+'章 '+c.name+' · STAGE '+stageNum);}
   const tb=totalBonuses();
   PLAYER.maxHp=Math.round(100*(1+(tb.maxHp||0)/100)); PLAYER.hp=PLAYER.maxHp; PLAYER.fireCd=0; PLAYER.speed=6.4*MOVE_SCALE*(1+(tb.speed||0)/100); PLAYER.dashT=0; PLAYER.dashCd=0; PLAYER.dashStock=PLAYER.dashMax=3; PLAYER.dashRe=0; PLAYER.rockShield=tomoShields(); iaiCharge=0; devourStacks=0; puppetCount=0; gunAmmo=WEAPONS.gun.mag; gunReloadT=0; gunBoost=0; gunStormT=0; gunKick=0; if(typeof clearSpirits==='function')clearSpirits();
   gameTime=0;kills=0;level=1;xp=0;xpNeed=8;spawnT=0;bossT=STAGE_BOSS_TIME;bossAlive=false;activeBossAudioKey=null; destroyMaouRing();
@@ -8163,9 +8170,9 @@ const CAMP_GROUPS={
 function campLine(text){const p=document.createElement('p');p.textContent=text;return p;}
 function renderCampHome(){
  const title=ARCADE_TITLES.find(t=>t.id===arcadeTitle);$('campTitleBadge').textContent=title?'【図:star】 '+title.name:'';
- const c=chapterFor(),i=chapterIndex(),gate=chapterGate(),bk=chapterBossKey(),cleared=routeCleared();
+ const c=chapterDisplay(),i=chapterIndex(),gate=chapterGate(),bk=chapterBossKey(),cleared=routeCleared();
  $('campGoal').textContent=mode==='normal'&&canRebirth()?'全10章クリア · 次の灯へ':'第'+(i+1)+'章 '+c.name;
- $('campBoss').textContent=bossName(bk);
+ $('campBoss').textContent=bossName(bk);$('campFieldNote').textContent=routeFieldNote();
  $('campProgress').style.width=clamp((cleared-i*10)/10*100,0,100)+'%';
  $('campProgressText').textContent=Math.max(0,Math.min(10,cleared-i*10))+' / 10';
  const advice=$('campAdvice');advice.textContent=pendingChapterRewards().length?'【図:star】 章報酬 未受取':canRebirth()?'【図:ember】 継灯可能':'';advice.hidden=!advice.textContent;
