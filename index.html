@@ -1142,7 +1142,7 @@ body.playing #musicCreditToast{top:max(164px,calc(env(safe-area-inset-top) + 156
 .original-icon{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.19em;overflow:visible;flex-shrink:0;pointer-events:none;}
 .original-icon--coin{color:#ffc966;filter:drop-shadow(0 1px 2px #b36a1833);}
 .original-icon--shard{color:#8be2ff;filter:drop-shadow(0 1px 3px #36b8ed44);}
-.original-icon--medal{color:#e3bb8a;}
+.original-icon--medal{color:#b69cda;}
 .original-icon--ember{color:#ffb768;filter:drop-shadow(0 1px 3px #ff753344);}
 .original-icon--water{color:#70cfff;}
 
@@ -1591,6 +1591,15 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 #eternityHud{top:max(115px,calc(env(safe-area-inset-top) + 107px))}#eternityHud[data-bosses="1"]{top:max(178px,calc(env(safe-area-inset-top) + 170px))}
 
 </style>
+<style>
+/* Round gold coins / notched violet-silver arcade medals. */
+.original-icon--coin{color:#e4ab43;filter:drop-shadow(0 1px 2px #b36a1833);}
+.original-icon--medal{color:#b69cda;}
+.arcade-wallet{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;}
+#campHubSummary .arcade-wallet .currency-balance{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0;padding:8px 10px;border:1px solid #b69cda66;border-radius:8px;background:#241e32;color:#ede5ff;font-size:12px;line-height:1.5;}
+#campHubSummary .arcade-wallet [data-currency="coin"]{border-color:#cba25366;background:#302619;color:#ffe4a0;}
+.currency-balance .original-icon{width:22px;height:22px;vertical-align:middle;}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -1640,7 +1649,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.70</span>
+  <span class="title-version">v1.7.71</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -1814,7 +1823,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     <div class="arcade-masthead"><svg class="arcade-emblem" viewBox="0 0 36 36" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 3c2 9 12 10 12 21a12 12 0 0 1-24 0c0-7 5-11 8-16 0 4 1 6 3 8 2-4 2-9 1-13Z"/></svg><div><small>一番台 · 玉遊び</small><h2>灯玉パチンコ</h2></div></div>
     <div class="pachi-frame"><canvas id="pachiCv" width="360" height="440"></canvas></div>
     <div class="gcoins" style="justify-content:center;gap:8px">
-      <span class="hpill">【図:medal】 <b id="pachiCoins">0</b></span>
+      <span class="hpill">【図:medal】 メダル <b id="pachiCoins">0</b></span>
       <span class="hpill">今回 <b id="pachiSession">+0</b></span>
     </div>
     <div id="pachiLegend" class="pachi-legend"></div>
@@ -1834,7 +1843,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
   <div class="ptitle"><span>【図:element_fire】 大博打</span><span class="x" id="hellClose">【図:close】</span></div>
   <div class="hell-title">HELL <span style="color:#f4e9d3">or</span> HEAVEN</div>
   <div class="eline2" style="text-align:center">A=1 · K=13</div>
-  <div class="gcoins"><span class="hpill">【図:medal】 所持 <b id="hellCoins">0</b></span><span class="hpill">上限 <b id="hellMax">0</b></span></div>
+  <div class="gcoins"><span class="hpill">【図:medal】 メダル <b id="hellCoins">0</b></span><span class="hpill">上限 <b id="hellMax">0</b></span></div>
   <div class="casino-round-state" id="hellRoundState">次のカードは？</div><div class="hell-cards"><div class="hell-card" id="hellFirst"><small>現在</small><span>?</span></div><div class="hell-vs">→</div><div class="hell-card hidden" id="hellNext"><small>次</small><span>?</span></div></div>
   <div class="eline" style="display:flex;justify-content:space-between"><b>掛け金</b><b>【図:medal】 <span id="hellBetText">0</span></b></div>
   <input id="hellBet" type="range" min="1" max="1" value="1" step="1" aria-label="掛け金">
@@ -1865,7 +1874,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
       </div>
     </div>
     <div class="slot-stops"><span id="slotLamp0">一</span><span id="slotLamp1">二</span><span id="slotLamp2">三</span></div><div id="slotStatus" role="status">三つの絵柄を揃えよう</div>
-    <div class="gcoins" style="justify-content:center"><span class="hpill">【図:medal】 所持 <b id="slotCoins">0</b></span></div>
+    <div class="gcoins" style="justify-content:center"><span class="hpill">【図:medal】 メダル <b id="slotCoins">0</b></span></div>
     <div id="slotResult" style="text-align:center;min-height:44px"></div>
     <button class="btn" id="slotSpinBtn">【図:slot】 レバーを引く（【図:medal】<span id="slotCost">30</span>）</button>
     <button class="btn ghost" id="slotAutoBtn" style="margin-top:6px">【図:repeat】 オート：OFF</button>
@@ -8341,7 +8350,12 @@ function buyArcadeMedals(id){
  coins-=pack.coins;medals+=pack.medals;commitSave();return true;
 }
 function renderArcadeWallet(wrap){
- wrap.append(campLine('【図:medal】 '+medals.toLocaleString('ja-JP')+' ／ 【図:coin】 '+coins.toLocaleString('ja-JP')));
+ const wallet=document.createElement('div');wallet.className='arcade-wallet';
+ for(const [key,label,value] of [['medal','遊技場メダル',medals],['coin','コイン',coins]]){
+  const line=campLine('【図:'+key+'】 '+label+' '+value.toLocaleString('ja-JP'));
+  line.className='currency-balance';line.dataset.currency=key;wallet.append(line);
+ }
+ wrap.append(wallet);
  wrap.append(arcadeButton(medalClaimDay===medalToday()?'本日受取済み':'本日分 【図:medal】300',()=>{claimMedals();renderCampHub();},medalClaimDay===medalToday()));
  const heading=document.createElement('h3');heading.textContent='メダル購入';wrap.append(heading);
  for(const pack of MEDAL_PACKS){
@@ -8411,9 +8425,9 @@ function setupCamp(){
 /* 灯火オリジナルアイコン。絵文字トークンは描画時に共通SVGへ置換する。
    新しいアイコンは ORIGINAL_ICONS と ORIGINAL_ICON_TOKENS に登録する。 */
 const ORIGINAL_ICONS={
- coin:{label:'コイン',body:'<path fill="#6d401d" d="m12 1 8 5v12l-8 5-8-5V6z"/><path fill="#d99739" stroke="#ffdc86" stroke-width="1.2" d="m12 2.5 6.7 4v11l-6.7 4-6.7-4v-11z"/><path fill="#55311d" stroke="#ffe2a0" stroke-width=".8" d="m12 5 4.4 2.7v8.6L12 19l-4.4-2.7V7.7z"/><path fill="#ffe3a0" d="M12 7.1c.1 2.3 3 2.5 3 5.5a3 3 0 0 1-6 0c0-1.4.9-2.3 1.3-3.3.3.7.6 1 .9 1.3.6-1 .9-2.2.8-3.5z"/><path stroke="#fff1c4" stroke-linecap="round" d="m7 5.6 2-1.2m6 15 2-1.2"/>'},
+ coin:{label:'コイン',body:'<path fill="#754018" fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22Zm-3 8v6h6V9Z"/> <path fill="#e4ab43" stroke="#ffe4a0" stroke-width="1" fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20ZM8.5 8.5v7h7v-7Z"/> <path fill="none" stroke="#a56625" stroke-width="1" d="M8.5 8.5h7v7h-7ZM5.4 15.5a7.5 7.5 0 0 0 13.2 0"/> <path fill="none" stroke="#fff1c1" stroke-width="1.3" stroke-linecap="round" d="M5 9a7.6 7.6 0 0 1 9.4-4.2M18.3 7.8l.7 1.5"/>'},
  shard:{label:'灯火の雫',body:'<path fill="#153f6c" stroke="#96e9ff" stroke-width="1" d="m12 1.5 6.4 8.1 1 6.7L12 23l-7.4-6.7 1-6.7z"/><path fill="#69d8f5" d="m12 1.5-1.6 9.7-4.8-1.6z"/><path fill="#b0f1ff" d="m12 1.5 6.4 8.1-4 1.6z"/><path fill="#32a7dd" d="m5.6 9.6 4.8 1.6L12 23l-7.4-6.7z"/><path fill="#72e0f4" d="m14.4 11.2 4-1.6 1 6.7L12 23z"/><path fill="#e2fbff" d="m12 9 2.4 4.7-2.4 4-2.4-4z"/><path stroke="#efffff" stroke-linecap="round" d="m16 4.2 1 1.3"/>'},
- medal:{label:'メダル',body:'<path fill="#734b35" stroke="#edc79a" stroke-width="1" d="m12 1.5 8.5 5v11L12 22.5l-8.5-5v-11z"/><path fill="#c69566" d="m12 4 6 3.5v9L12 20l-6-3.5v-9z"/><path fill="#463341" d="M8 8h8v8H8z"/><path fill="#fce2a3" d="m12 7 4 5-4 5-4-5z"/><path fill="#976b51" d="m12 10 1.5 2-1.5 2-1.5-2z"/><path stroke="#f5dcb5" d="M5.5 10v4m13-4v4"/>'},
+ medal:{label:'遊技場メダル',body:'<path fill="#30203f" stroke="#ded5f5" stroke-width="1" d="M6 1.5h12l2 2V9a3 3 0 0 0 0 6v5.5l-2 2H6l-2-2V15a3 3 0 0 0 0-6V3.5Z"/> <path fill="#9678c6" d="M7 3.5h10l1 1V8a5 5 0 0 0 0 8v3.5l-1 1H7l-1-1V16a5 5 0 0 0 0-8V4.5Z"/> <path fill="#f0e9ff" stroke="#49325e" stroke-width=".7" d="m12 6 1.8 3.9 4.2.5-3.1 2.9.8 4.2-3.7-2.1-3.7 2.1.8-4.2L6 10.4l4.2-.5Z"/> <path fill="none" stroke="#eee6ff" stroke-width="1" stroke-linecap="round" d="M8 5h2m4 0h2M8 19h2m4 0h2"/>'},
  ember:{label:'灯芯',body:'<path fill="#873b30" stroke="#ffb877" stroke-width="1" d="M12 1c0 5.3 7 6.1 7 13a7 7 0 0 1-14 0c0-3.2 2-5.8 3.5-7.7.2 2 1 3.1 1.6 3.6C12 7.4 12.6 4.3 12 1z"/><path fill="#fba952" d="M12 8c.3 2.7 3.7 3.7 3.7 7.2a3.7 3.7 0 0 1-7.4 0c0-1.7 1-3 1.9-4 .1 1 .5 1.6.8 2 .9-1.5 1.2-3.4 1-5.2z"/><path fill="#fff0bb" d="M11.2 14h1.6v6h-1.6z"/><path stroke="#ffdb95" stroke-linecap="round" d="M8 22h8"/>'},
  water:{label:'水属性',body:'<path fill="#164b74" stroke="#71d5ff" stroke-width="1.3" d="M12 2c-1.8 3.9-7 8-7 12a7 7 0 0 0 14 0c0-4-5.2-8.1-7-12z"/><path fill="none" stroke="#b3eeff" stroke-width="1.5" stroke-linecap="round" d="M7.5 14c2-2 3 2 5 0s3-1 4 0M8 17c2-2 3 2 5 0s2-1 3 0"/>'}
 };
