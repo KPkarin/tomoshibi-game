@@ -1600,6 +1600,12 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 #campHubSummary .arcade-wallet [data-currency="coin"]{border-color:#cba25366;background:#302619;color:#ffe4a0;}
 .currency-balance .original-icon{width:22px;height:22px;vertical-align:middle;}
 </style>
+<style>
+.et-planning{padding:15px 0;border-block:1px solid #9eb5d633;margin-top:15px;text-align:left;min-width:0}.et-plan-heading,.et-control{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}.et-plan-heading{margin-bottom:15px;color:#e4ebf7}.et-plan-heading small{font-size:9px;color:#a5b0c2}.et-control{margin:10px 0;color:#d7dfea}.et-control select{box-sizing:border-box;width:min(62%,250px);min-width:0;max-width:100%;min-height:42px;padding:8px;border:1px solid #697d9c;background:#111925;color:#e9eff7;border-radius:6px;font:inherit}.et-note{font-size:10px;line-height:1.7;color:#a8b5c8;margin:7px 0;overflow-wrap:anywhere}.et-jump-record{font-size:11px;color:#a8b5c8}.et-jump-record b{color:#e0e8f3;margin-left:10px}.et-prep{border:1px solid #697d9c66;padding:12px;border-radius:8px;margin:14px 0;background:#131c2bb3}.et-prep summary{display:flex;justify-content:space-between;gap:8px;cursor:pointer;font-size:12px;line-height:1.8}.et-prep summary span{font-size:10px;color:#becbe0}.et-row{display:flex;gap:8px}.et-small.btn{padding:9px 8px;min-height:38px;margin:0;font-size:11px;line-height:1.4;white-space:normal;width:auto;flex:1;box-shadow:none}.et-slot-tabs{display:flex;gap:6px;margin:10px 0}.et-slot-tabs .selected{border-color:#cbb989;background:#353024}.et-build-list{max-height:48dvh;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;margin-top:12px}.et-build-row{display:grid;grid-template-columns:minmax(0,1fr) 36px 36px;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid #ffffff14;font-size:11px}.et-build-row small{display:block;color:#a9b8cf;font-size:9px;line-height:1.6;margin-top:3px}.et-build-row .et-small.btn{min-width:0;min-height:36px;padding:6px;font-size:16px}.et-awaken-row>span{color:#f1dca5}.et-pause{width:min(92vw,430px);padding:8px 10px;margin:8px auto;background:#101c2ce6;border:1px solid #697d9c55;border-radius:8px;box-sizing:border-box}.et-pause .et-small{width:100%}.et-pause[hidden],.et-prep[hidden]{display:none}.lvcard.et-awakening{border-color:#c5a86b;background:linear-gradient(110deg,#332b24,#1e2634)}.lvcard.et-awakening .lvtag{color:#f7dfaa}.eternity-panel .eternity-button{width:126px;height:126px;margin:16px auto 12px}.eternity-panel .eternity-button span{font-size:10px}.eternity-panel .eternity-rules{font-size:10px;line-height:1.6}.eternity-panel .eternity-records{padding:11px 0}.eternity-panel .eternity-lead{margin:10px 0}.eternity-panel{max-height:94dvh}#etAwakeningStatus{display:block;font-size:9px;color:#e7d5ad;letter-spacing:0;line-height:1.7}
+@media(max-width:380px){.et-control{gap:6px;font-size:11px}.et-control select{width:64%;font-size:10px}.et-plan-heading small{font-size:8px}.et-prep{padding:8px}.et-slot-tabs .et-small.btn{font-size:9px;padding:7px 4px}.eternity-panel .eternity-records b{font-size:18px}}
+.et-rules{margin:8px 0;text-align:left;border-bottom:1px solid #94a7c233}.et-rules summary{cursor:pointer;min-height:36px;line-height:36px;font-size:11px;color:#adbed3}#etPresetArea[hidden]{display:none}
+
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -1619,7 +1625,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 <div id="bossPhase"><strong>DANGER</strong><span></span></div><div id="bossVignette"></div>
 <div id="bossArrow">【図:arrow】</div>
 <div id="toast"></div>
-<div id="eternityHud" hidden aria-label="一億年ボタンの戦況"><strong>一億年ボタン</strong><span id="eternityStatus"></span></div>
+<div id="eternityHud" hidden aria-label="一億年ボタンの戦況"><strong>一億年ボタン</strong><span id="etAwakeningStatus"></span><span id="eternityStatus"></span></div>
 <div id="upgradeNotice"><div class="uni">POWER ACQUIRED</div><div class="unm"></div><div class="uds"></div></div>
 <div id="gunAmmo"></div>
 <div id="devourHud"></div>
@@ -1649,7 +1655,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.71</span>
+  <span class="title-version">v1.7.72</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -1748,6 +1754,10 @@ body.in-arcade .camp-backdrop-mist{display:none;}
 <div class="ov dim" id="pauseScreen">
   <div class="ttl" style="font-size:28px">一時停止</div>
   <div class="stat" id="pauseStat"></div><div id="pauseBuild" class="camp-summary" style="max-height:35dvh;overflow:auto;touch-action:pan-y"></div>
+  <div id="etPause" class="et-pause" hidden>
+   <label class="et-control">強化の選択<select id="etPauseAuto" aria-label="耐久戦の自動取得を変更"></select></label>
+   <button class="btn ghost et-small" type="button" id="etSaveCurrent">現在の構成を保存</button>
+  </div>
   <button class="btn" id="resumeBtn">再開</button>
   <button class="btn ghost" id="toHomeBtn">拠点へ戻る</button>
 </div>
@@ -1885,8 +1895,27 @@ body.in-arcade .camp-backdrop-mist{display:none;}
  <div class="panel eternity-panel">
   <div class="ptitle"><span>一億年ボタン</span><button class="btn ghost" id="eternityBack">ステージへ戻る</button></div>
   <p class="eternity-lead">終わりのない耐久戦</p>
-  <div class="eternity-records"><div><small>最高生存時間</small><b id="eternityBestTime">0:00</b></div><div><small>最高撃破数</small><b id="eternityBestKills">0</b></div><div><small>最高ボス撃破</small><b id="eternityBestBosses">0</b></div></div>
-  <ul class="eternity-rules"><li>弱い敵から始まり、時間とともに敵のHP・攻撃力が上がり続けます。</li><li>10分ごとにボス追加。残ったボスは消えず、雑魚も出現し続けます。</li><li>雑魚は最大144体。武器・装備・恒久成長、道中のレベルアップを使って挑戦できます。</li><li>持ち帰るのは記録のみ。コイン・装備・探索者EXPは獲得せず、補給品も使用しません。</li><li>死亡・拠点への離脱時に記録を保存。通常ルートの現在地やクリア状況は変わりません。</li></ul>
+  <div class="eternity-records"><div><small>通し最高生存</small><b id="eternityBestTime">0:00</b></div><div><small>最高撃破数</small><b id="eternityBestKills">0</b></div><div><small>最高ボス撃破</small><b id="eternityBestBosses">0</b></div></div>
+  <details class="et-rules"><summary>挑戦のルール</summary><ul class="eternity-rules"><li>弱い敵から始まり、時間とともに敵のHP・攻撃力が上がり続けます。</li><li>10分ごとにボス追加。残ったボスは消えず、雑魚も出現し続けます。</li><li>雑魚は最大144体。武器・装備・恒久成長、道中のレベルアップを使って挑戦できます。</li><li>持ち帰るのは記録のみ。コイン・装備・探索者EXPは獲得せず、補給品も使用しません。</li><li>死亡・拠点への離脱時に記録を保存。通常ルートの現在地やクリア状況は変わりません。</li></ul></details>
+  <section class="et-planning" aria-label="挑戦の設定">
+   <div class="et-plan-heading"><span>挑戦の設定</span><small>通しと時間跳躍は別記録</small></div>
+   <label class="et-control">開始地点<select id="etJump" aria-label="時間跳躍の開始地点"></select></label>
+   <p id="etJumpNote" class="et-note"></p>
+   <p class="et-jump-record">時間跳躍の最高到達 <b id="etJumpBest">未挑戦</b></p>
+   <label class="et-control">強化の選択<select id="etAuto" aria-label="汎用強化の自動取得"></select></label>
+   <p class="et-note">専用が育った後、汎用だけ自動取得できます。覚醒は自分で選択。耐久戦の汎用は同系統を加算します。</p>
+   <details id="etPrep" class="et-prep" hidden>
+    <summary><b id="etPrepTitle"></b><span>構成を組む</span></summary>
+    <p id="etPrepHint" class="et-note"></p>
+    <div class="et-row"><button type="button" class="btn ghost et-small" id="etPrepFill">残りをおまかせ</button><button type="button" class="btn ghost et-small" id="etPrepReset">組み直す</button></div>
+    <div id="etPrepCards" class="et-build-list"></div>
+   </details>
+   <div id="etPresetArea">
+   <div id="etSlots" class="et-slot-tabs" aria-label="構成の保存先"></div>
+   <div class="et-row"><button type="button" class="btn ghost et-small" id="etSlotSave">準備構成を保存</button><button type="button" class="btn ghost et-small" id="etSlotLoad">構成を呼び出す</button></div>
+   <p id="etPlanMessage" class="et-note" role="status"></p>
+   </div>
+  </section>
   <button id="eternityStart" class="eternity-button" aria-label="一億年ボタンの挑戦を開始"><span>一億年</span><b>押す</b></button>
   <p class="camp-note" id="eternityPartyNote" hidden>共闘の出撃先はホストが決めます。</p>
  </div>
@@ -2022,6 +2051,7 @@ function loadSave(){
 }
 function restoreSaveData(d){
   if(typeof restoreEternityRecord==='function')restoreEternityRecord(d&&d.eternityRecord);
+  if(typeof restoreEternityProgress==='function')restoreEternityProgress(d&&d.eternityProgress);
   if(d&&d.best){ save.best={kills:d.best.kills|0,time:d.best.time|0,level:d.best.level||1}; save.totalKills=d.totalKills|0; }
   if(d&&WEAPONS[d.weapon]) save.weapon=d.weapon;
     if(d){ coins=readSavedCurrency(d,'coins','コイン'); shards=readSavedCurrency(d,'shards','灯火の雫'); medals=readSavedCurrency(d,'medals','メダル',1000);medalClaimDay=typeof d.medalClaimDay==='string'?d.medalClaimDay:'';arcadeTitles=Array.isArray(d.arcadeTitles)?d.arcadeTitles.filter(id=>ARCADE_TITLES.some(t=>t.id===id)):[];arcadeTitle=arcadeTitles.includes(d.arcadeTitle)?d.arcadeTitle:''; if(d.items)items=Object.assign({heal:0,atk:0,guard:0,xp:0},d.items); if(d.equipItem&&ITEM_DEF[d.equipItem])equipItem=d.equipItem; if(d.ownedW)ownedW=Object.assign({sword:1,bow:1,mage:1},d.ownedW); if(d.weapon&&WEAPONS[d.weapon]&&!(ownedW[d.weapon]>0))ownedW[d.weapon]=1; if(Array.isArray(d.inventory))inventory=d.inventory; if(d.equipped)equipped=Object.assign({head:null,chest:null,legs:null,feet:null},d.equipped); itemSeq=d.itemSeq|0;
@@ -2120,7 +2150,7 @@ function saveExportRaw(){
   if(unreadSaveRaw===null)throw new Error('元のセーブデータを取り出せませんでした');
   return unreadSaveRaw;
 }
-function saveSnapshot(){ if(typeof eternityRecord!=='undefined')save.eternityRecord=eternityRecord; save.muted=muted; save.medals=medals;save.medalClaimDay=medalClaimDay;save.arcadeTitles=arcadeTitles;save.arcadeTitle=arcadeTitle; save.coins=coins; save.shards=shards; save.currencyBalances={format:1,coins:String(coins),shards:String(shards),medals:String(medals)}; save.items=items; save.equipItem=equipItem; save.ownedW=ownedW; save.inventory=inventory; save.equipped=equipped; save.itemSeq=itemSeq; save.weapon=weapon; save.mode=mode; save.stageNum=stageNum; save.modeMax=modeMax;save.chapterClaims=chapterClaims;save.stageCleared=stageCleared; save.playerLevel=playerLevel; save.playerXp=playerXp; save.rebirthTier=rebirthTier; save.tomoshin=tomoshin; save.tomoshinNodes=tomoshinNodes; save.rebirthCount=rebirthCount; save.carryUsed=carryUsed; save.cycleCleared=cycleCleared; save.lastLogin=lastLogin; save.loginStreak=loginStreak; return JSON.stringify(save); }
+function saveSnapshot(){ if(typeof eternityProgress!=='undefined')save.eternityProgress=eternityProgress; if(typeof eternityRecord!=='undefined')save.eternityRecord=eternityRecord; save.muted=muted; save.medals=medals;save.medalClaimDay=medalClaimDay;save.arcadeTitles=arcadeTitles;save.arcadeTitle=arcadeTitle; save.coins=coins; save.shards=shards; save.currencyBalances={format:1,coins:String(coins),shards:String(shards),medals:String(medals)}; save.items=items; save.equipItem=equipItem; save.ownedW=ownedW; save.inventory=inventory; save.equipped=equipped; save.itemSeq=itemSeq; save.weapon=weapon; save.mode=mode; save.stageNum=stageNum; save.modeMax=modeMax;save.chapterClaims=chapterClaims;save.stageCleared=stageCleared; save.playerLevel=playerLevel; save.playerXp=playerXp; save.rebirthTier=rebirthTier; save.tomoshin=tomoshin; save.tomoshinNodes=tomoshinNodes; save.rebirthCount=rebirthCount; save.carryUsed=carryUsed; save.cycleCleared=cycleCleared; save.lastLogin=lastLogin; save.loginStreak=loginStreak; return JSON.stringify(save); }
 function commitSave(){ if(!saveWorks||saveLoadFailed||transferReloadPending)return false; try{localStorage.setItem(SAVE_KEY,saveSnapshot());return true;}catch(e){return false;} }
 
 
@@ -3274,6 +3304,7 @@ function moveEternityGround(px,pz,reset=false){
 function prepareEternityAttempt(){
   ETERNITY.active=!!ETERNITY.pending;ETERNITY.pending=false;ETERNITY.client=false;ETERNITY.elapsed=0;
   ETERNITY.nextBoss=ETERNITY_RULES.bossEvery;ETERNITY.spawned=0;ETERNITY.defeated=0;ETERNITY.recorded=false;ETERNITY.clientBosses=[];
+  if(typeof eternityPrepareStart==='function')eternityPrepareStart();
   updateEternityHud();
 }
 function scaleEternitySpawn(e,def){
@@ -3299,20 +3330,22 @@ function eternityTick(dt){
   if(gameTime+1e-8>=ETERNITY.nextBoss){
     const key=ETERNITY_RULES.bosses[ETERNITY.spawned%ETERNITY_RULES.bosses.length];
     spawnEnemy(key);const boss=enemies[enemies.length-1];initBossBrain(boss);
-    ETERNITY.spawned++;ETERNITY.nextBoss=ETERNITY_RULES.bossEvery*(ETERNITY.spawned+1);
+    ETERNITY.spawned++;boss.eternityWave=ETERNITY.spawned;ETERNITY.nextBoss=ETERNITY_RULES.bossEvery*(ETERNITY.spawned+1);
     bossAlive=bossSpawned=true;activeBossAudioKey=eternityBosses()[0].key;
     if(ETERNITY.spawned===1)playTrack('boss');
     toast('一億年ボタン · '+bossName(key)+'出現 / 生存ボス '+eternityBosses().length+'体');
   }
   bossT=Math.max(0,ETERNITY.nextBoss-gameTime);
 }
-function eternityBossKilled(){
+function eternityBossKilled(e){
+  if(typeof eternityBossProgress==='function')eternityBossProgress(e);
   ETERNITY.defeated++;const remaining=eternityBosses();bossAlive=bossSpawned=remaining.length>0;
   activeBossAudioKey=remaining.length?remaining[0].key:null;
   if(!remaining.length)playTrack(stageTrackName());
   updateEternityHud();
 }
 function recordEternityAttempt(){
+  if(typeof eternityStoreAttempt==='function')return eternityStoreAttempt();
   if(!ETERNITY.active||ETERNITY.recorded)return false;
   const seconds=eternityInteger(ETERNITY.client?ETERNITY.elapsed:gameTime),runKills=eternityInteger(ETERNITY.client?ETERNITY.clientKills:kills),bosses=eternityInteger(ETERNITY.defeated);
   eternityRecord.time=Math.max(eternityRecord.time,seconds);eternityRecord.kills=Math.max(eternityRecord.kills,runKills);eternityRecord.bosses=Math.max(eternityRecord.bosses,bosses);
@@ -3323,6 +3356,7 @@ function leaveEternity(){
   if(ETERNITY.active&&!ETERNITY.recorded)recordEternityAttempt();
   if(ETERNITY.active)moveEternityGround(0,0,true);
   ETERNITY.active=ETERNITY.pending=false;ETERNITY.clientBosses=[];
+  if(typeof clearEternityCombat==='function')clearEternityCombat();
   const hud=$('eternityHud');if(hud)hud.hidden=true;const bar=$('bossHp');if(bar)bar.dataset.bossKey='';
 }
 function eternityGameOver(){
@@ -3334,6 +3368,7 @@ function eternityGameOver(){
   $('overBest').textContent='最高生存 '+eternityDuration(eternityRecord.time)+' ／ 撃破 '+eternityRecord.lastKills+' ／ ボス撃破 '+eternityRecord.lastBosses;
   $('overNextBtn').style.display='none';const box=$('overJourney');box.replaceChildren();
   box.append(campLine('記録を保存しました。通常ステージの進行・通貨・探索者EXPは変わりません。'));
+  if(typeof eternityRenderResult==='function')eternityRenderResult();
   showOv('overScreen');updateEternityHud();
 }
 function startEternityRun(){
@@ -3343,7 +3378,7 @@ function startEternityRun(){
 function openEternity(){
   $('eternityBestTime').textContent=eternityDuration(eternityRecord.time);
   $('eternityBestKills').textContent=eternityRecord.kills.toLocaleString();$('eternityBestBosses').textContent=eternityRecord.bosses.toLocaleString();
-  $('eternityStart').disabled=NET.role==='client';$('eternityPartyNote').hidden=NET.role!=='client';showOv('eternityScreen');
+  $('eternityStart').disabled=NET.role==='client';$('eternityPartyNote').hidden=NET.role!=='client';if(typeof eternityRenderPlan==='function')eternityRenderPlan();showOv('eternityScreen');
 }
 function setupEternityUi(){
   $('eternityEntry').onclick=openEternity;$('eternityStart').onclick=startEternityRun;$('eternityBack').onclick=openStageSelect;
@@ -3355,13 +3390,15 @@ function eternityBossPacket(e){
 }
 function eternitySnapshot(){
   if(!ETERNITY.active)return null;
-  const focus=eternityFocusBoss();return {on:1,time:gameTime,next:ETERNITY.nextBoss,spawned:ETERNITY.spawned,defeated:ETERNITY.defeated,kills,focus:focus?focus.id:null,bosses:eternityBosses().map(eternityBossPacket)};
+  const focus=eternityFocusBoss();return {on:1,start:ETERNITY.startAt||0,checkpoint:typeof eternityProgress==='undefined'?0:eternityProgress.checkpoint,builds:typeof eternityFlattenBuild==='function'?[eternityFlattenBuild(RUN||{}),eternityFlattenBuild(ally&&ally.run||{})]:[],fx:typeof eternityTakeVisuals==='function'?eternityTakeVisuals():[],time:gameTime,next:ETERNITY.nextBoss,spawned:ETERNITY.spawned,defeated:ETERNITY.defeated,kills,focus:focus?focus.id:null,bosses:eternityBosses().map(eternityBossPacket)};
 }
 function receiveEternityState(data,newRun=false){
   if(ETERNITY.active&&!(data&&data.on))moveEternityGround(0,0,true);
   if(newRun)ETERNITY.recorded=false;
   ETERNITY.active=!!(data&&data.on);ETERNITY.client=true;ETERNITY.pending=false;
   if(ETERNITY.active){ETERNITY.elapsed=Math.max(0,Number.isFinite(data.time)?data.time:0);ETERNITY.nextBoss=Math.max(600,Number.isFinite(data.next)?data.next:600);ETERNITY.spawned=eternityInteger(data.spawned);ETERNITY.defeated=eternityInteger(data.defeated);ETERNITY.clientKills=eternityInteger(data.kills);ETERNITY.clientBosses=Array.isArray(data.bosses)?data.bosses:[];ETERNITY.clientFocus=data.focus;}
+  if(typeof eternityReceiveProgress==='function')eternityReceiveProgress(data,newRun);
+  if(typeof eternityClientVisuals==='function'&&data)eternityClientVisuals(data.fx);
   updateEternityHud();
 }
 function syncEternityBossFx(data){
@@ -3375,7 +3412,7 @@ function endEternityClient(data){
 function updateEternityHud(){
   const hud=$('eternityHud');if(!hud)return;hud.hidden=!ETERNITY.active;if(!ETERNITY.active)return;
   const time=ETERNITY.client?ETERNITY.elapsed:(typeof gameTime==='number'?gameTime:0),g=eternityGrowth(time);
-  $('hTime').textContent=eternityDuration(time);
+  $('hTime').textContent=eternityDuration(time);if(typeof eternityAwakeningStatus==='function'&&$('etAwakeningStatus'))$('etAwakeningStatus').textContent=eternityAwakeningStatus();
   const bosses=ETERNITY.client?ETERNITY.clientBosses:eternityBosses().map(eternityBossPacket),n=bosses.length;
   hud.dataset.bosses=n?'1':'0';
   const text='敵HP ×'+eternityNumber(g.hp)+' ／ 生存ボス '+n+'体 ／ 次 '+eternityDuration(Math.ceil(Math.max(0,ETERNITY.nextBoss-time)));
@@ -3904,6 +3941,7 @@ function setupAlly(opts){ // opts:{weapon,bonuses,elem}
   ally.gsSpin=null;ally.gsSpinAng=0;ally.grp.userData.gsAttackT=0;ally.run=makeRun();ally.iaiCharge=0;ally.iaiEcho=null;ally.charge=0; ally.buffT=0; ally.buffType=null; ally.fireCd=0; ally.move={x:0,z:0}; ally.dashT=0; ally.dashCd=0; ally.dashVX=0; ally.dashVZ=0; ally.dashStock=3; ally.dashMax=3; ally.dashRe=0; ally.rockShield=0;
   ally.gunAmmo=WEAPONS.gun.mag; ally.gunReloadT=0; ally.gunBoost=0; ally.gunStormT=0; ally.gunKick=0;ally.devourStacks=0;ally.spiritT=0;if(ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);ally.spiritOrbs=[]; ally.gunMesh=ally.gunMesh||null;
   ally.grp.position.set(2,0,0); ally.grp.visible=true;
+  if(typeof eternityAllyBuild==='function')eternityAllyBuild(opts);
   const r=ally.grp.userData.ring; if(ally.pElem.element){ r.material.color.set(ELEM[ally.pElem.element].color); r.visible=true; } else r.visible=false;
 }
 function removeAlly(){if(ally){clearPuppetOwner(ally.grp);clearEarthOwner(ally.grp);}resetContactDamage(1);if(ally&&ally.gsSpin)removeAndDispose(ally.gsSpin);if(ally&&ally.iaiEcho)clearIaiEcho(ally.iaiEcho); if(ally&&ally.spiritOrbs)for(const o of ally.spiritOrbs)removeAndDispose(o.g);if(ally&&ally.grp){removeShadowFor(ally.grp);removeAndDispose(ally.grp);} ally=null; }
@@ -3938,7 +3976,7 @@ function updateAlly(dt){
   PLAYER.dashT=ally.dashT;updateIaiState(dt);PLAYER.fireCd-=dt; if(PLAYER.fireCd<=0){ const okBuff=!greatswordRooted()&&!(weapon==='greatsword'&&PLAYER.dashT>0)&&!(weapon==='twin'&&PLAYER.dashT>0)&&buffType!=='gun'&&buffType!=='greatsword'; if(okBuff&&nearestEnemy(fireRange())){ doFire(); PLAYER.fireCd=fireInterval(); } else PLAYER.fireCd=0; }
   if(buffType==='greatsword')updateGreatswordSpin(dt);
   updateSpirits(dt);
-  updateIaiEcho(dt);
+  updateIaiEcho(dt);if(typeof eternityActorTick==='function')eternityActorTick(dt);
   if(buffT>0){ buffT-=dt; if(buffT<=1e-8){const was=buffType;buffT=0;buffType=null;if(was==='greatsword')endGsSpin();} }
   if(ally.grp.userData.ring)ally.grp.userData.ring.position.set(0,0.03,0);updateRockShieldVisual(ally.grp,PLAYER.rockShield,dt);
   }finally{ storeAlly(); }
@@ -3951,7 +3989,7 @@ function doDash(){ if(state!=='play'||introActive)return; if(PLAYER.dashT>0||gre
   else { if(PLAYER.dashCd>0)return; }
   let dx=move.x,dz=move.z; if(!dx&&!dz){ dx=Math.sin(player.rotation.y); dz=Math.cos(player.rotation.y); }
   const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
-  PLAYER.dashVX=dx*DASH_SPEED; PLAYER.dashVZ=dz*DASH_SPEED; PLAYER.dashT=DASH_TIME; if(weapon!=='twin')PLAYER.dashCd=DASH_CD; const dang=Math.atan2(dx,dz); player.rotation.y=dang; spawnDashFx(player.position); if(weapon==='twin')twinDashSlash(dang);if(weapon==='puppeteer')cyclePuppetMode(); }
+  PLAYER.dashVX=dx*DASH_SPEED; PLAYER.dashVZ=dz*DASH_SPEED; PLAYER.dashT=DASH_TIME; if(weapon!=='twin')PLAYER.dashCd=DASH_CD; const dang=Math.atan2(dx,dz); player.rotation.y=dang; spawnDashFx(player.position); if(weapon==='twin')twinDashSlash(dang);if(weapon==='puppeteer')cyclePuppetMode();if(typeof eternityAttackEvent==='function')eternityAttackEvent('dash'); }
 function twinDashSlash(ang){ const W=WEAPONS.twin; const dmg=baseDmg()*2.5*((RUN&&RUN.twinDashPower)||1); const rng=meleeRange('twin')*1.25;
   meleeAttack(ang,rng,2.6,dmg,0,0x8affd0,true);
   spawnSwordSwing(ang,rng*1.15,0x8affd0,true,true);
@@ -3964,7 +4002,7 @@ function allyDash(){ if(!ally||ally.hp<=0||ally.dashT>0||greatswordRooted(ally.g
   let dx=ally.move.x,dz=ally.move.z; if(!dx&&!dz){ dx=Math.sin(ally.grp.rotation.y); dz=Math.cos(ally.grp.rotation.y); }
   const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
   ally.dashVX=dx*DASH_SPEED; ally.dashVZ=dz*DASH_SPEED; ally.dashT=DASH_TIME; if(!twin)ally.dashCd=DASH_CD; const ang=Math.atan2(dx,dz);ally.grp.rotation.y=ang;spawnDashFx(ally.grp.position);
-  if(twin){loadAlly();try{twinDashSlash(ang);}finally{storeAlly();}}if(ally.weapon==='puppeteer')cyclePuppetMode(ally.grp); }
+  if(twin){loadAlly();try{twinDashSlash(ang);}finally{storeAlly();}}if(ally.weapon==='puppeteer')cyclePuppetMode(ally.grp);if(typeof eternityAttackEvent==='function'){loadAlly();try{eternityAttackEvent('dash');}finally{storeAlly();}} }
 function dashPress(){ if(NET.role==='client'){ netSendDash(); } else { doDash(); } }
 function netSendDash(){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].send({t:'dash'}); }catch(e){} } }
 // 敵から最も近い味方（host=player or ally）の位置とhp参照
@@ -4022,7 +4060,7 @@ function joinConnect(){
   try{ initAudio(); }catch(e){} // スマホの音声アンロック（ユーザー操作のうちに）
   netLeave(); NET.role='client'; NET.peer=new Peer({debug:0,config:ICE_CONFIG}); netStatus('【図:connecting】 接続中…');
   NET.peer.on('open',()=>{ const conn=NET.peer.connect('tomoshibi3d-'+code,{reliable:true}); NET.conns=[conn];
-    conn.on('open',()=>{ try{ conn.send({t:'join',weapon,bonuses:totalBonuses(),elem:playerElementInfo()}); }catch(e){} netStatus('【図:connected】 ホスト待ち'); });
+    conn.on('open',()=>{ try{ conn.send({t:'join',weapon,bonuses:totalBonuses(),elem:playerElementInfo(),etAuto:typeof eternityProgress==='undefined'?'off':eternityProgress.auto,etBuild:typeof eternityMyBuild==='function'?eternityMyBuild():[]}); }catch(e){} netStatus('【図:connected】 ホスト待ち'); });
     conn.on('data',d=>onClientData(d)); conn.on('error',e=>netStatus('【図:warning】 接続エラー: '+(e&&e.type||e))); conn.on('close',()=>{ netStatus('切断されました'); netLeave(); goHome(); }); });
   NET.peer.on('error',e=>netStatus('エラー: '+(e&&e.type||e)));
 }
@@ -4035,11 +4073,11 @@ function beginReady(){ for(const c of NET.conns){ if(c.open){ try{c.send({t:'toR
 function showReadyScreen(){ state='ready'; NET.myReady=false; if(NET.role==='host'){ for(const c of NET.conns)c.__ready=false; } renderRwsel(); const b=$('readyBtn'); if(b)b.textContent='準備完了'; updateReadyStat(); hostBroadcastLobby(); showOv('readyScreen'); }
 
 function setMyReady(v){ NET.myReady=v; const b=$('readyBtn'); if(b)b.textContent=v?'準備解除':'準備完了';
-  if(NET.role==='client'){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].send({t:'ready', r:v, weapon, bonuses:totalBonuses(), elem:playerElementInfo()}); }catch(e){} } }
+  if(NET.role==='client'){ if(NET.conns[0]&&NET.conns[0].open){ try{ NET.conns[0].send({t:'ready', r:v, weapon, bonuses:totalBonuses(), elem:playerElementInfo(),etAuto:typeof eternityProgress==='undefined'?'off':eternityProgress.auto,etBuild:typeof eternityMyBuild==='function'?eternityMyBuild():[]}); }catch(e){} } }
   else if(NET.role==='host'){ hostBroadcastLobby(); maybeStartHost(); }
   updateReadyStat(); }
 function toggleReady(){ setMyReady(!NET.myReady); }
-function cancelReady(){ NET.myReady=false; if(NET.role==='client'&&NET.conns[0]&&NET.conns[0].open){ try{NET.conns[0].send({t:'ready',r:false,weapon,bonuses:totalBonuses(),elem:playerElementInfo()});}catch(e){} } if(NET.role==='host')hostBroadcastLobby(); state='home'; showOv('homeScreen'); }
+function cancelReady(){ NET.myReady=false; if(NET.role==='client'&&NET.conns[0]&&NET.conns[0].open){ try{NET.conns[0].send({t:'ready',r:false,weapon,bonuses:totalBonuses(),elem:playerElementInfo(),etAuto:typeof eternityProgress==='undefined'?'off':eternityProgress.auto,etBuild:typeof eternityMyBuild==='function'?eternityMyBuild():[]});}catch(e){} } if(NET.role==='host')hostBroadcastLobby(); state='home'; showOv('homeScreen'); }
 function maybeStartHost(){ if(NET.role!=='host'||!NET.myReady)return; const open=NET.conns.filter(c=>c.open); if(!open.every(c=>c.__ready))return; startRun(); }
 function hostBroadcastLobby(){ if(NET.role!=='host')return; for(const c of NET.conns){ if(c.open){ try{ c.send({t:'rsync', h:NET.myReady, g:!!c.__ready}); }catch(e){} } } updateReadyStat(); }
 function updateReadyStat(){ const el=$('readyStat'); if(!el)return; const me=NET.myReady?'準備完了 【図:check】':'選択中…'; let other='—';
@@ -4048,15 +4086,16 @@ function updateReadyStat(){ const el=$('readyStat'); if(!el)return; const me=NET
   el.textContent=`自分: ${me} ／ 相手: ${other}`; }
 
 function onHostData(c,d){
-  if(d.t==='join'){ c.__opts={weapon:d.weapon,bonuses:d.bonuses,elem:d.elem}; if(NET.started){ setupAlly(c.__opts); } netStatus('【図:connected】 接続済み'); }
+  if(d.t==='join'){ c.__opts={weapon:d.weapon,bonuses:d.bonuses,elem:d.elem,etAuto:d.etAuto,etBuild:d.etBuild}; if(NET.started){ setupAlly(c.__opts); } netStatus('【図:connected】 接続済み'); }
   else if(d.t==='in'){ if(ally){ ally.move.x=d.x; ally.move.z=d.z; } }
   else if(d.t==='skill'){ allySkill(d.a); }
   else if(d.t==='dash'){ allyDash(); }
   else if(d.t==='toReady'){ showReadyScreen(); }
-  else if(d.t==='ready'){ c.__ready=!!d.r; c.__opts={weapon:d.weapon,bonuses:d.bonuses,elem:d.elem}; hostBroadcastLobby(); maybeStartHost(); }
+  else if(d.t==='ready'){ c.__ready=!!d.r; c.__opts={weapon:d.weapon,bonuses:d.bonuses,elem:d.elem,etAuto:d.etAuto,etBuild:d.etBuild}; hostBroadcastLobby(); maybeStartHost(); }
+  else if(d.t==='etauto'){if(ally)ally.etAuto=typeof ET_AUTO_MODES!=='undefined'&&ET_AUTO_MODES.includes(d.value)?d.value:'off';}
   else if(d.t==='levelpick'){if(NET.guestPicked)return;if(ally&&NET.guestChoices&&NET.guestChoices[d.idx]){const u=NET.guestChoices[d.idx];loadAlly();try{applyRunUpgrade(u);spawnUpgradeVisual(u,player,false);}finally{storeAlly();}}NET.guestPicked=true;coopLevelResolve();}
 }
-function onClientData(d){ if(d.t==='snap'){ applySnapshot(d); }
+function onClientData(d){if(d.t==='etlevelauto'){if(typeof eternityClientAuto==='function')eternityClientAuto(d.id);return;} if(d.t==='snap'){ applySnapshot(d); }
   else if(d.t==='start'){if(typeof receiveEternityState==='function')receiveEternityState(d.et,true);syncClientIaiEchoes([]);C.attackGuide=null;RUN=makeRun(); state='play'; document.body.classList.add('playing'); showOv(null); initAudio(); }
   else if(d.t==='toReady'){ showReadyScreen(); }
   else if(d.t==='rsync'){ NET._peerReady=!!d.h; updateReadyStat(); }
@@ -5667,16 +5706,16 @@ function killEnemy(e,source){
   if(e.bossAI)cleanupBossBrain(e);
   removeShadowFor(e.mesh);if(e.ring)removeAndDispose(e.ring);if(e.tele){removeAndDispose(e.tele);e.tele=null;}
   removeAndDispose(e.mesh);enemies.splice(enemies.indexOf(e),1);
-  if(e.boss){if(typeof ETERNITY!=='undefined'&&ETERNITY.active)eternityBossKilled();else{bossAlive=false;if(e.key==='maou')destroyMaouRing();stageClear();}}
+  if(e.boss){if(typeof ETERNITY!=='undefined'&&ETERNITY.active)eternityBossKilled(e);else{bossAlive=false;if(e.key==='maou')destroyMaouRing();stageClear();}}
 }
 function awardEnemyKill(e){
   const endless=typeof ETERNITY!=='undefined'&&ETERNITY.active;
-  kills++;
+  kills++;if(typeof eternityAttackEvent==='function')eternityAttackEvent('kill',e);
   if(weapon==='devour'&&NET.role!=='client')devourStacks+=e.boss?25:1+((RUN&&RUN.devourGrowth)||0);
   if(weapon==='scythe'&&NET.role!=='client'&&state==='play'){const heal=PLAYER.maxHp*((buffType==='scythe'?.04:.025)+((RUN&&RUN.scytheHeal)||0));PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+heal);}
   if(!endless){markDex(e.key);coins+=coinGain(Math.round((e.boss?40:2)*tierRewardMul()));}
   if(e.key==='maou'&&!endless){if(mode==='normal'&&stageNum===100)cycleCleared=true;const first=!save.maouCleared,mult=first?30:5;coins+=coinGain(40*(mult-1));save.maouCleared=true;let _mmsg=first?('魔王 初回討伐！ 報酬30倍 【図:coin】'+(coinGain(40*mult))):('魔王討伐 報酬5倍 【図:coin】'+(coinGain(40*mult)));if(mode==='normal'&&stageNum%100===0&&stageNum>(save.maouBonusMax|0)){save.maouBonusMax=stageNum;coins+=coinGain(5000);_mmsg+=' ＋討伐ボーナス【図:coin】'+coinGain(5000)+'！';}if(first)pendingFirstRewards.push({title:'魔王 初回討伐',text:_mmsg});else if(typeof toast==='function')toast(_mmsg);}
-  xp+=e.xp*(1+xpPct()/100)*((RUN&&RUN.xpMul)||1);addCharge(e.boss?12:2);
+  xp+=(endless&&typeof eternityXpGain==='function'?eternityXpGain(e.xp):e.xp)*(1+xpPct()/100)*((RUN&&RUN.xpMul)||1);addCharge(e.boss?12:2);
 }
 
 let orbs=[];
@@ -5711,7 +5750,7 @@ function upgradeFxKind(u){
 }
 function upgradeVisualMeta(u){return UPGRADE_VISUAL[upgradeFxKind(u)]||UPGRADE_VISUAL.magic;}
 function upgradeCard(u,onpick){
-  const v=upgradeVisualMeta(u),d=document.createElement('div');d.className='lvcard'+(v.special?' lv-special':'');
+  const v=upgradeVisualMeta(u),d=document.createElement('div');d.className='lvcard'+(v.special?' lv-special':'')+(u.etAwaken?' et-awakening':'');
   const tones={rapid:'#b99b5c',power:'#ad6350',move:'#719998',vitality:'#aa7771',xp:'#9888aa',regen:'#829a68',projectile:'#a68192',range:'#788ea6',arc:'#739b8b',magic:'#9584a6',star:'#b7a16d',flame:'#bc784d'};
   d.style.setProperty('--lvcol',tones[upgradeFxKind(u)]||'#b7a16d');
   const esc=t=>String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5719,7 +5758,7 @@ function upgradeCard(u,onpick){
   const name=match?match[1]:title,metric=match?match[2]:'';
   const description=esc(u.ds).replace(/([+−×-]?\d+(?:\.\d+)?(?:%|秒|体|s)?)/g,'<b>$1</b>');
   const rank=u.max?'<span class="lv-rank">'+(u.rank||upgradeRank(u)+1)+' / '+u.max+'</span>':'';
-  d.innerHTML=`<div class="lvic">${u.ic}</div><div class="lvtx"><div class="lvnm">${esc(name)}</div>${metric?`<div class="lvmetric">${esc(metric)}</div>`:''}${description?`<div class="lvds">${description}</div>`:''}</div><div class="lvside">${u.w&&u.w!=='all'?'<span class="lvtag">専用</span>':''}${rank}</div>`;
+  d.innerHTML=`<div class="lvic">${u.ic}</div><div class="lvtx"><div class="lvnm">${esc(name)}</div>${metric?`<div class="lvmetric">${esc(metric)}</div>`:''}${description?`<div class="lvds">${description}</div>`:''}</div><div class="lvside">${u.w&&u.w!=='all'?'<span class="lvtag">'+(u.etAwaken?'覚醒':'専用')+'</span>':''}${rank}</div>`;
   d.setAttribute('role','button');d.tabIndex=0;d.onclick=()=>onpick(u);d.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();d.click();}};return d;
 }
 let upgradeBursts=[],upgradeAuras=[];
@@ -5813,12 +5852,415 @@ function runMoveMul(){return (RUN&&RUN.iaiStepT>0?1.4:1)*(weapon==='twin'&&buffT
 function updateIaiState(dt){if(!RUN)return;if(RUN.iaiStepT>0)RUN.iaiStepT=Math.max(0,RUN.iaiStepT-dt);if(weapon!=='iai'){const ring=player.userData.iaiRing;if(ring)ring.visible=false;return;}const moving=Math.abs(move.x)+Math.abs(move.z)>.05||PLAYER.dashT>0;const fillT=Math.max(.4,fireInterval()*.88);iaiCharge=clamp(iaiCharge+(moving?-2.6:(1+RUN.iaiFocus)/fillT)*dt,0,1);updateIaiRing();}
 function iaiGuardMul(isHost){const run=isHost?RUN:ally&&ally.run,wp=isHost?weapon:ally&&ally.weapon,c=isHost?iaiCharge:ally&&ally.iaiCharge,mv=isHost?move:ally&&ally.move,dash=isHost?PLAYER.dashT:ally&&ally.dashT;return run&&run.iaiGuard&&wp==='iai'&&c>=.5&&mv&&Math.abs(mv.x)+Math.abs(mv.z)<=.05&&!(dash>0)?.6:1;}
 function spawnGsWave(ang,dmg){const mesh=new THREE.Mesh(new THREE.BoxGeometry(3.2,.16,.6),new THREE.MeshBasicMaterial({color:0xffcb79,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false}));mesh.position.set(player.position.x,.7,player.position.z);mesh.rotation.y=ang;scene.add(mesh);pBullets.push({mesh,vx:Math.sin(ang)*18,vz:Math.cos(ang)*18,life:.7,dmg,r:1.6,pierce:true,hitSet:new Set(),oel:pElem});}
+/* Endless-only progression. Saved builds contain card IDs/counts, never live actors. */
+const ET_PATHS={
+ sword:[['残光剣','斬撃に追撃する光刃。近い敵へ連鎖する。','chain','attack',0xffd78c],['剣域','攻撃した場所に、敵を斬り続ける剣域を残す。','field','attack',0xffbc81]],
+ greatsword:[['崩山','大剣に合わせて、敵を押し返す衝撃波を放つ。','blast','attack',0xffa265],['断界','前方を貫く長い地裂撃を追加する。','line','attack',0xffcf88]],
+ knuckle:[['連環拳','打撃から次の敵へ衝撃が連鎖する。','chain','attack',0xffa67b],['震脚','自分の足元から、敵を押し返す震動を放つ。','guard','attack',0xffd397]],
+ spear:[['穿星','攻撃方向を貫く星の槍を放つ。','line','attack',0x9fe8ff],['槍陣','狙った場所に、敵を足止めする槍陣を置く。','snare','attack',0x81cfff]],
+ gun:[['跳弾','発砲に合わせて、別の敵へ跳ねる光弾を放つ。','chain','attack',0xffda87],['照準刻印','狙った敵に刻印を重ね、強い追撃を与える。','mark','attack',0xff9a81]],
+ spirit:[['鬼火葬','近い敵の足元に燃え続ける霊火を残す。','field','pulse',0x91d9ff],['護霊輪','自分の周囲を霊火が巡り、近い敵を押し返す。','guard','pulse',0xb5c9ff]],
+ chain:[['雷鎖','鎖から敵同士へ雷撃が伝わる。','chain','attack',0xbfb0ff],['重力鎖','敵を中心へ引く重力域を置く。','vortex','attack',0xd09fff]],
+ iai:[['返し居合','抜刀方向に、遅れてもう一筋の斬撃を放つ。','line','attack',0xc0e8ff],['結界居合','斬った場所を持続する結界へ変える。','field','attack',0x9fc9ff]],
+ scythe:[['死花','倒した敵の位置に、敵を刻む死花を咲かせる。','field','kill',0xcf95ff],['冥鎌','攻撃方向へ、敵を貫く冥界の刃を放つ。','line','attack',0xb2a0ff]],
+ twin:[['追影','ダッシュの方向へ追撃の刃を残す。','line','dash',0x99ffcd],['旋風','攻撃中の自分の周囲に、持続する旋風を作る。','guard','attack',0x8ce8cf]],
+ devour:[['飢餓連鎖','倒した敵から、近い敵へ喰らう衝撃が伝わる。','chain','kill',0xcf8fff],['灯喰領域','周囲の敵を引き寄せ、持続して喰らう。','vortex','pulse',0xb27aff]],
+ hammer:[['断層','打撃方向へ長い断層を走らせる。','line','attack',0xffc080],['震源','攻撃した地点に、繰り返し震動する領域を置く。','field','attack',0xffb07b]],
+ fude:[['墨印','敵に墨印を重ね、濃くなった印を炸裂させる。','mark','attack',0xdfc4ff],['墨沼','狙った場所に、敵を鈍らせる墨沼を残す。','snare','attack',0xbb9ce4]],
+ bow:[['枝分かれ','放った矢に合わせ、別の敵へ枝分かれする光矢を放つ。','chain','attack',0xb9f28f],['天雨','狙った地点に、矢が降り続ける領域を残す。','rain','attack',0xd6eaa1]],
+ mage:[['星巡り','詠唱から敵同士を結ぶ星の追撃を放つ。','chain','attack',0xaacaff],['凍結域','狙った地点を、敵の動きを鈍らせる魔法陣にする。','snare','attack',0x93e9ff]],
+ earth:[['城塞共鳴','設置した岩を中心に、敵を押し返す共鳴波を放つ。','fortress','pulse',0xd6c49a],['崩壊炉','スキル後にも周囲の岩から地割れを連発。岩の耐久を消費する。','rift','pulse',0xffb981]],
+ puppeteer:[['軍勢の号令','人形の周囲から、敵を押し返す連携攻撃を放つ。','legion','pulse',0xffacd9],['糸の葬列','人形の周囲に、敵を鈍らせる糸の領域を残す。','web','pulse',0xd6a6ff]]
+};
+const ET_UPGRADES=[];
+for(const [wp,paths] of Object.entries(ET_PATHS))paths.forEach((p,i)=>ET_UPGRADES.push({id:'et:'+wp+':'+i,w:wp,nm:p[0],ds:p[1],ic:'【武器:'+wp+'】',fx:'magic',max:1,etAwaken:'path',etType:p[2],etTrigger:p[3],etColor:p[4],excludes:'et:'+wp+':'+(1-i),ap:()=>{}}));
+for(const [key,name,desc,fx] of [
+ ['echo','覚醒・追響','覚醒技に遅れて追撃。重ねるほど追撃の威力も増す。','power'],
+ ['reach','覚醒・拡域','覚醒技の範囲・連鎖距離を拡大し、威力も高める。','range'],
+ ['tempo','覚醒・流転','覚醒技の再発動を速め、発動時にスキルを充填する。','rapid']
+])ET_UPGRADES.push({id:'et:'+key,w:'all',nm:name,ds:desc,ic:'【図:star】',fx,etAwaken:key,ap:()=>{}});
+
+const ET_AUTO_MODES=['off','power','vital','growth'];
+function emptyEternityProgress(){return {v:1,checkpoint:0,jump:{time:0,elapsed:0,kills:0,bosses:0,runs:0},last:null,slots:[null,null,null],slot:0,auto:'off'};}
+let eternityProgress=emptyEternityProgress();
+const ET_PLAN={segment:0,weapon:'sword',build:[],slot:0,message:''};
+function eternityFindUpgrade(id){return ET_UPGRADES.find(u=>u.id===id)||UPGRADES3.find(u=>(u.id||u.nm)===id);}
+function eternityBuildRows(input,wp,limit=160){
+ if(!Array.isArray(input)||!Object.prototype.hasOwnProperty.call(WEAPONS,wp))return [];
+ const rows=[],seen=new Set();let left=Math.max(0,Math.min(160,Math.floor(limit)||0));
+ for(const q of input.slice(0,96)){
+  if(!Array.isArray(q)||typeof q[0]!=='string'||!Number.isSafeInteger(q[1])||q[1]<=0||seen.has(q[0]))continue;
+  const u=eternityFindUpgrade(q[0]);if(!u||!(u.w==='all'||u.w===wp))continue;
+  const n=Math.min(q[1],u.max||160,left);if(!n)continue;
+  rows.push([q[0],n]);seen.add(q[0]);left-=n;
+ }
+ return rows;
+}
+function eternityLiveBuild(input,wp){
+ if(!Array.isArray(input))return [];
+ const rows=[],seen=new Set();
+ for(const q of input.slice(0,96)){
+  if(!Array.isArray(q)||typeof q[0]!=='string'||!Number.isSafeInteger(q[1])||q[1]<=0||seen.has(q[0]))continue;
+  const u=eternityFindUpgrade(q[0]);if(!u||!(u.w==='all'||u.w===wp))continue;
+  rows.push([q[0],Math.min(q[1],u.max||1000000)]);seen.add(q[0]);
+ }
+ return rows;
+}
+function restoreEternityProgress(value){
+ const p=emptyEternityProgress(),v=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+ p.checkpoint=Math.min(1000000,eternityInteger(v.checkpoint));
+ if(!value&&typeof eternityRecord!=='undefined')p.checkpoint=Math.min(1000000,eternityInteger(eternityRecord.bosses),Math.floor(eternityRecord.time/600));
+ if(v.jump&&typeof v.jump==='object')for(const k of ['time','elapsed','kills','bosses','runs'])p.jump[k]=eternityInteger(v.jump[k]);
+ if(v.last&&typeof v.last==='object'){
+  p.last={};for(const k of ['start','time','elapsed','kills','bosses'])p.last[k]=eternityInteger(v.last[k]);
+ }
+ if(Array.isArray(v.slots))for(let i=0;i<3;i++){const s=v.slots[i];if(s&&Object.prototype.hasOwnProperty.call(WEAPONS,s.weapon))p.slots[i]={weapon:s.weapon,build:eternityBuildRows(s.build,s.weapon)};}
+ p.slot=Number.isInteger(v.slot)?clamp(v.slot,0,2):0;
+ p.auto=ET_AUTO_MODES.includes(v.auto)?v.auto:'off';eternityProgress=p;ET_PLAN.slot=p.slot;
+}
+function eternityJumpBudget(segment){return segment>0?Math.min(160,8+4*Math.min(1000000,eternityInteger(segment))):0;}
+function eternityXpNeed(L){return Math.round(8+6*Math.max(0,L-1)+3*Math.max(0,L-10));}
+function eternityXpGain(amount){return amount*Math.sqrt(1+Math.max(0,gameTime)/600);}
+function eternityGenericCap(u){return ['経験値 +15%','再生','移動速度 +12%'].includes(u.nm)?10:0;}
+function eternityGenericAllowed(u,run){return !(typeof ETERNITY!=='undefined'&&ETERNITY.active||run&&run.etPlanning)||!eternityGenericCap(u)||upgradeRank(u,run)<eternityGenericCap(u);}
+function eternityUpgradeView(u){
+ if(!ETERNITY.active||u.etAwaken)return u;
+ return {...u,id:u.id||u.nm,max:eternityGenericCap(u)||u.max,ds:(u.ds?u.ds+' · ':'')+(u.w==='all'?'同じ系統の効果は加算':'武器専用強化')};
+}
+function eternityApplyGeneric(u){
+ if(!ETERNITY.active||u.w!=='all'||u.etAwaken)return false;
+ const b=RUN.build||{},n=k=>b[k]||0;
+ const attack=.2*n('攻撃力 +20%')+.15*n('焔刃の紋章'),haste=.2*n('攻撃速度 +20%')+.05*n('焔刃の紋章');
+ const hp=.08*n('最大HP +8%')+.1*n('星環の加護');
+ const addAttack=v=>{pDmgMul*=(1+attack+v)/(1+attack);};
+ const addHaste=v=>{pFireMul*=(1+haste)/(1+haste+v);};
+ const addHp=v=>{const inc=Math.max(1,Math.round(PLAYER.maxHp*v/(1+hp)));PLAYER.maxHp+=inc;PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+inc);};
+ if(u.nm==='攻撃力 +20%')addAttack(.2);
+ else if(u.nm==='攻撃速度 +20%')addHaste(.2);
+ else if(u.nm==='最大HP +8%')addHp(.08);
+ else if(u.nm==='焔刃の紋章'){addAttack(.15);addHaste(.05);}
+ else if(u.nm==='星環の加護'){addHp(.1);PLAYER.rockShield=(PLAYER.rockShield||0)+1;}
+ else if(u.nm==='経験値 +15%')RUN.xpMul*=(1+.15*(n(u.nm)+1))/(1+.15*n(u.nm));
+ else if(u.nm==='移動速度 +12%')PLAYER.speed*=(1+.12*(n(u.nm)+1))/(1+.12*n(u.nm));
+ else return false;
+ return true;
+}
+function eternityPath(wp=weapon,run=RUN){return run&&run.build?ET_UPGRADES.find(u=>u.w===wp&&u.etAwaken==='path'&&run.build[u.id]>0):null;}
+function eternityAwakeningUsed(run){return ET_UPGRADES.reduce((n,u)=>n+((run&&run.build&&run.build[u.id])||0),0);}
+function eternityDedicatedPicks(wp,run){return UPGRADES3.filter(u=>u.w===wp).reduce((n,u)=>n+((run&&run.build&&run.build[u.id||u.nm])||0),0);}
+function eternityDedicatedReady(wp,run){const count=Math.min(6,UPGRADES3.filter(u=>u.w===wp).reduce((n,u)=>n+(u.max||6),0));return eternityDedicatedPicks(wp,run)>=count;}
+function eternityAwakeningAllowed(u,wp=weapon,run=RUN){
+ if(!u||!u.etAwaken||!run||!(run.etPlanning||(typeof ETERNITY!=='undefined'&&ETERNITY.active)))return false;
+ if(!(u.w==='all'||u.w===wp))return false;
+ const ranks=run.build||{},path=eternityPath(wp,run),used=eternityAwakeningUsed(run),credits=eternityInteger(run.etCredits);
+ if(used>=1+3*credits)return false;
+ if(u.etAwaken==='path')return !path&&!ranks[u.id]&&(eternityDedicatedPicks(wp,run)>=6||(run.etLevel||level)>=10);
+ return !!path;
+}
+function eternityAwakenChoices(wp,run){return ET_UPGRADES.filter(u=>eternityAwakeningAllowed(u,wp,run));}
+function eternityPlanRun(rows=ET_PLAN.build,wp=weapon,segment=ET_PLAN.segment){
+ const budget=eternityJumpBudget(segment),run={build:{},etPlanning:true,etLevel:budget+1,etCredits:segment};let used=0;
+ for(const [id,n] of eternityBuildRows(rows,wp,budget)){
+  const u=eternityFindUpgrade(id);for(let j=0;j<n&&used<budget;j++){
+   if(u.etAwaken?!eternityAwakeningAllowed(u,wp,run):!upgradeAllowed(u,wp,run))break;
+   run.build[id]=(run.build[id]||0)+1;used++;
+  }
+ }
+ return run;
+}
+function eternityFlattenBuild(run){return Object.entries(run.build||{}).filter(q=>q[1]>0);}
+function eternityStartSegment(){return Math.min(eternityInteger(ET_PLAN.segment),eternityProgress.checkpoint);}
+function eternityPrepareStart(){
+ ETERNITY.startAt=ETERNITY.active?eternityStartSegment()*600:0;
+ ETERNITY.nextBoss=ETERNITY.startAt+600;ETERNITY.spawned=ETERNITY.startAt/600;ETERNITY.killedWaves=[];
+}
+function eternitySeedBuild(rows,segment){
+ if(!ETERNITY.active)return;
+ RUN.etCredits=segment;RUN.etAutoCount=0;RUN.etCd=0;RUN.etMarks=new Map();
+ const normalized=eternityPlanRun(rows,weapon,segment);
+ for(const [id,n] of Object.entries(normalized.build)){const u=eternityFindUpgrade(id);for(let i=0;i<n;i++)applyRunUpgrade(u);}
+}
+function eternityBeginRun(){
+ if(!ETERNITY.active)return;
+ const segment=(ETERNITY.startAt||0)/600;
+ gameTime=ETERNITY.startAt||0;ETERNITY.elapsed=gameTime;
+ level=1+eternityJumpBudget(segment);xp=0;xpNeed=eternityXpNeed(level);
+ eternitySeedBuild(ET_PLAN.build,segment);updateEternityHud();
+}
+function eternityAllyBuild(opts){
+ if(!ETERNITY.active||!ally)return;
+ ally.etAuto=ET_AUTO_MODES.includes(opts.etAuto)?opts.etAuto:'off';
+ loadAlly();try{eternitySeedBuild(opts.etBuild,(ETERNITY.startAt||0)/600);}finally{storeAlly();}
+}
+function eternityMyBuild(){const s=eternityProgress.slots[eternityProgress.slot];return s&&s.weapon===weapon?s.build:[];}
+function eternityBossProgress(e){
+ if(!ETERNITY.active||!e||!e.boss||e.hp>0)return;
+ const wave=eternityInteger(e.eternityWave||Math.floor((e.eternityBorn||0)/600));
+ if(wave<1||ETERNITY.killedWaves.includes(wave))return;
+ ETERNITY.killedWaves.push(wave);
+ eternityProgress.checkpoint=Math.max(eternityProgress.checkpoint,Math.min(1000000,wave));
+ if(RUN)RUN.etCredits=eternityInteger(RUN.etCredits)+1;
+ if(ally&&ally.run)ally.run.etCredits=eternityInteger(ally.run.etCredits)+1;
+ commitSave();toast('ボス撃破 · '+wave*10+'分からの跳躍と、覚醒強化3回を解放');
+}
+function eternityStoreAttempt(){
+ if(!ETERNITY.active||ETERNITY.recorded)return false;
+ const time=eternityInteger(ETERNITY.client?ETERNITY.elapsed:gameTime),start=eternityInteger(ETERNITY.startAt),elapsed=Math.max(0,time-start);
+ const result={start,time,elapsed,kills:eternityInteger(ETERNITY.client?ETERNITY.clientKills:kills),bosses:eternityInteger(ETERNITY.defeated)};
+ eternityProgress.last=result;
+ if(!start){
+  for(const [k,v] of [['time',time],['kills',result.kills],['bosses',result.bosses]])eternityRecord[k]=Math.max(eternityRecord[k],v);
+  eternityRecord.runs=eternityInteger(eternityRecord.runs+1);eternityRecord.lastTime=time;eternityRecord.lastKills=result.kills;eternityRecord.lastBosses=result.bosses;eternityRecord.weapon=weapon;
+ }else{
+  const r=eternityProgress.jump;for(const k of ['time','elapsed','kills','bosses'])r[k]=Math.max(r[k],result[k]);r.runs=eternityInteger(r.runs+1);
+ }
+ ETERNITY.recorded=true;commitSave();return true;
+}
+function eternityReceiveProgress(data,newRun){
+ if(newRun)ETERNITY.killedWaves=[];
+ ETERNITY.startAt=data&&Number.isFinite(data.start)?Math.max(0,Math.floor(data.start/600)*600):0;
+ if(data&&Number.isSafeInteger(data.checkpoint))eternityProgress.checkpoint=Math.max(eternityProgress.checkpoint,Math.min(1000000,data.checkpoint));
+ if(data&&Array.isArray(data.builds)&&data.builds[1]&&RUN){
+  RUN.build=Object.fromEntries(eternityLiveBuild(data.builds[1],weapon));RUN.etCredits=Math.floor(ETERNITY.startAt/600)+ETERNITY.defeated;
+ }
+}
+function eternityChooseAuto(wp,run,policy){
+ if(!ETERNITY.active||policy==='off'||!ET_AUTO_MODES.includes(policy)||!eternityDedicatedReady(wp,run)||eternityAwakenChoices(wp,run).length)return null;
+ const names={power:['攻撃力 +20%','攻撃速度 +20%','焔刃の紋章'],vital:['最大HP +8%','再生','星環の加護'],growth:['経験値 +15%','攻撃力 +20%','最大HP +8%']};
+ const ranks=run.build||{},list=names[policy];let best=null,score=Infinity;
+ for(const name of list){const u=UPGRADES3.find(q=>q.w==='all'&&q.nm===name);if(u&&upgradeAllowed(u,wp,run)){const s=(ranks[u.id||u.nm]||0)*3+list.indexOf(name);if(s<score){best=u;score=s;}}}
+ return best;
+}
+function eternityAutoLevels(){
+ if(!ETERNITY.active||NET.role==='client'||(NET.role==='host'&&NET.conns.some(c=>c.open)))return false;
+ let n=0;
+ while(pendingLevels>0&&n<32){const u=eternityChooseAuto(weapon,RUN,eternityProgress.auto);if(!u)break;applyRunUpgrade(u);RUN.etAutoCount=(RUN.etAutoCount||0)+1;pendingLevels--;n++;}
+ if(n)updateEternityHud();
+ return pendingLevels<=0;
+}
+function eternityCoopAuto(){
+ if(!ETERNITY.active)return;
+ const hu=!NET.hostPicked&&eternityChooseAuto(weapon,RUN,eternityProgress.auto);
+ const gu=ally&&!NET.guestPicked&&eternityChooseAuto(ally.weapon,ally.run,ally.etAuto);
+ if(hu){applyRunUpgrade(hu);RUN.etAutoCount=(RUN.etAutoCount||0)+1;NET.hostPicked=true;if(!NET.guestPicked)waitingCards('自動取得済み · 相手を待機中…');}
+ if(gu){loadAlly();try{applyRunUpgrade(gu);RUN.etAutoCount=(RUN.etAutoCount||0)+1;}finally{storeAlly();}NET.guestPicked=true;for(const c of NET.conns)if(c.open)c.send({t:'etlevelauto',id:gu.id||gu.nm});}
+ if(hu||gu)setTimeout(()=>{if(state==='levelup')coopLevelResolve();},0);
+}
+function eternityClientAuto(id){const u=eternityFindUpgrade(id);if(!ETERNITY.active||!u||u.etAwaken||u.w!=='all')return;NET.clientBuildPicked=true;if(!RUN)RUN=makeRun();RUN.build[id]=(RUN.build[id]||0)+1;RUN.etAutoCount=(RUN.etAutoCount||0)+1;waitingCards('自動取得済み · 相手を待機中…');}
+
+function eternityUiButton(text,fn,disabled=false){const b=document.createElement('button');b.type='button';b.className='btn ghost et-small';b.textContent=text;b.disabled=disabled;b.onclick=fn;return b;}
+function eternityFillAutoSelect(select){
+ select.replaceChildren();for(const [value,label] of [['off','手動で選ぶ'],['power','汎用は攻撃優先'],['vital','汎用は生存優先'],['growth','汎用は経験値優先']]){const o=document.createElement('option');o.value=value;o.textContent=label;select.append(o);}select.value=eternityProgress.auto;
+ select.onchange=()=>{eternityProgress.auto=ET_AUTO_MODES.includes(select.value)?select.value:'off';commitSave();if(NET.role==='client'&&NET.conns[0]&&NET.conns[0].open)NET.conns[0].send({t:'etauto',value:eternityProgress.auto});};
+}
+function eternityRenderPlan(){
+ const select=$('etJump');if(!select)return;
+ if(ET_PLAN.weapon!==weapon){ET_PLAN.weapon=weapon;ET_PLAN.build=[];}
+ ET_PLAN.segment=Math.min(ET_PLAN.segment,eternityProgress.checkpoint);select.replaceChildren();
+ const max=eternityProgress.checkpoint,values=new Set([0]);for(let n=1;n<=Math.min(max,6);n++)values.add(n);for(let n=Math.max(1,max-11);n<=max;n++)values.add(n);
+ for(const n of [...values].sort((a,b)=>a-b)){const o=document.createElement('option');o.value=String(n);o.textContent=n?n*10+'分から':'0分から · 通し挑戦';select.append(o);}select.value=String(ET_PLAN.segment);select.disabled=NET.role==='client';
+ select.onchange=()=>{ET_PLAN.segment=Number(select.value);ET_PLAN.build=eternityFlattenBuild(eternityPlanRun());ET_PLAN.message='';eternityRenderPlan();};
+ $('etJumpNote').textContent=max?'ボス撃破で開始地点を解放 · 現在 '+max*10+'分まで':'ボスを倒すと、その10分区間からの時間跳躍が解放されます。';
+ $('etJumpBest').textContent=eternityProgress.jump.time?eternityDuration(eternityProgress.jump.time):'未挑戦';
+ eternityFillAutoSelect($('etAuto'));
+ const budget=eternityJumpBudget(ET_PLAN.segment),run=eternityPlanRun(),used=Object.values(run.build).reduce((a,b)=>a+b,0);ET_PLAN.build=eternityFlattenBuild(run);
+ $('etPrep').hidden=!budget;$('etPresetArea').hidden=!budget;$('etPrepTitle').textContent=WEAPONS[weapon].name+' · 準備 '+used+' / '+budget+'枠';
+ $('etPrepHint').textContent='使う強化を選んでから出発。覚醒も準備できます。';
+ const list=$('etPrepCards');list.replaceChildren();
+ const catalog=[...UPGRADES3.filter(u=>u.w===weapon),...ET_UPGRADES.filter(u=>u.w===weapon),...ET_UPGRADES.filter(u=>u.w==='all'),...UPGRADES3.filter(u=>u.w==='all')];
+ for(const u of catalog){
+  const id=u.id||u.nm,n=run.build[id]||0,row=document.createElement('div');row.className='et-build-row'+(u.etAwaken?' et-awaken-row':'');row.dataset.upgrade=id;
+  const name=document.createElement('span');name.textContent=(u.etAwaken?'覚醒 · ':'')+u.nm+' ×'+n;const description=document.createElement('small');description.textContent=u.ds||'';name.append(description);
+  const minus=eternityUiButton('−',()=>{const q=ET_PLAN.build.find(q=>q[0]===id);if(q)q[1]--;ET_PLAN.build=ET_PLAN.build.filter(q=>q[1]>0);eternityRenderPlan();},!n);
+  const allowed=u.etAwaken?eternityAwakeningAllowed(u,weapon,run):upgradeAllowed(u,weapon,run);
+  const plus=eternityUiButton('＋',()=>{const q=ET_PLAN.build.find(q=>q[0]===id);if(q)q[1]++;else ET_PLAN.build.push([id,1]);eternityRenderPlan();},used>=budget||!allowed);
+  minus.setAttribute('aria-label',u.nm+'を減らす');plus.setAttribute('aria-label',u.nm+'を増やす');row.append(name,minus,plus);list.append(row);
+ }
+ $('etPrepReset').onclick=()=>{ET_PLAN.build=[];eternityRenderPlan();};
+ $('etPrepFill').onclick=()=>{eternityFillPlan();eternityRenderPlan();};
+ const slots=$('etSlots');slots.replaceChildren();
+ for(let i=0;i<3;i++){const s=eternityProgress.slots[i],b=eternityUiButton('構成'+(i+1)+(s?' · '+WEAPONS[s.weapon].name:' · 空'),()=>{ET_PLAN.slot=i;eternityProgress.slot=i;commitSave();eternityRenderPlan();});b.classList.toggle('selected',ET_PLAN.slot===i);b.setAttribute('aria-pressed',String(ET_PLAN.slot===i));slots.append(b);}
+ $('etSlotSave').onclick=()=>eternitySaveSlot(ET_PLAN.build,weapon,'準備構成を保存しました');
+ $('etSlotLoad').onclick=()=>{const s=eternityProgress.slots[ET_PLAN.slot];if(s&&s.weapon===weapon){ET_PLAN.build=eternityBuildRows(s.build,weapon,budget);ET_PLAN.message='構成を呼び出しました';eternityRenderPlan();}};
+ $('etSlotSave').disabled=!budget;$('etSlotLoad').disabled=!budget||!eternityProgress.slots[ET_PLAN.slot]||eternityProgress.slots[ET_PLAN.slot].weapon!==weapon;
+ $('etPlanMessage').textContent=ET_PLAN.message;
+ $('eternityStart').querySelector('span').textContent=ET_PLAN.segment?ET_PLAN.segment*10+'分へ跳躍':'一億年';
+}
+function eternityFillPlan(){
+ const budget=eternityJumpBudget(ET_PLAN.segment);let run=eternityPlanRun(),guard=0;
+ while(Object.values(run.build).reduce((a,b)=>a+b,0)<budget&&guard++<160){
+  const special=UPGRADES3.filter(u=>u.w===weapon&&upgradeAllowed(u,weapon,run));
+  const target=Math.ceil(6/Math.max(1,UPGRADES3.filter(u=>u.w===weapon).length));
+  let u=special.find(u=>(run.build[u.id||u.nm]||0)<target);
+  if(!u){const name=['攻撃力 +20%','最大HP +8%','攻撃速度 +20%'][guard%3];u=UPGRADES3.find(u=>u.nm===name);}
+  const id=u.id||u.nm,old=ET_PLAN.build.find(q=>q[0]===id);if(old)old[1]++;else ET_PLAN.build.push([id,1]);run=eternityPlanRun();
+ }
+}
+function eternitySaveSlot(rows,wp,message){
+ const sorted=[...rows].sort((a,b)=>{const order=id=>{const u=eternityFindUpgrade(id);return u&&u.etAwaken==='path'?0:u&&u.etAwaken?1:u&&u.w!=='all'?2:3;};return order(a[0])-order(b[0]);});
+ eternityProgress.slots[ET_PLAN.slot]={weapon:wp,build:eternityBuildRows(sorted,wp)};eternityProgress.slot=ET_PLAN.slot;
+ if(!commitSave())message='構成を一時保持中です（保存できませんでした）';ET_PLAN.message=message;const e=$('etPlanMessage');if(e)e.textContent=message;toast(message);
+}
+function eternityPauseControls(){
+ const root=$('etPause');if(!root)return;root.hidden=!ETERNITY.active;if(root.hidden)return;
+ eternityFillAutoSelect($('etPauseAuto'));
+ $('etSaveCurrent').textContent='現在の構成を「構成'+(ET_PLAN.slot+1)+'」へ保存';
+ $('etSaveCurrent').onclick=()=>eternitySaveSlot(eternityFlattenBuild(RUN||{build:{}}),weapon,'現在の構成を保存しました');
+}
+function eternityRenderResult(){
+ const r=eternityProgress.last;if(!r)return;
+ $('overStat').textContent=r.start?'時間跳躍 · '+r.start/60+'分発 / 到達 '+eternityDuration(r.time):'通し挑戦 · 生存 '+eternityDuration(r.time);
+ $('overBest').textContent=r.start?'跳躍後の生存 '+eternityDuration(r.elapsed)+' ／ 今回 '+r.bosses+'ボス撃破':'通し最高 '+eternityDuration(eternityRecord.time)+' ／ 撃破 '+r.kills;
+ const box=$('overJourney');box.replaceChildren();box.append(campLine('時間跳躍 '+eternityProgress.checkpoint*10+'分まで解放 · '+(r.start?'跳躍の記録を保存':'通しの記録を保存')));
+ box.append(eternityUiButton('この構成を「構成'+(ET_PLAN.slot+1)+'」へ保存',()=>eternitySaveSlot(eternityFlattenBuild(RUN||{build:{}}),weapon,'今回の構成を保存しました')));
+}
+function eternityAwakeningStatus(){
+ if(!ETERNITY.active)return '';
+ const path=eternityPath(),used=eternityAwakeningUsed(RUN),credits=RUN?eternityInteger(RUN.etCredits):0;
+ return (ETERNITY.startAt?'跳躍 '+ETERNITY.startAt/60+'分発 · ':'通し · ')+(path?path.nm+' · 覚醒 '+used+'/'+(1+3*credits):'覚醒は専用6回 または Lv10から')+((RUN&&RUN.etAutoCount)?' · 自動 '+RUN.etAutoCount+'回':'');
+}
+
+/* Authoritative awakening attacks. Each delayed effect retains its actor and build. */
+let etFields=[],etEchoes=[],etFx=[],etVisualEvents=[];
+const ET_GEO={};
+function eternityGeo(key){
+ if(!ET_GEO[key])ET_GEO[key]=pinGpuResource(key==='ring'?new THREE.RingGeometry(.87,1,40):new THREE.BoxGeometry(1,1,1));
+ return ET_GEO[key];
+}
+function eternityVisual(type,x,z,r,col,x2=x,z2=z,life=.6,sync=true){
+ if(!scene||![x,z,r,col,x2,z2,life].every(Number.isFinite))return null;
+ const g=new THREE.Group(),m=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+ g.position.set(x,.09,z);
+ if(type==='line'||type==='chain'){
+  const dx=x2-x,dz=z2-z,len=Math.hypot(dx,dz)||.01;
+  const beam=new THREE.Mesh(eternityGeo('box'),m);beam.scale.set(type==='line'?Math.max(.15,r*.35):.08,.08,len);beam.position.set(dx/2,.65,dz/2);beam.rotation.y=Math.atan2(dx,dz);g.add(beam);
+ }else{
+  const ring=new THREE.Mesh(eternityGeo('ring'),m);ring.rotation.x=-Math.PI/2;ring.scale.setScalar(r);g.add(ring);
+  for(let i=0;i<(type==='rain'?8:4);i++){
+   const a=i/(type==='rain'?8:4)*TAU,p=new THREE.Mesh(eternityGeo('box'),m);
+   p.position.set(Math.sin(a)*r*.65,type==='rain'?2+i*.18:.14,Math.cos(a)*r*.65);p.scale.set(.06,type==='rain'?.9:.1,type==='rain'?.06:r*.55);p.rotation.y=a;g.add(p);
+  }
+ }
+ scene.add(g);const fx={g,m,type,life,max:life,r};etFx.push(fx);
+ while(etFx.length>96){const f=etFx.shift();removeAndDispose(f.g);}
+ if(sync&&NET.role==='host'&&NET.started){etVisualEvents.push([type,x,z,r,col,x2,z2,life]);if(etVisualEvents.length>48)etVisualEvents.shift();}
+ return fx;
+}
+function updateEternityFx(dt){
+ if(!(ETERNITY.active&&(state==='play'||NET.role==='client')))return;
+ for(let i=etFx.length-1;i>=0;i--){const f=etFx[i];f.life-=dt;if(f.life<=0){removeAndDispose(f.g);etFx.splice(i,1);continue;}
+  const t=f.max-f.life;f.m.opacity=Math.min(.65,f.life*2)*(.75+.25*Math.sin(t*8));
+  if(f.type==='rain')for(let j=1;j<f.g.children.length;j++)f.g.children[j].position.y=3-((t*5+j*.6)%3);
+  else if(!['line','chain'].includes(f.type)){f.g.rotation.y+=dt*.6;if(f.max<1)f.g.scale.setScalar(1+t*2);}
+ }
+}
+function eternityTakeVisuals(){const rows=etVisualEvents;etVisualEvents=[];return rows;}
+function eternityClientVisuals(rows){
+ if(!Array.isArray(rows))return;
+ for(const q of rows.slice(0,48))if(Array.isArray(q)&&q.length===8&&['line','chain','field','rain','snare','vortex','guard','blast','mark','web'].includes(q[0])&&q.slice(1).every(Number.isFinite)&&q[3]>0&&q[3]<=40&&q[7]>0&&q[7]<=8)eternityVisual(...q,false);
+}
+function clearEternityCombat(){for(const f of etFx)removeAndDispose(f.g);etFields=[];etEchoes=[];etFx=[];etVisualEvents=[];}
+function eternityActorAlive(actor){return actor===player?PLAYER.hp>0:!!(ally&&actor===ally.grp&&ally.hp>0);}
+function eternityWithSource(source,fn){
+ if(!eternityActorAlive(source.actor))return;
+ if(source.actor===player){if(RUN===source.run)fn();}
+ else if(ally&&source.actor===ally.grp&&ally.run===source.run){loadAlly();try{fn();}finally{storeAlly();}}
+}
+function eternityTargets(x,z,r){return enemies.filter(e=>!e.puppet&&e.hp>0&&((e.mesh.position.x-x)**2+(e.mesh.position.z-z)**2)<(r+e.r)**2).sort((a,b)=>(a.mesh.position.x-x)**2+(a.mesh.position.z-z)**2-(b.mesh.position.x-x)**2-(b.mesh.position.z-z)**2);}
+function eternityHit(e,power,recruit=true){
+ if(!e||e.puppet||e.hp<=0||!Number.isFinite(power)||power<=0)return 0;
+ const dealt=damageEnemy(e,Math.min(1e100,power)*eMul(e));if(dealt>0){e.flash=.12;dmgPop(e.mesh.position,dealt,{boss:e.boss});if(e.hp<=0)killEnemy(e,{recruit:recruit&&weapon==='puppeteer'});}return dealt;
+}
+function eternityCircle(x,z,r,power,push=false,recruit=true){
+ for(const e of eternityTargets(x,z,r)){
+  eternityHit(e,power,recruit);
+  if(push&&e.hp>0&&!e.boss){
+   let dx=e.mesh.position.x-x,dz=e.mesh.position.z-z,d=Math.hypot(dx,dz);
+   if(d<1e-6){dx=e.mesh.position.x-player.position.x;dz=e.mesh.position.z-player.position.z;d=Math.hypot(dx,dz);}
+   if(d<1e-6){dx=Math.sin(player.rotation.y);dz=Math.cos(player.rotation.y);d=1;}
+   pushEnemy(e,dx/d*1.2,dz/d*1.2);
+  }
+ }
+}
+function eternityLine(x,z,a,len,width,power,col){
+ const dx=Math.sin(a),dz=Math.cos(a);
+ for(const e of enemies.slice()){if(e.puppet||e.hp<=0)continue;const rx=e.mesh.position.x-x,rz=e.mesh.position.z-z,t=rx*dx+rz*dz;if(t>=-e.r&&t<=len+e.r&&Math.abs(rx*dz-rz*dx)<width+e.r)eternityHit(e,power);}
+ eternityVisual('line',x,z,width,col,x+dx*len,z+dz*len,.55);
+}
+function eternityNewField(source,type,x,z,r,power,col){
+ const owned=etFields.filter(f=>f.actor===source.actor);
+ if(owned.length>=6){const old=owned[0];if(old.fx)old.fx.life=0;etFields.splice(etFields.indexOf(old),1);}
+ const life=4.5,fx=eternityVisual(type,x,z,r,col,x,z,life);
+ etFields.push({...source,type,x,z,r,power,col,life,tick:0,fx});
+}
+function eternityAttackEvent(event,target){
+ if(!ETERNITY.active||NET.role==='client'||!RUN||state!=='play')return;
+ const path=eternityPath();if(!path)return;
+ if(event==='skill'){if(path.etType==='rift')RUN.etRiftUntil=gameTime+10;return;}
+ if(path.etTrigger!==event||(RUN.etCd||0)>1e-8)return;
+ if(weapon==='gun'&&buffType!=='gun'&&(gunReloadT>0||gunAmmo<=0))return;
+ if(path.etType==='rift'&&!(RUN.etRiftUntil>gameTime))return;
+ const rank=id=>(RUN.build['et:'+id]||0),reach=1+.12*Math.sqrt(rank('reach')),tempo=rank('tempo');
+ const t=target&&target.mesh?target:nearestEnemy(32),p=player.position,x=t?t.mesh.position.x:p.x,z=t?t.mesh.position.z:p.z;
+ if(!t&&event!=='dash'&&!['guard','fortress','legion','web','rift'].includes(path.etType))return;
+ RUN.etCd=Math.max(.55,(path.etType==='chain'?2:2.7)/(1+.12*Math.sqrt(tempo)));
+ const source={actor:player,run:RUN,wp:weapon},col=path.etColor,base=Math.min(1e100,baseDmg())*(1+.12*rank('reach'));
+ const a=t?Math.atan2(x-p.x,z-p.z):player.rotation.y,r=3.4*reach,type=path.etType;
+ if(type==='chain'){
+  let ox=p.x,oz=p.z,hit=new Set();
+  for(let i=0;i<Math.min(6,3+Math.floor(rank('reach')/3));i++){
+   const next=eternityTargets(i?ox:x,i?oz:z,(i?11:3)*reach).find(e=>!hit.has(e));if(!next)break;hit.add(next);
+   const q=next.mesh.position;eternityVisual('chain',ox,oz,.4,col,q.x,q.z,.45);ox=q.x;oz=q.z;eternityHit(next,base*Math.max(.45,1.15-i*.14));
+  }
+ }else if(type==='line')eternityLine(p.x,p.z,event==='dash'?player.rotation.y:a,22*reach,1.1*reach,base*2,col);
+ else if(type==='mark'){
+  if(t){if(!RUN.etMarks)RUN.etMarks=new Map();for(const [id]of RUN.etMarks)if(!enemies.some(e=>e.id===id))RUN.etMarks.delete(id);
+   const n=(RUN.etMarks.get(t.id)||0)+1;RUN.etMarks.set(t.id,n);eternityHit(t,base*(n%3===0?5:1.5));eternityVisual('mark',x,z,r*.55,col,x,z,.6);
+  }
+ }else if(['field','rain','snare','vortex'].includes(type))eternityNewField(source,type,x,z,r,base*.6,col);
+ else if(type==='guard')eternityNewField(source,type,p.x,p.z,r,base*.55,col);
+ else if(type==='blast'){eternityCircle(x,z,r*1.3,base*2,true);eternityVisual('blast',x,z,r*1.3,col);}
+ else if(type==='fortress'||type==='rift'){
+  const nodes=earthNodes.filter(n=>n.owner===player&&n.kind!==2).slice(-4);
+  if(type==='fortress'){
+   for(const n of nodes.length?nodes:[{x:p.x,z:p.z}]){eternityCircle(n.x,n.z,r*1.15,base*1.2,true);eternityVisual('guard',n.x,n.z,r*1.15,col);}
+  }else for(const n of nodes){eternityLine(n.x,n.z,Math.atan2(x-n.x,z-n.z),Math.min(30,Math.hypot(x-n.x,z-n.z)+3),1.3*reach,base*1.8,col);n.hp-=n.maxHp*.12;if(n.hp<=0)earthRemoveNode(n);}
+ }else if(type==='legion'||type==='web'){
+  for(const puppet of ownPuppets().slice(0,5)){const q=puppet.mesh.position;if(type==='legion'){eternityCircle(q.x,q.z,r,base*1.1,true,false);eternityVisual('blast',q.x,q.z,r,col);}else eternityNewField(source,'web',q.x,q.z,r,base*.4,col);}
+ }
+ const echo=rank('echo');
+ if(echo>0&&etEchoes.length<32)etEchoes.push({...source,x,z,r:r*.85,power:base*(.3+.12*echo),col,t:.35});
+ if(tempo)addCharge(Math.min(6,.7*tempo));
+}
+function eternityActorTick(dt){
+ if(!ETERNITY.active||!RUN)return;
+ RUN.etCd=Math.max(0,(RUN.etCd||0)-dt);
+ const path=eternityPath();if(path&&path.etTrigger==='pulse')eternityAttackEvent('pulse',nearestEnemy(32));
+ else if(path&&path.etTrigger==='attack'&&buffT>0)eternityAttackEvent('attack',nearestEnemy(32));
+}
+function eternityCombatTick(dt){
+ if(!ETERNITY.active||NET.role==='client')return;
+ for(let i=etEchoes.length-1;i>=0;i--){const q=etEchoes[i];q.t-=dt;if(q.t<=0){etEchoes.splice(i,1);eternityWithSource(q,()=>{eternityCircle(q.x,q.z,q.r,q.power);eternityVisual('blast',q.x,q.z,q.r,q.col);});}}
+ for(let i=etFields.length-1;i>=0;i--){
+  const f=etFields[i];f.life-=dt;f.tick-=dt;if(f.life<=0||!eternityActorAlive(f.actor)){if(f.fx)f.fx.life=0;etFields.splice(i,1);continue;}
+  if(f.tick<=0){f.tick+=.5;eternityWithSource(f,()=>{
+   if(f.type==='vortex')for(const e of eternityTargets(f.x,f.z,f.r))if(!e.boss)pullEnemy(e,lerpN(e.mesh.position.x,f.x,.3),lerpN(e.mesh.position.z,f.z,.3));
+   eternityCircle(f.x,f.z,f.r,f.power,f.type==='guard',f.type!=='web');
+  });}
+ }
+}
+function eternitySlowMul(e){
+ if(!ETERNITY.active||e.puppet)return 1;
+ for(const f of etFields)if(['snare','web'].includes(f.type)&&f.life>0&&(e.mesh.position.x-f.x)**2+(e.mesh.position.z-f.z)**2<f.r*f.r)return e.boss?.9:.55;
+ return 1;
+}
+
 function upgradeRank(u,run=RUN){return (run&&run.build&&run.build[u.id||u.nm])||0;}
-function upgradeAllowed(u,wp=weapon,run=RUN){return (u.w==='all'||u.w===wp)&&(!u.max||upgradeRank(u,run)<u.max)&&(!u.excludes||!((run&&run.build&&run.build[u.excludes])||0));}
-function pickBuildChoices(wp,run){const pool=UPGRADES3.filter(u=>upgradeAllowed(u,wp,run));const out=[];const special=pool.filter(u=>u.w===wp);if(special.length){const u=special[Math.floor(Math.random()*special.length)];out.push(u);pool.splice(pool.indexOf(u),1);}while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);return out;}
+function upgradeAllowed(u,wp=weapon,run=RUN){if(u.etAwaken)return typeof eternityAwakeningAllowed==='function'&&eternityAwakeningAllowed(u,wp,run);if(typeof eternityGenericAllowed==='function'&&!eternityGenericAllowed(u,run))return false;return (u.w==='all'||u.w===wp)&&(!u.max||upgradeRank(u,run)<u.max)&&(!u.excludes||!((run&&run.build&&run.build[u.excludes])||0));}
+function pickBuildChoices(wp,run){const awakening=typeof eternityAwakenChoices==='function'?eternityAwakenChoices(wp,run):[];if(awakening.length)return awakening;const pool=UPGRADES3.filter(u=>upgradeAllowed(u,wp,run));const out=[];const special=pool.filter(u=>u.w===wp);if(special.length){const u=special[Math.floor(Math.random()*special.length)];out.push(u);pool.splice(pool.indexOf(u),1);}while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);return typeof eternityUpgradeView==='function'?out.map(eternityUpgradeView):out;}
 function pickUpgrades3(){return pickBuildChoices(weapon,RUN);}
-function applyRunUpgrade(u){if(!RUN||!upgradeAllowed(u))return false;u.ap();const key=u.id||u.nm;RUN.build[key]=(RUN.build[key]||0)+1;return true;}
-function runBuildHTML(run=RUN,heading=true){if(!run||!run.build||!Object.keys(run.build).length)return '<div class="eline2">未取得</div>';return '<div class="eline2" style="line-height:1.8">'+(heading?'<b>今回の強化</b><br>':'')+Object.entries(run.build).map(([id,n])=>{const u=UPGRADES3.find(x=>(x.id||x.nm)===id);return u?(u.w==='all'?'':'【図:star】 ')+u.nm+' ×'+n:'';}).filter(Boolean).join('<br>')+'</div>';}
+function applyRunUpgrade(u){if(!RUN||!upgradeAllowed(u))return false;if(!(typeof eternityApplyGeneric==='function'&&eternityApplyGeneric(u)))u.ap();const key=u.id||u.nm;RUN.build[key]=(RUN.build[key]||0)+1;return true;}
+function runBuildHTML(run=RUN,heading=true){if(!run||!run.build||!Object.keys(run.build).length)return '<div class="eline2">未取得</div>';return '<div class="eline2" style="line-height:1.8">'+(heading?'<b>今回の強化</b><br>':'')+Object.entries(run.build).map(([id,n])=>{const u=typeof eternityFindUpgrade==='function'?eternityFindUpgrade(id):UPGRADES3.find(x=>(x.id||x.nm)===id);return u?(u.w==='all'?'':'【図:star】 ')+u.nm+' ×'+n:'';}).filter(Boolean).join('<br>')+'</div>';}
 function showRunBuild(id){const box=$(id);if(box)box.innerHTML=runBuildHTML(RUN,id!=='resultDetailsBuild');}
 function openLevelUp(){ state='levelup'; renderLevelCards(); showOv('levelScreen'); }
 function renderLevelCards(){ 
@@ -5832,7 +6274,7 @@ function renderLevelCards(){
   const wrap=$('levelCards'); wrap.innerHTML='';
   for(const u of pickUpgrades3())wrap.appendChild(upgradeCard(u,chooseUpgrade));
 }
-function chooseUpgrade(u){if(state!=='levelup'||!applyRunUpgrade(u))return;spawnUpgradeVisual(u,player,true);pendingLevels--;if(pendingLevels>0){renderLevelCards();}else{showOv(null);state='play';}}
+function chooseUpgrade(u){if(state!=='levelup'||!applyRunUpgrade(u))return;spawnUpgradeVisual(u,player,true);pendingLevels--;if(typeof eternityAutoLevels==='function')eternityAutoLevels();if(pendingLevels>0){renderLevelCards();}else{showOv(null);state='play';}}
 /* ---- 協力プレイ：経験値は共有・強化は各自が選択 ---- */
 function pickUpgradesFor(wp){return pickBuildChoices(wp,(ally&&wp===ally.weapon&&wp!==weapon)?ally.run:RUN);}
 function renderCards(list,onpick,titleText){
@@ -5843,15 +6285,16 @@ function renderCards(list,onpick,titleText){
   list.forEach((u,idx)=>wrap.appendChild(upgradeCard(u,()=>onpick(idx,u))));
 }
 function waitingCards(msg){ const wrap=$('levelCards'); if(wrap)wrap.innerHTML=`<div style="text-align:center;padding:20px 6px;color:#cfd8ff;font-weight:800">${msg}</div>`; }
-function startLevelUp(){ state='levelup'; if(NET.role==='host' && NET.conns.some(c=>c.open)){ coopLevelStart(); } else { renderLevelCards(); showOv('levelScreen'); } }
+function startLevelUp(){if(typeof eternityAutoLevels==='function'&&eternityAutoLevels())return; state='levelup'; if(NET.role==='host' && NET.conns.some(c=>c.open)){ coopLevelStart(); } else { renderLevelCards(); showOv('levelScreen'); } }
 function coopLevelStart(){
   NET.hostPicked=false; NET.guestPicked=!NET.conns.some(c=>c.open);
   NET.hostChoices=pickUpgradesFor(weapon);
   NET.guestChoices=pickBuildChoices(ally?ally.weapon:'sword',ally?ally.run:makeRun());
   renderCards(NET.hostChoices, coopHostPick, 'Lv '+level+(pendingLevels>1?`（残り${pendingLevels}）`:''));
   showOv('levelScreen');
-  const disp=NET.guestChoices.map(u=>({ic:u.ic,nm:u.nm,ds:u.ds,fx:u.fx,w:u.w,id:u.id,max:u.max,rank:upgradeRank(u,ally&&ally.run)+1,persist:u.persist||null}));
+  const disp=NET.guestChoices.map(u=>({ic:u.ic,nm:u.nm,ds:u.ds,fx:u.fx,w:u.w,id:u.id,max:u.max,rank:upgradeRank(u,ally&&ally.run)+1,persist:u.persist||null,etAwaken:u.etAwaken||null}));
   for(const c of NET.conns){ if(c.open){ try{ c.send({t:'levelup', lv:level, n:pendingLevels, choices:disp}); }catch(e){} } }
+  if(typeof eternityCoopAuto==='function')eternityCoopAuto();
 }
 function coopHostPick(idx){if(NET.hostPicked)return;const u=NET.hostChoices&&NET.hostChoices[idx];if(u){applyRunUpgrade(u);spawnUpgradeVisual(u,player,true);}NET.hostPicked=true;if(!NET.guestPicked)waitingCards('相手を待機中…');coopLevelResolve();}
 function coopLevelResolve(){ if(!(NET.hostPicked&&NET.guestPicked))return; pendingLevels--; if(pendingLevels>0){ coopLevelStart(); } else { showOv(null); state='play'; for(const c of NET.conns){ if(c.open){ try{c.send({t:'levelend'});}catch(e){} } } } }
@@ -6831,6 +7274,7 @@ function doFire(){
   const tgt=nearestEnemy(W.melee?(effR+1.5):(weapon==='gun'?gunRange(RUN,buffType==='gun'):weapon==='iai'?50:PLAYER.range));
   if(!tgt)return;
   const dx=tgt.mesh.position.x-player.position.x, dz=tgt.mesh.position.z-player.position.z, ang=Math.atan2(dx,dz);
+  if(typeof eternityAttackEvent==='function')eternityAttackEvent('attack',tgt);
   if(weapon==='iai'){const c=iaiCharge;iaiSlash(ang,0.5+c*3.5,12+c*40);if(RUN.iaiStep&&c>=.8)RUN.iaiStepT=3;iaiCharge=0;return;}
   if(weapon==='chain'){ chainAttack(ang); return; }
   if(WEAPONS[weapon].orbit){ return; }
@@ -7267,6 +7711,7 @@ function activateSkill(aimAng){
   else if(weapon==='devour'){ devourBurst(); }
   else if(weapon==='fude'){ const t=nearestEnemy(40); const x=t?t.mesh.position.x:player.position.x+Math.sin(player.rotation.y)*6, z=t?t.mesh.position.z:player.position.z+Math.cos(player.rotation.y)*6; spawnFudeZone(x,z,10*(RUN.resRMul||1),baseDmg()*3.0*((RUN&&RUN.fudePower)||1),5.0+(RUN.resLifeAdd||0),true); }
   else if(weapon==='earth'){ earthquakeSkill(hasAim?aimAng:undefined); }
+  if(typeof eternityAttackEvent==='function')eternityAttackEvent('skill');
 }
 function throwSuperSpear(aimAng){
   let ang; if(typeof aimAng==='number'){ang=aimAng;} else { const t=nearestEnemy(60); ang=t?Math.atan2(t.mesh.position.x-player.position.x,t.mesh.position.z-player.position.z):player.rotation.y; }
@@ -7694,7 +8139,7 @@ function dexStop(){
 function clearArr(arr){ for(const x of arr){
   if(x.mesh){removeShadowFor(x.mesh);removeAndDispose(x.mesh);} if(x.m)removeAndDispose(x.m); if(x.tele)removeAndDispose(x.tele); if(x.extra)removeAndDispose(x.extra);
 } arr.length=0; }
-function clearField(){clearPuppeteer();clearEarthField();
+function clearField(){if(typeof clearEternityCombat==='function')clearEternityCombat();clearPuppeteer();clearEarthField();
   if(player)player.userData.gsAttackT=0;if(ally){ally.grp.userData.gsAttackT=0;if(ally.gsSpin){removeAndDispose(ally.gsSpin);ally.gsSpin=null;}}
   resetContactDamage();
   clearAllIaiEchoes();
@@ -8012,11 +8457,13 @@ function startRun(nextStageNum){
   charge=0;buffT=0;buffType=null; if(typeof endGsSpin==="function")endGsSpin(); if(typeof endScReap==="function")endScReap(); if(typeof endChainWard==="function")endChainWard(); if(typeof endKnAura==="function")endKnAura(); pDmgMul=1+(tb.damage||0)/100; pFireMul=1/(1+(tb.fireRate||0)/100); pCritChance=CRIT_CHANCE_BASE+(tb.critRate||0)/100+tomoCritAdd(); pCritDmg=CRIT_DMG_BASE+(tb.critDmg||0)/100; bossSpawned=false; lastMeta=null;pendingFirstRewards=[];
   pElem=playerElementInfo(); setPlayerElemRing(); RUN=makeRun(); RUN.startProgress={coins,shards,level:playerLevel,weapons:Object.keys(ownedW).filter(k=>ownedW[k]>0)}; pendingLevels=0;
   if(NET.role!=='client'&&!endless)consumeSortieItem();
+  if(typeof eternityBeginRun==='function')eternityBeginRun();
   if(NET.role==='host'){ NET.started=true; for(const c of NET.conns){ if(c.__opts)setupAlly(c.__opts); if(c.open){ try{c.send({t:'start',et:typeof eternitySnapshot==='function'?eternitySnapshot():null});}catch(e){} } } }
   state='play'; document.body.classList.add('playing'); showOv(null); initAudio(); playTrack(stageTrackName());
 }
 function pauseGame(){ if(state!=='play')return; state='pause'; pauseBgm();
   $('pauseStat').textContent=`${WEAPONS[weapon].name} ・ Lv ${level} ・ HP ${Math.ceil(PLAYER.hp)}/${PLAYER.maxHp} ・ 撃破 ${kills}`;
+  if(typeof eternityPauseControls==='function')eternityPauseControls();
   showRunBuild('pauseBuild');showOv('pauseScreen'); }
 function resumeGame(){ if(state!=='pause')return; state='play'; resumeBgm(); showOv(null); }
 function gameOver(){if(typeof ETERNITY!=='undefined'&&ETERNITY.active){eternityGameOver();return;}clearPuppeteer();clearEarthField();
@@ -8069,7 +8516,7 @@ function update(dt){
     e.forcedThisStep=updateEnemyForce(e,dt);
     if(e.puppet){updatePuppetEnemy(e,dt);applyEnemyForcePose(e);continue;}
     const tgt=enemyCombatTarget(e); const dx=tgt.grp.position.x-e.mesh.position.x,dz=tgt.grp.position.z-e.mesh.position.z,d=Math.hypot(dx,dz)||1;
-    const originalSpeed=e.speed;e.speed*=puppetFieldSpeed(e);
+    const originalSpeed=e.speed;e.speed*=puppetFieldSpeed(e)*(typeof eternitySlowMul==='function'?eternitySlowMul(e):1);
     earthCasterPosition(e,tgt,dt);
     const bossHandled=e.boss?updateBossCombat(e,dt,tgt,dx,dz,d):false;
     if(e.forcedThisStep){e.stun=Math.max(0,(e.stun||0)-dt);}
@@ -8093,7 +8540,7 @@ function update(dt){
   if(buffType==='scythe') updateScReap(dt);
   if(buffType==='chain') updateChainWard(dt);
   updateSpirits(dt);
-  updateIaiEcho(dt);
+  updateIaiEcho(dt);if(typeof eternityActorTick==='function')eternityActorTick(dt);
   if(buffType==='hammer'){ hammerStompT-=dt; if(hammerStompT<=0){ hammerStompT=0.6; hammerStomp(); } }
   if(buffType==='knuckle'&&knAura){ knAura.position.set(player.position.x,0,player.position.z); knAura.rotation.y+=dt*3.5; knAura.children[0].material.opacity=0.6+Math.sin(gameTime*12)*0.25; }
   if(buffT>0){ buffT-=dt; if(buffT<=1e-8){ buffT=0; const was=buffType; buffType=null; if(was==='greatsword')endGsSpin(); if(was==='scythe')endScReap(); if(was==='chain')endChainWard(); if(was==='knuckle')endKnAura(); } }
@@ -8120,9 +8567,10 @@ function update(dt){
     if(b.trail){ b.tT=(b.tT||0)-dt; if(b.tT<=0){ b.tT=(b.boss||b.maou)?0.05:0.09; mfxPuff(b.mesh.position,(b.trail==='hue'?(b.tc||0xffffff):b.trail),b.maou?1.8:(b.boss?1.3:0.8),0.2); } }
     let hitA=null; for(const a of avatars()){ if(isInvincible(a.isHost))continue; const dx=a.grp.position.x-b.mesh.position.x,dz=a.grp.position.z-b.mesh.position.z; if(dx*dx+dz*dz<(PLAYER.r+b.r)*(PLAYER.r+b.r)){ hitA=a; break; } } if(hitA){ damageAvatar(hitA.isHost,b.dmg); if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); continue; } if(b.life<=0){ if(b.ms)motifImpact(b); removeAndDispose(b.mesh); eBullets.splice(i,1); } }
 
+  if(typeof eternityCombatTick==='function')eternityCombatTick(dt);
   updatePuppeteer(dt);updateEarthField(dt);updateMelees(dt); updateResidues(dt); updateDebris(dt); updateOrbs(dt); updateShadows(); updateEarthFx(dt);
 
-  while(xp>=xpNeed){ xp-=xpNeed; level++; xpNeed=Math.round(xpNeed*1.35+4); pendingLevels++; }
+  let levelsThisStep=0;while(xp>=xpNeed&&(!ETERNITY.active||levelsThisStep<32)){ xp-=xpNeed; level++; xpNeed=ETERNITY.active?eternityXpNeed(level):Math.round(xpNeed*1.35+4); pendingLevels++;levelsThisStep++; }
   if(pendingLevels>0 && state==='play') startLevelUp();
   if(RUN){ const rg=(RUN.regen||0)+(RUN.regenPct||0)*PLAYER.maxHp; if(rg>0)PLAYER.hp=Math.min(PLAYER.maxHp,PLAYER.hp+rg*dt); }
   enforceMaouRing(dt);
@@ -8326,6 +8774,7 @@ function loop(){ requestAnimationFrame(loop); const now=performance.now(); const
   if(NET.role==='client'){ netClientTick(now); updateClientFx(dt); updateMelees(dt); updateEarthFx(dt); updateDebris(dt); }
   else if(state==='play'){ update(dt); netHostTick(now); }
   else if(state==='home')homeIdle(dt);
+  if(typeof updateEternityFx==='function')updateEternityFx(dt);
   updateBodyHitboxRings();
   if(NET.role==='client'){ updateDecor(C.meX||0,C.meZ||0); updateFireField(C.meX||0,C.meZ||0,dt); updateWaterField(C.meX||0,C.meZ||0,dt); updateGrassField(C.meX||0,C.meZ||0,dt); updateMotifField(C.meX||0,C.meZ||0,dt); updateMfx(dt); } // クライアントは自分のアバター中心に岩・茂みを配置
   else if(state==='play'||state==='home'){ updateDecor(player.position.x,player.position.z); updateFireField(player.position.x,player.position.z,dt); updateWaterField(player.position.x,player.position.z,dt); updateGrassField(player.position.x,player.position.z,dt); updateMotifField(player.position.x,player.position.z,dt); updateMfx(dt); } // 周辺の岩・茂みを使い回し配置
