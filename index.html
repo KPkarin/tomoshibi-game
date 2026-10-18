@@ -5969,6 +5969,16 @@ function eternityPlanRun(rows=ET_PLAN.build,wp=weapon,segment=ET_PLAN.segment){
  return run;
 }
 function eternityFlattenBuild(run){return Object.entries(run.build||{}).filter(q=>q[1]>0);}
+function eternityCompleteBuild(rows,wp,segment){
+ const budget=eternityJumpBudget(segment),run=eternityPlanRun(rows,wp,segment);let used=Object.values(run.build).reduce((a,b)=>a+b,0);
+ const cards=UPGRADES3.filter(u=>u.w===wp),target=Math.ceil(6/Math.max(1,cards.length));
+ while(used<budget){
+  let u=cards.find(u=>(run.build[u.id||u.nm]||0)<target&&upgradeAllowed(u,wp,run));
+  if(!u){const name=['攻撃力 +20%','最大HP +8%','攻撃速度 +20%'][used%3];u=UPGRADES3.find(u=>u.nm===name);}
+  const id=u.id||u.nm;run.build[id]=(run.build[id]||0)+1;used++;
+ }
+ return eternityFlattenBuild(run);
+}
 function eternityStartSegment(){return Math.min(eternityInteger(ET_PLAN.segment),eternityProgress.checkpoint);}
 function eternityPrepareStart(){
  ETERNITY.startAt=ETERNITY.active?eternityStartSegment()*600:0;
@@ -5990,7 +6000,8 @@ function eternityBeginRun(){
 function eternityAllyBuild(opts){
  if(!ETERNITY.active||!ally)return;
  ally.etAuto=ET_AUTO_MODES.includes(opts.etAuto)?opts.etAuto:'off';
- loadAlly();try{eternitySeedBuild(opts.etBuild,(ETERNITY.startAt||0)/600);}finally{storeAlly();}
+ const segment=(ETERNITY.startAt||0)/600,rows=eternityCompleteBuild(opts.etBuild,ally.weapon,segment);
+ loadAlly();try{eternitySeedBuild(rows,segment);}finally{storeAlly();}
 }
 function eternityMyBuild(){const s=eternityProgress.slots[eternityProgress.slot];return s&&s.weapon===weapon?s.build:[];}
 function eternityBossProgress(e){
