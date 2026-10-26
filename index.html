@@ -1659,7 +1659,7 @@ body.in-arcade .camp-backdrop-mist{display:none;}
     </div>
     <div id="saveLoadNotice" role="alert" hidden style="width:100%;box-sizing:border-box;max-height:24dvh;overflow:auto;padding:10px;border:1px solid #c78c66;background:rgba(20,14,14,.96);color:#ffcfad;font-size:12px;line-height:1.6;text-align:center">セーブを読み込めませんでした。元データを保護するため、現在のプレイ内容は保存されません。<br>「データ引継ぎ」で元データを退避し、正常なセーブを読み込んでください。</div>
   </div>
-  <span class="title-version">v1.7.73</span>
+  <span class="title-version">v1.7.74</span>
 </div>
 
 <div id="musicCreditToast" role="status" aria-live="polite"><strong></strong><span></span></div>
@@ -2092,7 +2092,7 @@ function restoreSaveData(d){
   if(typeof restoreEternityProgress==='function')restoreEternityProgress(d&&d.eternityProgress);
   if(d&&d.best){ save.best={kills:d.best.kills|0,time:d.best.time|0,level:d.best.level||1}; save.totalKills=d.totalKills|0; }
   if(d&&WEAPONS[d.weapon]) save.weapon=d.weapon;
-    if(d){ coins=readSavedCurrency(d,'coins','コイン'); shards=readSavedCurrency(d,'shards','灯火の雫'); medals=readSavedCurrency(d,'medals','メダル',1000);medalClaimDay=typeof d.medalClaimDay==='string'?d.medalClaimDay:'';arcadeTitles=Array.isArray(d.arcadeTitles)?d.arcadeTitles.filter(id=>ARCADE_TITLES.some(t=>t.id===id)):[];arcadeTitle=arcadeTitles.includes(d.arcadeTitle)?d.arcadeTitle:''; if(d.items)items=Object.assign({heal:0,atk:0,guard:0,xp:0},d.items); if(d.equipItem&&ITEM_DEF[d.equipItem])equipItem=d.equipItem; if(d.ownedW)ownedW=Object.assign({sword:1,bow:1,mage:1},d.ownedW); if(d.weapon&&WEAPONS[d.weapon]&&!(ownedW[d.weapon]>0))ownedW[d.weapon]=1; if(Array.isArray(d.inventory))inventory=d.inventory; if(d.equipped)equipped=Object.assign({head:null,chest:null,legs:null,feet:null},d.equipped); itemSeq=d.itemSeq|0;
+    if(d){ coins=readSavedCurrency(d,'coins','コイン'); shards=readSavedCurrency(d,'shards','灯火の雫'); medals=medalValue(readSavedCurrency(d,'medals','メダル',1000));medalClaimDay=typeof d.medalClaimDay==='string'?d.medalClaimDay:'';arcadeTitles=Array.isArray(d.arcadeTitles)?d.arcadeTitles.filter(id=>ARCADE_TITLES.some(t=>t.id===id)):[];arcadeTitle=arcadeTitles.includes(d.arcadeTitle)?d.arcadeTitle:''; if(d.items)items=Object.assign({heal:0,atk:0,guard:0,xp:0},d.items); if(d.equipItem&&ITEM_DEF[d.equipItem])equipItem=d.equipItem; if(d.ownedW)ownedW=Object.assign({sword:1,bow:1,mage:1},d.ownedW); if(d.weapon&&WEAPONS[d.weapon]&&!(ownedW[d.weapon]>0))ownedW[d.weapon]=1; if(Array.isArray(d.inventory))inventory=d.inventory; if(d.equipped)equipped=Object.assign({head:null,chest:null,legs:null,feet:null},d.equipped); itemSeq=d.itemSeq|0;
       if(['normal','fire','water','grass'].includes(d.mode))mode=d.mode;
       if(d.modeMax)modeMax=Object.assign({normal:1,fire:1,water:1,grass:1},d.modeMax);
       chapterClaims=Array.isArray(d.chapterClaims)?d.chapterClaims.filter(k=>/^(normal|fire|water|grass):[0-9]$/.test(k)):[];for(const k of ['normal','fire','water','grass'])stageCleared[k]=clamp(d.stageCleared&&Number.isFinite(d.stageCleared[k])?d.stageCleared[k]:Math.max(0,(modeMax[k]||1)-1),0,100);
@@ -2179,7 +2179,7 @@ async function readSaveFile(file){
 }
 function previewTransferSave(){
   const text=$('transferImportArea').value;if(!String(text||'').trim()){$('transferMsg').textContent='';return;}
-  try{const data=parseTransferSave(text);$('transferMsg').textContent=(data.coins===undefined?'コードを確認しました':'引き継ぐコイン：'+data.coins.toLocaleString('ja-JP'))+' · 「読み込む」で確定';}
+  try{const data=parseTransferSave(text);$('transferMsg').textContent=(data.coins===undefined?'コードを確認しました':'引き継ぐコイン：'+data.coins.toLocaleString('ja-JP'))+(data.medals===undefined?'':' ／ メダル：'+medalText(data.medals))+' · 「読み込む」で確定';$('transferMsg').title=data.medals===undefined?'':'メダル：'+medalCount(data.medals).toLocaleString('ja-JP')+'枚';}
   catch(e){$('transferMsg').textContent=e.message;}
 }
 let transferReloadPending=false;
@@ -2188,7 +2188,7 @@ function saveExportRaw(){
   if(unreadSaveRaw===null)throw new Error('元のセーブデータを取り出せませんでした');
   return unreadSaveRaw;
 }
-function saveSnapshot(){ if(typeof eternityProgress!=='undefined')save.eternityProgress=eternityProgress; if(typeof eternityRecord!=='undefined')save.eternityRecord=eternityRecord; save.muted=muted; save.medals=medals;save.medalClaimDay=medalClaimDay;save.arcadeTitles=arcadeTitles;save.arcadeTitle=arcadeTitle; save.coins=coins; save.shards=shards; save.currencyBalances={format:1,coins:String(coins),shards:String(shards),medals:String(medals)}; save.items=items; save.equipItem=equipItem; save.ownedW=ownedW; save.inventory=inventory; save.equipped=equipped; save.itemSeq=itemSeq; save.weapon=weapon; save.mode=mode; save.stageNum=stageNum; save.modeMax=modeMax;save.chapterClaims=chapterClaims;save.stageCleared=stageCleared; save.playerLevel=playerLevel; save.playerXp=playerXp; save.rebirthTier=rebirthTier; save.tomoshin=tomoshin; save.tomoshinNodes=tomoshinNodes; save.rebirthCount=rebirthCount; save.carryUsed=carryUsed; save.cycleCleared=cycleCleared; save.lastLogin=lastLogin; save.loginStreak=loginStreak; return JSON.stringify(save); }
+function saveSnapshot(){ if(typeof eternityProgress!=='undefined')save.eternityProgress=eternityProgress; if(typeof eternityRecord!=='undefined')save.eternityRecord=eternityRecord; save.muted=muted; save.medals=medalSave(medals);save.medalClaimDay=medalClaimDay;save.arcadeTitles=arcadeTitles;save.arcadeTitle=arcadeTitle; save.coins=coins; save.shards=shards; save.currencyBalances={format:1,coins:String(coins),shards:String(shards),medals:String(medals)}; save.items=items; save.equipItem=equipItem; save.ownedW=ownedW; save.inventory=inventory; save.equipped=equipped; save.itemSeq=itemSeq; save.weapon=weapon; save.mode=mode; save.stageNum=stageNum; save.modeMax=modeMax;save.chapterClaims=chapterClaims;save.stageCleared=stageCleared; save.playerLevel=playerLevel; save.playerXp=playerXp; save.rebirthTier=rebirthTier; save.tomoshin=tomoshin; save.tomoshinNodes=tomoshinNodes; save.rebirthCount=rebirthCount; save.carryUsed=carryUsed; save.cycleCleared=cycleCleared; save.lastLogin=lastLogin; save.loginStreak=loginStreak; return JSON.stringify(save); }
 function commitSave(){ if(!saveWorks||saveLoadFailed||transferReloadPending)return false; try{localStorage.setItem(SAVE_KEY,saveSnapshot());return true;}catch(e){return false;} }
 
 
@@ -2340,6 +2340,7 @@ function savedCurrencyNumber(value,label,defaultValue=0){
   return Math.floor(value);
 }
 function readSavedCurrency(data,key,label,defaultValue=0){
+  if(key==='medals')return readSavedMedals(data,defaultValue);
   const backup=data.currencyBalances;
   if(backup&&backup.format===1&&backup[key]!==undefined){
     const original=savedCurrencyNumber(backup[key],label,defaultValue),raw=data[key];
@@ -2350,6 +2351,58 @@ function readSavedCurrency(data,key,label,defaultValue=0){
     throw new Error(label+'残高の記録が一致しません。元のセーブを確認してください');
   }
   return savedCurrencyNumber(data[key],label,defaultValue);
+}
+
+/* Keep small balances numeric for legacy saves; use exact integers above 2^53-1. */
+function medalCount(value,defaultValue=0){
+  if(value===undefined||value===null||value==='')value=defaultValue;
+  if(typeof value==='bigint'){
+    if(value<0n)throw new Error('メダル残高は0枚以上である必要があります');
+    return value;
+  }
+  if(typeof value==='number'){
+    if(!Number.isFinite(value)||value<0)throw new Error('メダル残高を読み取れません');
+    value=String(Math.floor(value));
+  }
+  if(typeof value!=='string')throw new Error('メダル残高を読み取れません');
+  value=value.normalize('NFKC').trim();
+  if(/^\d{1,3}(?:,\d{3})+(?:\.0+)?$/.test(value))value=value.replace(/,/g,'');
+  const m=/^\+?(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i.exec(value);
+  if(!m)throw new Error('メダル残高を読み取れません');
+  const fraction=m[2]||'',exponent=Number(m[3]||0);
+  let digits=(m[1]+fraction).replace(/^0+/,'');
+  if(!digits)return 0n;
+  // Bound expansion of untrusted exponent notation, rather than a gameplay balance.
+  if(!Number.isSafeInteger(exponent)||exponent>100000)throw new Error('メダルの指数表記が大きすぎます。通常の数字で書き出してください');
+  const shift=exponent-fraction.length;
+  digits=shift>=0?digits+'0'.repeat(shift):digits.slice(0,Math.max(0,digits.length+shift));
+  return BigInt(digits||'0');
+}
+function medalValue(value,defaultValue=0){const n=medalCount(value,defaultValue);return n<=BigInt(Number.MAX_SAFE_INTEGER)?Number(n):n;}
+function medalSave(value,defaultValue=0){const n=medalValue(value,defaultValue);return typeof n==='bigint'?String(n):n;}
+function medalCredit(amount){medals=medalValue(medalCount(medals)+medalCount(amount));}
+function medalSpend(amount){const balance=medalCount(medals),cost=medalCount(amount);if(cost>balance)return false;medals=medalValue(balance-cost);return true;}
+function medalRatio(value,numerator,denominator=100){return medalValue(medalCount(value)*BigInt(numerator)/BigInt(denominator));}
+function medalClamp(value,max){const limit=medalCount(max);if(!limit)return 0;const n=medalCount(value);return medalValue(n<1n?1n:n>limit?limit:n);}
+function medalText(value){const n=medalCount(value),s=String(n);return s.length>18?'約'+s[0]+'.'+s.slice(1,6)+'e+'+(s.length-1):n.toLocaleString('ja-JP');}
+function setMedalText(element,value){if(!element)return;element.textContent=medalText(value);element.title=medalCount(value).toLocaleString('ja-JP')+'枚';element.setAttribute('aria-label','メダル '+element.title);}
+function readSavedMedals(data,defaultValue=1000){
+  const backup=data.currencyBalances;
+  if(backup&&backup.format===1&&backup.medals!==undefined){
+    const original=medalCount(backup.medals,defaultValue),raw=data.medals;
+    if(raw===undefined)return medalSave(original);
+    let current;
+    try{current=medalCount(raw,defaultValue);}catch(e){
+      if((typeof raw==='number'&&Number.isInteger(raw))||(typeof raw==='string'&&/^-\d+$/.test(raw)))current=BigInt(raw);
+      else throw e;
+    }
+    const unsigned=original%4294967296n,signed=unsigned>=2147483648n?unsigned-4294967296n:unsigned;
+    // Older versions serialized unsafe Number values. The decimal mirror is authoritative.
+    const legacyRounded=typeof raw==='number'&&!Number.isSafeInteger(raw)&&Number.isFinite(raw)&&Number(original)===raw;
+    if(current===original||current===unsigned||current===signed||legacyRounded)return medalSave(original);
+    throw new Error('メダル残高の記録が一致しません。元のセーブを確認してください');
+  }
+  return medalSave(data.medals,defaultValue);
 }
 
 const safeBalance=n=>Number.isFinite(Number(n))?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(Number(n)))):0;
@@ -2921,7 +2974,7 @@ function pachiAward(idx){
   const P=PACHI_POCKETS[idx]; P.glow=10;
   const rushOn=pachiRushLeft>0;
   let pay=Math.round(P.pay*pachiPayBet()*(rushOn?PACHI_RUSH_MUL:1));
-  if(pay>0){ medals+=pay; pachiSession+=pay; }
+  if(pay>0){ medalCredit(pay); pachiSession+=pay; }
   let msg=P.pay>0?('【図:medal】+'+pay.toLocaleString()):'ハズレ';
   if(P.jackpot){
     if(rushOn){ pachiRushN++; pachiRushLeft+=PACHI_RUSH_BALLS; msg='【図:element_fire】 継続！ '+pachiRushN+'連 【図:medal】+'+pay.toLocaleString(); }
@@ -2967,7 +3020,7 @@ function pachiRenderBets(){
   const cost=document.getElementById('pachiCost'); if(cost)cost.textContent=pachiBallCost().toLocaleString();
 }
 function pachiUpdateUI(){
-  const c=document.getElementById('pachiCoins'); if(c)c.textContent=medals.toLocaleString();
+  const c=document.getElementById('pachiCoins'); if(c)setMedalText(c,medals);
   const se=document.getElementById('pachiSession'); if(se){ se.textContent=(pachiSession>=0?'+':'')+pachiSession.toLocaleString(); se.style.color=pachiSession>=0?'#9fe0b0':'#ff8a9a'; }
   const r=document.getElementById('pachiResult'); if(r)r.textContent=pachiLastMsg;
   const rw=document.getElementById('pachiRush'); if(rw){ const was=rw.classList.contains('on'); rw.classList.toggle('on',pachiRushLeft>0);
@@ -2997,7 +3050,7 @@ function pachiDrop(){
   if(pachiBalls.length>0)return;
   const cost=pachiBallCost();
   if(medals<cost){ toast('【図:medal】が足りません'); pachiAuto=false; pachiAutoUI(); return; }
-  medals-=cost; pachiSession-=cost; commitSave();
+  medalSpend(cost); pachiSession-=cost; commitSave();
   pachiBalls.push({x:PACHI_W/2+(Math.random()-0.5)*30, y:24, vx:(Math.random()-0.5)*2.2, vy:0.6});
   pachiUpdateUI();
   pachiIdleStop(); if(!pachiRaf)pachiRaf=requestAnimationFrame(pachiLoop);
@@ -3139,8 +3192,8 @@ function consumeSortieItem(){
 /* ===== スロットミニゲーム ===== */
 function weightedSlotPick(){ const tot=SLOT_SYMBOLS.reduce((s,x)=>s+x.w,0); let r=Math.random()*tot;
   for(const s of SLOT_SYMBOLS){ r-=s.w; if(r<=0)return s; } return SLOT_SYMBOLS[0]; }
-function applySlotReward(rw){ if(!rw)return ''; const n=rw.medals||0; medals+=n;commitSave();return '【図:medal】+'+n; }
-function updateSlotUI(){ const sc=$('slotCoins'); if(sc)sc.textContent=medals.toLocaleString('ja-JP'); const sco=$('slotCost'); if(sco)sco.textContent=SLOT_COST; }
+function applySlotReward(rw){ if(!rw)return ''; const n=rw.medals||0; medalCredit(n);commitSave();return '【図:medal】+'+n; }
+function updateSlotUI(){ const sc=$('slotCoins'); if(sc)setMedalText(sc,medals); const sco=$('slotCost'); if(sco)sco.textContent=SLOT_COST; }
 const REEL_FILL=16; // 停止前に流すダミー絵柄の数
 // リール1マスの高さはCSS変数から取得する（画面サイズで変わるため毎回読み直す）
 function reelCellH(){
@@ -3167,7 +3220,7 @@ function closeSlot(){ stopAutoSlot(); goHome(); }
 function doSlot(){
   if(slotSpinning)return;
   if(medals<SLOT_COST){ toast('【図:medal】が足りません'); stopAutoSlot(); return; }
-  medals-=SLOT_COST; commitSave(); updateSlotUI();
+  medalSpend(SLOT_COST); commitSave(); updateSlotUI();
   const result=[weightedSlotPick(),weightedSlotPick(),weightedSlotPick()];
   const reelEls=[$('reel0'),$('reel1'),$('reel2')];
   if(reelEls.some(e=>!e))return;
@@ -3201,7 +3254,7 @@ function evaluateSlot(r){
   else if(r[0].k===r[1].k||r[1].k===r[2].k||r[0].k===r[2].k){
     const s=(r[0].k===r[1].k)?r[0]:((r[1].k===r[2].k)?r[1]:r[0]);
     rewardMsg=applySlotReward(s.pair); resultText='当たり！'; }
-  else { medals+=5; commitSave(); rewardMsg='【図:medal】+5'; resultText='残念…'; }
+  else { medalCredit(5); commitSave(); rewardMsg='【図:medal】+5'; resultText='残念…'; }
   updateSlotUI();if(campGroup==='arcade'&&$('campHub').classList.contains('show'))renderCampHub();
   $('slotResult').innerHTML=`<div style="font-weight:900;font-size:15px;margin-bottom:4px">${resultText}</div><div>${rewardMsg}</div>`;
   if(autoSlot){ if(medals>=SLOT_COST){ setTimeout(()=>{ if(autoSlot)doSlot(); },550); } else { stopAutoSlot(); toast('【図:medal】が足りずオート停止しました'); } }
@@ -8943,23 +8996,23 @@ function loop(){ requestAnimationFrame(loop); const now=performance.now(); const
   if(dmgCtx)updateDrawDmg(dt); }
 
 function medalToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
-function claimMedals(){if(medalClaimDay===medalToday())return false;medals=Math.min(Number.MAX_SAFE_INTEGER,medals+300);medalClaimDay=medalToday();commitSave();return true;}
+function claimMedals(){if(medalClaimDay===medalToday())return false;medalCredit(300);medalClaimDay=medalToday();commitSave();return true;}
 function arcadeButton(text,fn,disabled){const b=document.createElement('button');b.className='btn ghost';b.style.cssText='width:100%;font-size:12px;margin-top:8px;padding:10px';b.textContent=text;b.disabled=disabled;b.onclick=fn;return b;}
-function buyArcadeTitle(id){const t=ARCADE_TITLES.find(x=>x.id===id);if(!t||arcadeTitles.includes(id)||medals<t.cost)return false;medals-=t.cost;arcadeTitles.push(id);arcadeTitle=id;commitSave();return true;}
+function buyArcadeTitle(id){const t=ARCADE_TITLES.find(x=>x.id===id);if(!t||arcadeTitles.includes(id)||medals<t.cost)return false;medalSpend(t.cost);arcadeTitles.push(id);arcadeTitle=id;commitSave();return true;}
 const MEDAL_PACKS=[
  {id:'small',coins:1000,medals:50},
  {id:'medium',coins:10000,medals:550},
  {id:'large',coins:100000,medals:6000}
 ];
-function canBuyMedalPack(pack){return !!pack&&coins>=pack.coins&&medals<=Number.MAX_SAFE_INTEGER-pack.medals;}
+function canBuyMedalPack(pack){return !!pack&&coins>=pack.coins;}
 function buyArcadeMedals(id){
  const pack=MEDAL_PACKS.find(p=>p.id===id);if(!canBuyMedalPack(pack))return false;
- coins-=pack.coins;medals+=pack.medals;commitSave();return true;
+ coins-=pack.coins;medalCredit(pack.medals);commitSave();return true;
 }
 function renderArcadeWallet(wrap){
  const wallet=document.createElement('div');wallet.className='arcade-wallet';
  for(const [key,label,value] of [['medal','遊技場メダル',medals],['coin','コイン',coins]]){
-  const line=campLine('【図:'+key+'】 '+label+' '+value.toLocaleString('ja-JP'));
+  const line=campLine('【図:'+key+'】 '+label+' '+(key==='medal'?medalText(value):value.toLocaleString('ja-JP')));if(key==='medal')line.title=medalCount(value).toLocaleString('ja-JP')+'枚';
   line.className='currency-balance';line.dataset.currency=key;wallet.append(line);
  }
  wrap.append(wallet);
@@ -8981,7 +9034,7 @@ function renderSupplyShop(){const wrap=$('supplyShop');wrap.replaceChildren();co
  for(const k of Object.keys(ITEM_DEF))wrap.append(arcadeButton(ITEM_DEF[k].icon+' '+ITEM_DEF[k].name+' · 【図:coin】'+ITEM_PRICES[k],()=>buySupply(k),coins<ITEM_PRICES[k]));}
 // HIGH/LOWの勝利払い戻し。引き分けを除く期待値を約95%以下にする。
 function hellQuote(first,high){const wins=high?13-first:first-1;if(!wins)return {wins:0,mult:0};return {wins,mult:Math.floor((12/wins)*.95*100)/100};}
-function hellPayout(stake,quote){return Math.floor(stake*quote.mult);}
+function hellPayout(stake,quote){return medalRatio(stake,Math.round(quote.mult*100),100);}
 
 /* 拠点の情報設計。既存画面を再利用し、セーブ形式と戦闘には触れない。 */
 let campGroup=null;
@@ -9110,17 +9163,17 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
 (function(){
  const el=id=>document.getElementById(id);
  let first=1, bet=1, busy=false, opened=false, settled=false, nextFirst=1;
- const fmt=n=>Math.floor(n).toLocaleString('ja-JP');
- const cap=()=>Math.max(0,Math.floor(medals*0.9));
+ const fmt=n=>medalText(n);
+ const cap=()=>medalRatio(medals,90);
  const face=n=>n===1?'A':n===11?'J':n===12?'Q':n===13?'K':String(n);
  function card(id,n,hidden){el(id).classList.toggle('hidden',hidden);el(id).innerHTML=arcadeCardHTML(id,n,hidden);}
  function refresh(){
   el('hellScreen').dataset.phase=settled?'result':busy?'drawing':'bet';
   el('hellContinue').hidden=!settled;el('hellRoundState').textContent=settled?'勝負結果':busy?'札を開いています':'次のカードは？';
-  const max=cap(); bet=max?Math.max(1,Math.min(max,Math.floor(bet))):0;
-  el('hellCoins').textContent=fmt(medals);el('hellMax').textContent=fmt(max);
-  const slider=el('hellBet');slider.max=Math.max(1,max);slider.value=Math.max(1,bet);slider.disabled=busy||settled||max<1;
-  el('hellBetText').textContent=fmt(bet);
+  const max=cap(); bet=medalClamp(bet,max);
+  setMedalText(el('hellCoins'),medals);setMedalText(el('hellMax'),max);
+  const slider=el('hellBet');slider.max=typeof max==='bigint'?10000:Math.max(1,max);slider.value=typeof max==='bigint'?Math.max(1,Number(medalCount(bet)*10000n/medalCount(max))):Math.max(1,bet);slider.disabled=busy||settled||max<1;
+  setMedalText(el('hellBetText'),bet);
   const low=hellQuote(first,false),high=hellQuote(first,true);
   el('hellLow').disabled=busy||settled||max<1||low.wins===0;el('hellHigh').disabled=busy||settled||max<1||high.wins===0;
   el('hellLow').innerHTML='<strong>↓ LOW</strong><small>'+low.mult.toFixed(2)+'倍<br>'+ (low.wins/13*100).toFixed(1)+'%</small>';el('hellHigh').innerHTML='<strong>↑ HIGH</strong><small>'+high.mult.toFixed(2)+'倍<br>'+(high.wins/13*100).toFixed(1)+'%</small>';
@@ -9129,21 +9182,21 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
   el('hellOdds').textContent='勝率 · '+label('LOW',low)+' ／ '+label('HIGH',high);
   for(const b of el('hellScreen').querySelectorAll('[data-hpct]'))b.disabled=busy||settled||max<1;
  }
- function open(){el('hellScreen').dataset.outcome='';opened=true;busy=false;settled=false;first=2+Math.floor(Math.random()*11);card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';bet=Math.max(1,Math.floor(cap()/2));refresh();showOv('hellScreen');}
+ function open(){el('hellScreen').dataset.outcome='';opened=true;busy=false;settled=false;first=2+Math.floor(Math.random()*11);card('hellFirst',first,false);card('hellNext',0,true);el('hellResult').className='hell-result';el('hellResult').textContent='';bet=medalRatio(cap(),1,2);refresh();showOv('hellScreen');}
  function close(){if(busy)return;opened=false;goHome();}
  function play(high){
   if(!opened||busy||settled)return;
   const max=cap();if(max<1||bet<1||bet>max){refresh();return;}
   const quote=hellQuote(first,high);if(!quote.wins)return;
-  busy=true;const stake=bet;medals-=stake;commitSave();refresh();
+  busy=true;const stake=bet;medalSpend(stake);commitSave();refresh();
   el('hellResult').className='hell-result';el('hellResult').textContent='…';
   const next=1+Math.floor(Math.random()*13);
   setTimeout(()=>{
    const tie=next===first,win=!tie&&(high?next>first:next<first);
-   const payout=tie?stake:win?hellPayout(stake,quote):0;medals+=payout;
+   const payout=tie?stake:win?hellPayout(stake,quote):0;medalCredit(payout);
    commitSave();el('hellScreen').dataset.outcome=win?'win':tie?'tie':'lose';card('hellNext',next,false);
    el('hellResult').className='hell-result '+(win?'win':tie?'':'lose');
-   el('hellResult').textContent=tie?'【図:balance】 DRAW　【図:medal】'+fmt(stake)+' 返却':win?'【図:star】 HEAVEN！　【図:medal】+'+fmt(payout-stake):'【図:element_fire】 HELL…　【図:medal】-'+fmt(stake);
+   el('hellResult').textContent=tie?'【図:balance】 DRAW　【図:medal】'+fmt(stake)+' 返却':win?'【図:star】 HEAVEN！　【図:medal】+'+fmt(medalCount(payout)-medalCount(stake)):'【図:element_fire】 HELL…　【図:medal】-'+fmt(stake);
    nextFirst=(next===1||next===13)?2+Math.floor(Math.random()*11):next;settled=true;busy=false;refresh();
   },650);
  }
@@ -9152,8 +9205,8 @@ init(); setupCamp(); clock=new THREE.Clock(); loop();
  el('hellTile').addEventListener('click',open);
  el('hellClose').addEventListener('click',close);el('hellHome').addEventListener('click',close);
  el('hellHigh').addEventListener('click',()=>play(true));el('hellLow').addEventListener('click',()=>play(false));
- el('hellBet').addEventListener('input',e=>{bet=Number(e.target.value);refresh();});
- el('hellScreen').querySelectorAll('[data-hpct]').forEach(b=>b.addEventListener('click',()=>{bet=Math.max(1,Math.floor(medals*Number(b.dataset.hpct)/100));refresh();}));
+ el('hellBet').addEventListener('input',e=>{const max=cap();bet=typeof max==='bigint'?medalRatio(max,Number(e.target.value),10000):Number(e.target.value);refresh();});
+ el('hellScreen').querySelectorAll('[data-hpct]').forEach(b=>b.addEventListener('click',()=>{bet=medalRatio(medals,Number(b.dataset.hpct));refresh();}));
 })();
 </script>
 </body>
